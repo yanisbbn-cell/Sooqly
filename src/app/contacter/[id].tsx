@@ -9,6 +9,7 @@ import { Libelle, styleChamp } from '@/components/Champ';
 import { EnTeteRetour } from '@/components/EnTeteRetour';
 import { EtatChargement } from '@/components/EtatChargement';
 import { Pastille } from '@/components/Pastille';
+import { IconeCadenas } from '@/components/Icones';
 import { Texte } from '@/components/Texte';
 import { lireAnnonce, type Annonce } from '@/lib/annonces';
 import { useAuth } from '@/lib/auth';
@@ -103,7 +104,8 @@ export default function Contacter() {
           )}
 
           <View style={styles.prive}>
-            <Texte style={{ fontSize: 13, lineHeight: 19 }}>🔒 {t('messagerie.prive')}</Texte>
+            <IconeCadenas couleur={colors.vert} />
+            <Texte style={{ fontSize: 13, lineHeight: 19, flex: 1 }}>{t('messagerie.prive')}</Texte>
           </View>
 
           {erreur && (
@@ -132,5 +134,5 @@ const styles = StyleSheet.create({
   grille: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   zone: { ...styleChamp, height: 130, paddingTop: 12, fontSize: 15, color: colors.brun },
   alerte: { backgroundColor: colors.rougeFond, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: colors.rouge },
-  prive: { backgroundColor: colors.vertFond, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: colors.vertBord },
+  prive: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, backgroundColor: colors.vertFond, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: colors.vertBord },
 });

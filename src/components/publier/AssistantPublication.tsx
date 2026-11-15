@@ -76,6 +76,7 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
   const [tarifsSaisis, setTarifsSaisis] = useState<Partial<Record<Unite, string>>>({});
   const [dispo, setDispo] = useState<{ debut: string | null; fin: string | null }>({ debut: null, fin: null });
   const [locationEnregistree, setLocationEnregistree] = useState(false);
+  const [permisExige, setPermisExige] = useState(false);
   const [wilaya, setWilaya] = useState<number | null>(profil.wilaya_code);
   const [ville, setVille] = useState(profil.ville ?? '');
   const [feuilleWilayas, setFeuilleWilayas] = useState(false);
@@ -239,6 +240,7 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
         ),
         prixDa: location ? tarifs[0]!.prix_da : (prix ?? 0),
         location,
+        permisExige,
         wilaya,
         ville,
         pro: pro && activite ? { activite, nomCommercial: nomCommercial.trim() } : null,
@@ -284,6 +286,7 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
     setTarifsSaisis({});
     setDispo({ debut: null, fin: null });
     setLocationEnregistree(false);
+    setPermisExige(false);
     setErreurPhotos(false);
   };
 
@@ -588,6 +591,24 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
                     </View>
                   ))}
                 </View>
+                {cleCategorie === 'vehicules' && (
+                  <Pressable
+                    onPress={() => setPermisExige(!permisExige)}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: permisExige }}
+                    style={styles.caseLigne}
+                  >
+                    <View style={[styles.caseCarree, permisExige && { backgroundColor: colors.brun }]}>
+                      {permisExige && <IconeCoche couleur={colors.sable1} taille={14} />}
+                    </View>
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <Texte poids={700} style={{ fontSize: 14 }}>
+                        {t('permis.exiger')}
+                      </Texte>
+                      <Texte style={styles.aide}>{t('permis.exigerSous')}</Texte>
+                    </View>
+                  </Pressable>
+                )}
                 <View style={styles.bloc}>
                   <Libelle>{t('location.disponibilites')}</Libelle>
                   <Calendrier
@@ -764,6 +785,7 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
                         : '—'
                 }
               />
+              {location && cleCategorie === 'vehicules' && permisExige && <LigneRecap libelle={t('permis.titre')} valeur={t('permis.exiger')} />}
               {location && dispo.debut && dispo.fin && (
                 <LigneRecap
                   libelle={t('location.disponibilites')}
@@ -1007,6 +1029,25 @@ const styles = StyleSheet.create({
   carteEtatChoisie: { borderWidth: 2, borderColor: colors.accent },
   radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: colors.sable4, alignItems: 'center', justifyContent: 'center' },
   radioPoint: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent },
+  caseLigne: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.sable3,
+    backgroundColor: colors.carte,
+  },
+  caseCarree: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: colors.brun,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   ligneTarif: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   unite: { ...styleChamp, backgroundColor: colors.sable2, justifyContent: 'center' },
   apercu: { fontSize: 13 },

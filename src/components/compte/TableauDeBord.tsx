@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -8,6 +8,7 @@ import { IconeRetour } from '@/components/Icones';
 import { ImageProfil } from '@/components/ImageProfil';
 import { Texte } from '@/components/Texte';
 import { estModerateur, useAuth, type Profil } from '@/lib/auth';
+import { nombreDocumentsEnAttente } from '@/lib/permis';
 import { usePreferences } from '@/lib/preferences';
 import { useWilayas } from '@/lib/referentiel';
 import { colors, toucheMin } from '@/theme';
@@ -23,6 +24,12 @@ export function TableauDeBord({ profil }: { profil: Profil }) {
   const { donnees: wilayas } = useWilayas();
   const [feuilleImages, setFeuilleImages] = useState(false);
   const [demandeDeconnexion, setDemandeDeconnexion] = useState(false);
+  const [documents, setDocuments] = useState(0);
+  useFocusEffect(
+    useCallback(() => {
+      nombreDocumentsEnAttente(profil.id).then(setDocuments);
+    }, [profil.id]),
+  );
 
   const w = wilayas?.find((x) => x.code === profil.wilaya_code);
   const lieu = [profil.ville, w ? (langue === 'ar' ? w.nom_ar : w.nom_fr) : null].filter(Boolean).join(langue === 'ar' ? '، ' : ', ');
@@ -65,7 +72,12 @@ export function TableauDeBord({ profil }: { profil: Profil }) {
           </Texte>
           <View style={styles.menu}>
             {estModerateur(profil) && <Ligne libelle={t('moderation.entree')} onPress={() => router.push('/moderation')} />}
+            <Ligne
+              libelle={documents ? t('permis.documentsEntree', { count: documents }) : t('permis.documents')}
+              onPress={() => router.push('/documents')}
+            />
             <Ligne libelle={t('compte.changerImage')} onPress={() => setFeuilleImages(true)} />
+            <Ligne libelle={t('motDePasse.entree')} onPress={() => router.push('/mot-de-passe')} />
             <Ligne libelle={t('ecrans.compte.charte')} onPress={() => router.push('/charte')} />
             <Ligne libelle={t('ecrans.compte.revoir')} onPress={revoirAccueil} />
             <Ligne libelle={t('compte.langue')} onPress={changerLangue} dernier />
