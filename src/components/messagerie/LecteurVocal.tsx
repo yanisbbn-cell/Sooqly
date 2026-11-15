@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { useTranslation } from 'react-i18next';
 
+import { IconeLecture, IconePause } from '@/components/Icones';
 import { Texte } from '@/components/Texte';
 import { lienVocal } from '@/lib/messagerie';
 import { colors, toucheMin } from '@/theme';
@@ -45,9 +46,8 @@ export function LecteurVocal({ chemin, duree, clair }: { chemin: string; duree: 
         {!lien ? (
           <ActivityIndicator color={couleur} size="small" />
         ) : (
-          <Texte poids={700} style={{ color: couleur, fontSize: 14 }}>
-            {enLecture ? '❚❚' : '▶'}
-          </Texte>
+          // Le triangle « lecture » garde son sens dans les deux langues.
+          <View style={{ direction: 'ltr' }}>{enLecture ? <IconePause couleur={couleur} /> : <IconeLecture couleur={couleur} />}</View>
         )}
       </Pressable>
       <View style={[styles.barre, { backgroundColor: clair ? colors.brunMoyen : colors.sable2 }]}>

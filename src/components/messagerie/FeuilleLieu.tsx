@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Bouton } from '@/components/Bouton';
 import { Champ } from '@/components/Champ';
+import { IconeLieu } from '@/components/Icones';
 import { Texte } from '@/components/Texte';
 import { usePreferences } from '@/lib/preferences';
 import { colors, toucheMin } from '@/theme';
@@ -55,9 +56,12 @@ export function FeuilleLieu({ visible, onFermer, onEnvoyer }: Props) {
         <Pressable style={styles.fond} onPress={onFermer} accessibilityLabel={t('commun.fermer')} />
         <View style={[styles.feuille, { paddingBottom: insets.bottom + 16 }]} accessibilityViewIsModal>
           <View style={styles.poignee} />
-          <Texte variante="titre" poids={700} style={{ fontSize: 20 }} accessibilityRole="header">
-            📍 {t('messagerie.lieuTitre')}
-          </Texte>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <IconeLieu couleur={colors.accent} />
+            <Texte variante="titre" poids={700} style={{ fontSize: 20 }} accessibilityRole="header">
+              {t('messagerie.lieuTitre')}
+            </Texte>
+          </View>
           <Texte style={{ fontSize: 13, lineHeight: 19, color: colors.vert }}>{t('messagerie.lieuConseil')}</Texte>
           <Champ libelle={t('messagerie.lieuNom')} placeholder={t('messagerie.lieuEx')} value={nom} onChangeText={setNom} maxLength={120} />
           <Pressable

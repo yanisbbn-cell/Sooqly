@@ -92,9 +92,9 @@ export default function Messages() {
         renderItem={({ item: d }) => {
           const dernier =
             d.dernier_type === 'vocal'
-              ? `🎤 ${t('messagerie.vocal')}`
+              ? t('messagerie.vocal')
               : d.dernier_type === 'lieu'
-                ? `📍 ${t('messagerie.lieu')}`
+                ? t('messagerie.lieu')
                 : d.dernier_type === 'permis'
                   ? t('messagerie.permis')
                   : (d.dernier_contenu ?? '');

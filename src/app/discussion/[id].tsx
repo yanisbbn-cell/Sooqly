@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { EtatChargement } from '@/components/EtatChargement';
-import { IconeRetour } from '@/components/Icones';
+import { IconeEnvoyer, IconeLieu, IconeMicro, IconeRetour } from '@/components/Icones';
 import { ImageProfil } from '@/components/ImageProfil';
 import { Texte } from '@/components/Texte';
 import { BulleMessage } from '@/components/messagerie/BulleMessage';
@@ -264,7 +264,7 @@ export default function Discussion() {
               accessibilityLabel={t('messagerie.proposerLieu')}
               style={styles.outil}
             >
-              <Texte style={{ fontSize: 20 }}>📍</Texte>
+              <IconeLieu couleur={colors.brun} />
             </Pressable>
             <TextInput
               value={brouillon}
@@ -285,7 +285,7 @@ export default function Discussion() {
                 style={styles.envoyer}
               >
                 <View style={rtl && { transform: [{ scaleX: -1 }] }}>
-                  <IconeEnvoyer />
+                  <IconeEnvoyer couleur={colors.blanc} />
                 </View>
               </Pressable>
             ) : (
@@ -294,9 +294,9 @@ export default function Discussion() {
                 disabled={envoi}
                 accessibilityRole="button"
                 accessibilityLabel={t('messagerie.enregistrer')}
-                style={[styles.envoyer, { backgroundColor: colors.brun }]}
+                style={styles.envoyer}
               >
-                <Texte style={{ fontSize: 18, color: colors.sable1 }}>🎤</Texte>
+                <IconeMicro couleur={colors.blanc} />
               </Pressable>
             )}
           </>
@@ -305,17 +305,6 @@ export default function Discussion() {
 
       <FeuilleLieu visible={feuilleLieu} onFermer={() => setFeuilleLieu(false)} onEnvoyer={envoyerLeLieu} />
     </KeyboardAvoidingView>
-  );
-}
-
-function IconeEnvoyer() {
-  // Flèche « avion en papier » (dessin simple, sans dépendance).
-  return (
-    <View style={{ width: 20, height: 20, alignItems: 'center', justifyContent: 'center' }}>
-      <Texte poids={700} style={{ color: colors.blanc, fontSize: 18, lineHeight: 20 }}>
-        ➤
-      </Texte>
-    </View>
   );
 }
 

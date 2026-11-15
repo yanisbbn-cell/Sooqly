@@ -24,7 +24,7 @@ export function BulleMessage({ message: m, moi }: { message: Message; moi: boole
         <CarteLieu nom={m.lieu_nom} lat={m.lieu_lat} lng={m.lieu_lng} clair={moi} />
       ) : (
         <Texte poids={600} style={{ fontSize: 14, color: couleur }}>
-          {m.type === 'vocal' ? `🎤 ${t('messagerie.vocal')}` : m.type === 'lieu' ? `📍 ${m.lieu_nom ?? t('messagerie.lieu')}` : t('messagerie.permis')}
+          {m.type === 'vocal' ? t('messagerie.vocal') : m.type === 'lieu' ? (m.lieu_nom ?? t('messagerie.lieu')) : t('messagerie.permis')}
         </Texte>
       )}
       <Texte style={[styles.heure, { color: moi ? colors.sable3 : colors.brunMoyen }]}>{heure}</Texte>

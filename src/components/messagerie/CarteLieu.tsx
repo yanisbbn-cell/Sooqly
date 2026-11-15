@@ -1,6 +1,7 @@
 import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { IconeLieu } from '@/components/Icones';
 import { Texte } from '@/components/Texte';
 import { colors, toucheMin } from '@/theme';
 
@@ -19,9 +20,12 @@ export function CarteLieu({ nom, lat, lng, clair }: { nom: string; lat: number |
   const couleur = clair ? colors.sable1 : colors.brun;
   return (
     <View style={{ gap: 6, minWidth: 200 }}>
-      <Texte poids={700} style={{ fontSize: 12, color: clair ? colors.sable3 : colors.brunMoyen }}>
-        📍 {t('messagerie.lieuTitre')}
-      </Texte>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <IconeLieu couleur={clair ? colors.sable3 : colors.accentFonce} taille={16} />
+        <Texte poids={700} style={{ fontSize: 12, color: clair ? colors.sable3 : colors.brunMoyen }}>
+          {t('messagerie.lieuTitre')}
+        </Texte>
+      </View>
       <Texte poids={700} style={{ fontSize: 15, color: couleur }}>
         {nom}
       </Texte>
