@@ -232,6 +232,21 @@ export default function FicheAnnonce() {
             </View>
           )}
 
+          {visibleParTous &&
+            (profil?.id === a.auteur_id ? (
+              <Texte style={[styles.secondaire, { textAlign: 'center' }]}>{t('messagerie.votreAnnonce')}</Texte>
+            ) : (
+              <Bouton
+                libelle={
+                  profil
+                    ? t(a.type === 'location' ? 'messagerie.contacterLoueur' : 'messagerie.contacterVendeur')
+                    : t('messagerie.connexionContact')
+                }
+                onPress={() => (profil ? router.push({ pathname: '/contacter/[id]', params: { id: a.id } }) : router.navigate('/compte'))}
+                grand
+              />
+            ))}
+
           {estModerateur(profil) && a.statut === 'verification' && (
             <PanneauModeration
               annonce={a}

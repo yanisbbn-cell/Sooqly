@@ -287,5 +287,24 @@ begin
     reset role;
   end;
 
+  -- ---------- 14. Messagerie : coordonnées masquées, liste des discussions privée ----------
+  declare
+    texte text; nb2 int;
+  begin
+    -- A écrit (B, bloqué par A plus haut, ne peut plus écrire).
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    insert into public.messages (conversation_id, auteur_id, contenu)
+      values (conv, a, 'Appelez le 0555 12 34 56 ou ecrivez a test@exemple.com, prix 45 000 DA')
+      returning contenu into texte;
+    assert texte = 'Appelez le ••• ou ecrivez a •••, prix 45 000 DA', 'coordonnées non masquées : ' || texte;
+    select count(*) into nb2 from public.mes_discussions(); assert nb2 = 1, 'A : sa discussion absente';
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    select count(*) into nb2 from public.mes_discussions(); assert nb2 = 0, 'C : voit des discussions qui ne le concernent pas';
+    reset role;
+  end;
+
   raise exception 'TESTS_OK';
 end $$;
