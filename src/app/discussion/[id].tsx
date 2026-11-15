@@ -19,7 +19,7 @@ import { IconeEnvoyer, IconeLieu, IconeMicro, IconeRetour } from '@/components/I
 import { ImageProfil } from '@/components/ImageProfil';
 import { Texte } from '@/components/Texte';
 import { BulleMessage } from '@/components/messagerie/BulleMessage';
-import { EnregistreurVocal } from '@/components/messagerie/EnregistreurVocal';
+import { MicroMaintenu } from '@/components/messagerie/MicroMaintenu';
 import { FeuilleLieu } from '@/components/messagerie/FeuilleLieu';
 import { useAuth } from '@/lib/auth';
 import {
@@ -59,7 +59,6 @@ export default function Discussion() {
   const [envoi, setEnvoi] = useState(false);
   const [erreur, setErreur] = useState(false);
   const [prudence, setPrudence] = useState(false);
-  const [enregistre, setEnregistre] = useState(false);
   const [feuilleLieu, setFeuilleLieu] = useState(false);
   const clePrudence = `sooqly.prudence.${id}`;
 
@@ -125,12 +124,11 @@ export default function Discussion() {
     if (!ok) return setErreur(true);
     setMessages(await lireMessages(String(id)));
   };
-  const envoyerEnregistrement = async (uri: string, secondes: number) => {
-    setEnregistre(false);
+  const envoyerEnregistrement = async (uri: string, secondes: number, onde: number[]) => {
     if (!profil) return;
     setEnvoi(true);
     setErreur(false);
-    await apres(await envoyerVocal(String(id), profil.id, uri, secondes));
+    await apres(await envoyerVocal(String(id), profil.id, uri, secondes, onde));
   };
   const envoyerLeLieu = async (nom: string, position: { lat: number; lng: number } | null) => {
     if (!profil) return;
@@ -162,6 +160,19 @@ export default function Discussion() {
       </View>
     );
   }
+
+  const champ = (
+    <TextInput
+      value={brouillon}
+      onChangeText={setBrouillon}
+      placeholder={t('messagerie.champ')}
+      placeholderTextColor={colors.brunMoyen}
+      accessibilityLabel={t('messagerie.champ')}
+      multiline
+      maxLength={1000}
+      style={[styles.champ, { fontFamily: rtl ? fonts.arabe[400] : fonts.texte[400], textAlign: rtl ? 'right' : 'left' }]}
+    />
+  );
 
   return (
     <KeyboardAvoidingView style={styles.ecran} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -254,9 +265,7 @@ export default function Discussion() {
       </ScrollView>
 
       <View style={[styles.saisie, { paddingBottom: insets.bottom + 8 }]}>
-        {enregistre ? (
-          <EnregistreurVocal onEnvoyer={envoyerEnregistrement} onAnnuler={() => setEnregistre(false)} />
-        ) : (
+        {brouillon.trim() ? (
           <>
             <Pressable
               onPress={() => setFeuilleLieu(true)}
@@ -266,40 +275,38 @@ export default function Discussion() {
             >
               <IconeLieu couleur={colors.brun} />
             </Pressable>
-            <TextInput
-              value={brouillon}
-              onChangeText={setBrouillon}
-              placeholder={t('messagerie.champ')}
-              placeholderTextColor={colors.brunMoyen}
-              accessibilityLabel={t('messagerie.champ')}
-              multiline
-              maxLength={1000}
-              style={[styles.champ, { fontFamily: rtl ? fonts.arabe[400] : fonts.texte[400], textAlign: rtl ? 'right' : 'left' }]}
-            />
-            {brouillon.trim() ? (
-              <Pressable
-                onPress={() => envoyer(brouillon)}
-                disabled={envoi}
-                accessibilityRole="button"
-                accessibilityLabel={t('messagerie.envoyer')}
-                style={styles.envoyer}
-              >
-                <View style={rtl && { transform: [{ scaleX: -1 }] }}>
-                  <IconeEnvoyer couleur={colors.blanc} />
-                </View>
-              </Pressable>
-            ) : (
-              <Pressable
-                onPress={() => setEnregistre(true)}
-                disabled={envoi}
-                accessibilityRole="button"
-                accessibilityLabel={t('messagerie.enregistrer')}
-                style={styles.envoyer}
-              >
-                <IconeMicro couleur={colors.blanc} />
-              </Pressable>
-            )}
+            {champ}
+            <Pressable
+              onPress={() => envoyer(brouillon)}
+              disabled={envoi}
+              accessibilityRole="button"
+              accessibilityLabel={t('messagerie.envoyer')}
+              style={styles.envoyer}
+            >
+              <View style={rtl && { transform: [{ scaleX: -1 }] }}>
+                <IconeEnvoyer couleur={colors.blanc} />
+              </View>
+            </Pressable>
           </>
+        ) : (
+          <MicroMaintenu
+            rtl={rtl}
+            desactive={envoi}
+            onEnvoyer={envoyerEnregistrement}
+            gauche={
+              <>
+                <Pressable
+                  onPress={() => setFeuilleLieu(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('messagerie.proposerLieu')}
+                  style={styles.outil}
+                >
+                  <IconeLieu couleur={colors.brun} />
+                </Pressable>
+                {champ}
+              </>
+            }
+          />
         )}
       </View>
 

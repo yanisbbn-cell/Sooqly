@@ -23,6 +23,8 @@ export type Message = {
   lieu_lng: number | null;
   lu: boolean;
   cree_le: string;
+  /** Forme d'onde d'un vocal : 48 barres de 0 à 100. */
+  onde: number[] | null;
 };
 
 export type Discussion = {
@@ -44,7 +46,7 @@ export type Discussion = {
 /** Mots qui trahissent une demande d'avance (comme la maquette) : une mise en garde rouge s'affiche. */
 export const ARNAQUE = /(ccp|baridi|avance|acompte|virement|western|mandat|flexy|حوالة|عربون|تسبيق|بريدي)/i;
 
-const COLONNES = 'id, conversation_id, auteur_id, type, contenu, fichier, duree_secondes, lieu_nom, lieu_lat, lieu_lng, lu, cree_le';
+const COLONNES = 'id, conversation_id, auteur_id, type, contenu, fichier, duree_secondes, lieu_nom, lieu_lat, lieu_lng, lu, cree_le, onde';
 
 export async function mesDiscussions(): Promise<Discussion[]> {
   const { data, error } = await supabase.rpc('mes_discussions');
@@ -122,7 +124,13 @@ export async function lireDiscussion(id: string) {
 const SEAU_VOCAUX = 'vocaux';
 
 /** Envoie un message vocal : le fichier va dans le seau privé, rangé sous l'identifiant de la discussion. */
-export async function envoyerVocal(conversationId: string, auteurId: string, uri: string, dureeSecondes: number): Promise<boolean> {
+export async function envoyerVocal(
+  conversationId: string,
+  auteurId: string,
+  uri: string,
+  dureeSecondes: number,
+  onde: number[],
+): Promise<boolean> {
   const reponse = await fetch(uri);
   const contenu = await reponse.arrayBuffer();
   // Sur le web, l'enregistrement est un « blob » sans extension (format webm) ; sur téléphone, un fichier .m4a.
@@ -137,6 +145,7 @@ export async function envoyerVocal(conversationId: string, auteurId: string, uri
     type: 'vocal',
     fichier: chemin,
     duree_secondes: Math.max(1, Math.round(dureeSecondes)),
+    onde: onde.length ? onde : null,
   });
   return !error;
 }

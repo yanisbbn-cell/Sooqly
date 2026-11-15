@@ -19,7 +19,7 @@ export function BulleMessage({ message: m, moi }: { message: Message; moi: boole
       {m.type === 'texte' ? (
         <Texte style={{ fontSize: 15, lineHeight: 21, color: couleur }}>{m.contenu}</Texte>
       ) : m.type === 'vocal' && m.fichier ? (
-        <LecteurVocal chemin={m.fichier} duree={m.duree_secondes ?? 0} clair={moi} />
+        <LecteurVocal chemin={m.fichier} duree={m.duree_secondes ?? 0} onde={m.onde} clair={moi} />
       ) : m.type === 'lieu' && m.lieu_nom ? (
         <CarteLieu nom={m.lieu_nom} lat={m.lieu_lat} lng={m.lieu_lng} clair={moi} />
       ) : (
