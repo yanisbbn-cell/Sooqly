@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { IconeCategorie } from '@/components/IconeCategorie';
 import { Texte } from '@/components/Texte';
 import { estSponsorisee, photoPrincipale, type AnnonceResume } from '@/lib/annonces';
+import { tarifCourt, type Tarif } from '@/lib/location';
 import { urlPhoto } from '@/lib/photos';
 import { usePreferences } from '@/lib/preferences';
 import { formaterEuro, formaterNombre } from '@/lib/prix';
@@ -28,6 +29,8 @@ export function CarteAnnonce({ annonce: a, categorie, wilaya, taux }: Props) {
   const don = a.type === 'don';
   const lieu = a.ville || (wilaya ? (langue === 'ar' ? wilaya.nom_ar : wilaya.nom_fr) : '');
   const sponsorisee = estSponsorisee(a);
+  // Location : le plus petit tarif (par nuit ou par jour, sinon semaine, mois…).
+  const tarif: Tarif | null = a.type === 'location' ? (tarifCourt(a.tarifs ?? []) ?? premierTarif(a.tarifs ?? [])) : null;
 
   return (
     <Pressable
@@ -69,9 +72,14 @@ export function CarteAnnonce({ annonce: a, categorie, wilaya, taux }: Props) {
           {a.titre}
         </Texte>
         <Texte variante="titre" poids={700} style={styles.prix}>
-          {don ? t('carte.gratuit') : `${formaterNombre(a.prix_da)} ${t('da')}`}
+          {don ? t('carte.gratuit') : `${formaterNombre(tarif?.prix_da ?? a.prix_da)} ${t('da')}`}
+          {tarif && (
+            <Texte poids={600} style={styles.petit}>
+              {` ${t(`location.suffixe.${tarif.unite}`)}`}
+            </Texte>
+          )}
         </Texte>
-        {!don && <Texte style={styles.petit}>{formaterEuro(a.prix_da, taux)}</Texte>}
+        {!don && <Texte style={styles.petit}>{formaterEuro(tarif?.prix_da ?? a.prix_da, taux)}</Texte>}
         {a.etat && (
           <Texte poids={600} style={styles.etat}>
             {(t(`etats.${a.etat}`, { returnObjects: true }) as unknown as string[])[0]}
@@ -86,6 +94,9 @@ export function CarteAnnonce({ annonce: a, categorie, wilaya, taux }: Props) {
     </Pressable>
   );
 }
+
+const ORDRE = ['nuit', 'jour', 'semaine', 'mois', '6_mois', 'an'];
+const premierTarif = (tarifs: Tarif[]) => [...tarifs].sort((x, y) => ORDRE.indexOf(x.unite) - ORDRE.indexOf(y.unite))[0] ?? null;
 
 const styles = StyleSheet.create({
   carte: { flex: 1, backgroundColor: colors.carte, borderRadius: 16, overflow: 'hidden' },

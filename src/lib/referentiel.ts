@@ -96,6 +96,8 @@ export type Critere = {
   ar: string;
   type: 'texte' | 'nombre' | 'choix';
   options?: { v: string; fr: string; ar: string }[];
+  /** Demandé seulement pour une location (capacité d'un logement, type de véhicule). */
+  location?: boolean;
 };
 export type SousCategorie = { id: number; nom_fr: string; nom_ar: string; ordre: number };
 export type Categorie = {
