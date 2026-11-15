@@ -1,4 +1,4 @@
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 type P = { couleur: string; taille?: number; epaisseur?: number };
 
@@ -94,6 +94,52 @@ export function IconeFiltres({ couleur, taille = 20 }: P) {
       <Circle cx={16} cy={6} r={2} />
       <Circle cx={10} cy={12} r={2} />
       <Circle cx={18} cy={18} r={2} />
+    </Svg>
+  );
+}
+
+/** Micro (message vocal), repris de la maquette. */
+export function IconeMicro({ couleur, taille = 20 }: P) {
+  return (
+    <Svg {...base(taille)} stroke={couleur} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+      <Rect x={9} y={3} width={6} height={11} rx={3} />
+      <Path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+    </Svg>
+  );
+}
+
+/** Repère de lieu (lieu de rendez-vous), repris de la maquette. */
+export function IconeLieu({ couleur, taille = 22 }: P) {
+  return (
+    <Svg {...base(taille)} stroke={couleur} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z" />
+      <Circle cx={12} cy={10} r={2.5} />
+    </Svg>
+  );
+}
+
+/** Envoyer (avion en papier), repris de la maquette. */
+export function IconeEnvoyer({ couleur, taille = 20 }: P) {
+  return (
+    <Svg {...base(taille)} stroke={couleur} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M4 12l16-8-6 16-3-7z" />
+    </Svg>
+  );
+}
+
+export function IconeLecture({ couleur, taille = 16 }: P) {
+  return (
+    <Svg {...base(taille)} fill={couleur} stroke={couleur} strokeWidth={1.5} strokeLinejoin="round">
+      <Path d="M8 5v14l11-7z" />
+    </Svg>
+  );
+}
+
+export function IconePause({ couleur, taille = 16 }: P) {
+  return (
+    <Svg {...base(taille)} fill={couleur}>
+      <Rect x={6} y={5} width={4} height={14} rx={1} />
+      <Rect x={14} y={5} width={4} height={14} rx={1} />
     </Svg>
   );
 }

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { BoutonOnglet, BoutonPublier, ConteneurBarre } from '@/components/BarreOnglets';
 import { IconeAccueil, IconeCompte, IconeFavori, IconeMessage } from '@/components/Icones';
+import { useNonLus } from '@/lib/notifications';
 import { colors } from '@/theme';
 
 /**
@@ -12,6 +13,7 @@ import { colors } from '@/theme';
  */
 export default function OngletsLayout() {
   const { t } = useTranslation();
+  const { nonLus } = useNonLus();
   return (
     <Tabs style={styles.conteneur}>
       <View style={styles.ecran}>
@@ -24,7 +26,7 @@ export default function OngletsLayout() {
             <BoutonOnglet libelle={t('onglets.annonces')} Icone={IconeAccueil} />
           </TabTrigger>
           <TabTrigger name="messages" href="/messages" asChild>
-            <BoutonOnglet libelle={t('onglets.messages')} Icone={IconeMessage} />
+            <BoutonOnglet libelle={t('onglets.messages')} Icone={IconeMessage} pastille={nonLus} />
           </TabTrigger>
           <TabTrigger name="publier" href="/publier" asChild>
             <BoutonPublier libelle={t('onglets.publier')} aria={t('onglets.publierAria')} />
