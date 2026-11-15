@@ -3,6 +3,9 @@ import { useTranslation } from 'react-i18next';
 
 import { Texte } from '@/components/Texte';
 import type { Message } from '@/lib/messagerie';
+
+import { CarteLieu } from './CarteLieu';
+import { LecteurVocal } from './LecteurVocal';
 import { colors } from '@/theme';
 
 /** Une bulle de la discussion : à droite (côté fin) pour mes messages, à gauche pour ceux de l'autre membre. */
@@ -15,6 +18,10 @@ export function BulleMessage({ message: m, moi }: { message: Message; moi: boole
     <View style={[styles.bulle, moi ? styles.moi : styles.autre]}>
       {m.type === 'texte' ? (
         <Texte style={{ fontSize: 15, lineHeight: 21, color: couleur }}>{m.contenu}</Texte>
+      ) : m.type === 'vocal' && m.fichier ? (
+        <LecteurVocal chemin={m.fichier} duree={m.duree_secondes ?? 0} clair={moi} />
+      ) : m.type === 'lieu' && m.lieu_nom ? (
+        <CarteLieu nom={m.lieu_nom} lat={m.lieu_lat} lng={m.lieu_lng} clair={moi} />
       ) : (
         <Texte poids={600} style={{ fontSize: 14, color: couleur }}>
           {m.type === 'vocal' ? `🎤 ${t('messagerie.vocal')}` : m.type === 'lieu' ? `📍 ${m.lieu_nom ?? t('messagerie.lieu')}` : t('messagerie.permis')}

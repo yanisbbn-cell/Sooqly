@@ -19,8 +19,20 @@ import { IconeRetour } from '@/components/Icones';
 import { ImageProfil } from '@/components/ImageProfil';
 import { Texte } from '@/components/Texte';
 import { BulleMessage } from '@/components/messagerie/BulleMessage';
+import { EnregistreurVocal } from '@/components/messagerie/EnregistreurVocal';
+import { FeuilleLieu } from '@/components/messagerie/FeuilleLieu';
 import { useAuth } from '@/lib/auth';
-import { ARNAQUE, ecouterMessages, envoyerTexte, lireDiscussion, lireMessages, marquerLus, type Message } from '@/lib/messagerie';
+import {
+  ARNAQUE,
+  ecouterMessages,
+  envoyerLieu,
+  envoyerTexte,
+  envoyerVocal,
+  lireDiscussion,
+  lireMessages,
+  marquerLus,
+  type Message,
+} from '@/lib/messagerie';
 import { usePreferences } from '@/lib/preferences';
 import { ecrire, lire } from '@/lib/stockage';
 import { supabase } from '@/lib/supabase';
@@ -45,6 +57,8 @@ export default function Discussion() {
   const [envoi, setEnvoi] = useState(false);
   const [erreur, setErreur] = useState(false);
   const [prudence, setPrudence] = useState(false);
+  const [enregistre, setEnregistre] = useState(false);
+  const [feuilleLieu, setFeuilleLieu] = useState(false);
   const clePrudence = `sooqly.prudence.${id}`;
 
   const charger = useCallback(async () => {
@@ -102,6 +116,27 @@ export default function Discussion() {
     setBrouillon('');
     // Au cas où le temps réel tarde : on relit la discussion.
     setMessages(await lireMessages(String(id)));
+  };
+
+  const apres = async (ok: boolean) => {
+    setEnvoi(false);
+    if (!ok) return setErreur(true);
+    setMessages(await lireMessages(String(id)));
+  };
+  const envoyerEnregistrement = async (uri: string, secondes: number) => {
+    setEnregistre(false);
+    if (!profil) return;
+    setEnvoi(true);
+    setErreur(false);
+    await apres(await envoyerVocal(String(id), profil.id, uri, secondes));
+  };
+  const envoyerLeLieu = async (nom: string, position: { lat: number; lng: number } | null) => {
+    if (!profil) return;
+    setEnvoi(true);
+    setErreur(false);
+    const ok = await envoyerLieu(String(id), profil.id, nom, position);
+    setFeuilleLieu(false);
+    await apres(ok);
   };
 
   const fermerPrudence = () => {
@@ -217,28 +252,56 @@ export default function Discussion() {
       </ScrollView>
 
       <View style={[styles.saisie, { paddingBottom: insets.bottom + 8 }]}>
-        <TextInput
-          value={brouillon}
-          onChangeText={setBrouillon}
-          placeholder={t('messagerie.champ')}
-          placeholderTextColor={colors.brunMoyen}
-          accessibilityLabel={t('messagerie.champ')}
-          multiline
-          maxLength={1000}
-          style={[styles.champ, { fontFamily: rtl ? fonts.arabe[400] : fonts.texte[400], textAlign: rtl ? 'right' : 'left' }]}
-        />
-        <Pressable
-          onPress={() => envoyer(brouillon)}
-          disabled={!brouillon.trim() || envoi}
-          accessibilityRole="button"
-          accessibilityLabel={t('messagerie.envoyer')}
-          style={[styles.envoyer, !brouillon.trim() && { backgroundColor: colors.inactif }]}
-        >
-          <View style={rtl && { transform: [{ scaleX: -1 }] }}>
-            <IconeEnvoyer />
-          </View>
-        </Pressable>
+        {enregistre ? (
+          <EnregistreurVocal onEnvoyer={envoyerEnregistrement} onAnnuler={() => setEnregistre(false)} />
+        ) : (
+          <>
+            <Pressable
+              onPress={() => setFeuilleLieu(true)}
+              accessibilityRole="button"
+              accessibilityLabel={t('messagerie.proposerLieu')}
+              style={styles.outil}
+            >
+              <Texte style={{ fontSize: 20 }}>📍</Texte>
+            </Pressable>
+            <TextInput
+              value={brouillon}
+              onChangeText={setBrouillon}
+              placeholder={t('messagerie.champ')}
+              placeholderTextColor={colors.brunMoyen}
+              accessibilityLabel={t('messagerie.champ')}
+              multiline
+              maxLength={1000}
+              style={[styles.champ, { fontFamily: rtl ? fonts.arabe[400] : fonts.texte[400], textAlign: rtl ? 'right' : 'left' }]}
+            />
+            {brouillon.trim() ? (
+              <Pressable
+                onPress={() => envoyer(brouillon)}
+                disabled={envoi}
+                accessibilityRole="button"
+                accessibilityLabel={t('messagerie.envoyer')}
+                style={styles.envoyer}
+              >
+                <View style={rtl && { transform: [{ scaleX: -1 }] }}>
+                  <IconeEnvoyer />
+                </View>
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={() => setEnregistre(true)}
+                disabled={envoi}
+                accessibilityRole="button"
+                accessibilityLabel={t('messagerie.enregistrer')}
+                style={[styles.envoyer, { backgroundColor: colors.brun }]}
+              >
+                <Texte style={{ fontSize: 18, color: colors.sable1 }}>🎤</Texte>
+              </Pressable>
+            )}
+          </>
+        )}
       </View>
+
+      <FeuilleLieu visible={feuilleLieu} onFermer={() => setFeuilleLieu(false)} onEnvoyer={envoyerLeLieu} />
     </KeyboardAvoidingView>
   );
 }
@@ -295,5 +358,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.brun,
   },
+  outil: { width: toucheMin, height: toucheMin, alignItems: 'center', justifyContent: 'center' },
   envoyer: { width: toucheMin, height: toucheMin, borderRadius: toucheMin / 2, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
 });

@@ -116,3 +116,50 @@ export async function lireDiscussion(id: string) {
   if (error) throw error;
   return data as { id: string; annonce_id: string; acheteur_id: string; vendeur_id: string } | null;
 }
+
+// ---------- Messages vocaux et lieu de rendez-vous (étape 7, morceau 2) ----------
+
+const SEAU_VOCAUX = 'vocaux';
+
+/** Envoie un message vocal : le fichier va dans le seau privé, rangé sous l'identifiant de la discussion. */
+export async function envoyerVocal(conversationId: string, auteurId: string, uri: string, dureeSecondes: number): Promise<boolean> {
+  const reponse = await fetch(uri);
+  const contenu = await reponse.arrayBuffer();
+  // Sur le web, l'enregistrement est un « blob » sans extension (format webm) ; sur téléphone, un fichier .m4a.
+  const extension = /\.([a-z0-9]{2,4})$/i.exec(uri.split('?')[0]!)?.[1]?.toLowerCase() ?? (uri.startsWith('blob:') ? 'webm' : 'm4a');
+  const type = extension === 'webm' ? 'audio/webm' : extension === 'wav' ? 'audio/wav' : 'audio/mp4';
+  const chemin = `${conversationId}/${Date.now().toString(36)}.${extension}`;
+  const envoi = await supabase.storage.from(SEAU_VOCAUX).upload(chemin, contenu, { contentType: type });
+  if (envoi.error) return false;
+  const { error } = await supabase.from('messages').insert({
+    conversation_id: conversationId,
+    auteur_id: auteurId,
+    type: 'vocal',
+    fichier: chemin,
+    duree_secondes: Math.max(1, Math.round(dureeSecondes)),
+  });
+  return !error;
+}
+
+/** Lien temporaire (1 heure) pour écouter un vocal : seuls les membres de la discussion l'obtiennent. */
+export async function lienVocal(chemin: string): Promise<string | null> {
+  const { data } = await supabase.storage.from(SEAU_VOCAUX).createSignedUrl(chemin, 3600);
+  return data?.signedUrl ?? null;
+}
+
+export async function envoyerLieu(
+  conversationId: string,
+  auteurId: string,
+  nom: string,
+  position: { lat: number; lng: number } | null,
+): Promise<boolean> {
+  const { error } = await supabase.from('messages').insert({
+    conversation_id: conversationId,
+    auteur_id: auteurId,
+    type: 'lieu',
+    lieu_nom: nom.trim(),
+    lieu_lat: position?.lat ?? null,
+    lieu_lng: position?.lng ?? null,
+  });
+  return !error;
+}
