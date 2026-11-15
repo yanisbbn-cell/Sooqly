@@ -29,6 +29,7 @@ export type ErreurCompte =
   | 'identifiants'
   | 'motDePasseFaible'
   | 'reseau'
+  | 'ancienMotDePasse'
   | 'inconnue';
 
 type Resultat = { erreur: ErreurCompte | null };
@@ -48,6 +49,8 @@ type Auth = {
   }) => Promise<Resultat>;
   connecter: (numero: string, motDePasse: string) => Promise<Resultat>;
   changerAvatar: (numero: number) => Promise<Resultat>;
+  /** Vérifie l'ancien mot de passe, puis enregistre le nouveau. */
+  changerMotDePasse: (ancien: string, nouveau: string) => Promise<Resultat>;
   deconnecter: () => Promise<void>;
 };
 
@@ -170,6 +173,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [profil],
   );
 
+  const changerMotDePasse = useCallback<Auth['changerMotDePasse']>(async (ancien, nouveau) => {
+    const { data: s } = await supabase.auth.getSession();
+    const telephone = s.session?.user.phone;
+    if (!telephone) return { erreur: 'inconnue' };
+    // On vérifie l'ancien mot de passe en se reconnectant avec : quelqu'un qui emprunte le téléphone ne peut pas le changer.
+    const verif = await supabase.auth.signInWithPassword({ phone: `+${telephone.replace(/^\+/, '')}`, password: ancien });
+    if (verif.error) return { erreur: verif.error.code === 'invalid_credentials' ? 'ancienMotDePasse' : traduireErreur(verif.error, 'inconnue') };
+    const { error } = await supabase.auth.updateUser({ password: nouveau });
+    return { erreur: error ? traduireErreur(error, 'inconnue') : null };
+  }, []);
+
   const deconnecter = useCallback(async () => {
     // Ce téléphone ne doit plus recevoir les notifications de ce compte.
     const { retirerJetonDuTelephone } = await import('./notifications');
@@ -181,8 +195,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const valeur = useMemo(
-    () => ({ pret, profil, inscrire, connecter, changerAvatar, deconnecter }),
-    [pret, profil, inscrire, connecter, changerAvatar, deconnecter],
+    () => ({ pret, profil, inscrire, connecter, changerAvatar, changerMotDePasse, deconnecter }),
+    [pret, profil, inscrire, connecter, changerAvatar, changerMotDePasse, deconnecter],
   );
 
   return <Contexte.Provider value={valeur}>{children}</Contexte.Provider>;

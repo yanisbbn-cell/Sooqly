@@ -80,6 +80,7 @@ export const ar: Traduction = {
     annuler: 'إلغاء',
     suite: 'ستظهر هنا الإعلانات والمفضلة والتنبيهات في المراحل القادمة من الخطة.',
     erreurs: {
+      ancienMotDePasse: 'كلمة المرور الحالية غير صحيحة.',
       tropDeDemandes: 'طلبات كثيرة. انتظر دقيقة ثم أعد المحاولة.',
       identifiants: 'الرقم أو كلمة المرور غير صحيحة.',
       motDePasseFaible: 'كلمة المرور ضعيفة: 8 أحرف على الأقل.',
@@ -516,6 +517,17 @@ export const ar: Traduction = {
     accepteTexte: 'تم قبول الرخصة: يرى {{nom}} ذلك في محادثتكما.',
     refuseTexte: 'تم رفض الرخصة: يرى {{nom}} ذلك في محادثتكما.',
     chargementPhoto: 'جارٍ تحميل الصورة…',
+  },
+  motDePasse: {
+    entree: 'تغيير كلمة المرور',
+    titre: 'تغيير كلمة المرور',
+    ancien: 'كلمة المرور الحالية',
+    nouveau: 'كلمة المرور الجديدة',
+    confirmer: 'أكّد كلمة المرور الجديدة',
+    aide: '8 أحرف على الأقل.',
+    different: 'كلمتا المرور الجديدتان غير متطابقتين.',
+    enregistrer: 'حفظ',
+    reussi: 'تم تغيير كلمة المرور. استعملها في تسجيل الدخول القادم.',
   },
   commun: {
     retour: 'رجوع',

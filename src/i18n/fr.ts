@@ -80,6 +80,7 @@ export const fr = {
     annuler: 'Annuler',
     suite: 'Annonces, favoris et alertes apparaîtront ici aux prochaines étapes du plan.',
     erreurs: {
+      ancienMotDePasse: 'Mot de passe actuel incorrect.',
       tropDeDemandes: 'Trop de demandes. Patientez une minute avant de réessayer.',
       identifiants: 'Numéro ou mot de passe incorrect.',
       motDePasseFaible: 'Mot de passe trop simple : au moins 8 caractères.',
@@ -516,6 +517,17 @@ export const fr = {
     accepteTexte: 'Permis accepté : {{nom}} le voit dans votre discussion.',
     refuseTexte: 'Permis refusé : {{nom}} le voit dans votre discussion.',
     chargementPhoto: 'Chargement de la photo…',
+  },
+  motDePasse: {
+    entree: 'Changer mon mot de passe',
+    titre: 'Changer mon mot de passe',
+    ancien: 'Mot de passe actuel',
+    nouveau: 'Nouveau mot de passe',
+    confirmer: 'Confirmez le nouveau mot de passe',
+    aide: 'Au moins 8 caractères.',
+    different: 'Les deux nouveaux mots de passe ne sont pas identiques.',
+    enregistrer: 'Enregistrer',
+    reussi: 'Mot de passe changé. Utilisez-le à votre prochaine connexion.',
   },
   commun: {
     retour: 'Retour',

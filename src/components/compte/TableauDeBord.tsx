@@ -77,6 +77,7 @@ export function TableauDeBord({ profil }: { profil: Profil }) {
               onPress={() => router.push('/documents')}
             />
             <Ligne libelle={t('compte.changerImage')} onPress={() => setFeuilleImages(true)} />
+            <Ligne libelle={t('motDePasse.entree')} onPress={() => router.push('/mot-de-passe')} />
             <Ligne libelle={t('ecrans.compte.charte')} onPress={() => router.push('/charte')} />
             <Ligne libelle={t('ecrans.compte.revoir')} onPress={revoirAccueil} />
             <Ligne libelle={t('compte.langue')} onPress={changerLangue} dernier />
