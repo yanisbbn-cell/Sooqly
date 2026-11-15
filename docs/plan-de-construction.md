@@ -6,7 +6,7 @@ Yanis construit Sooqly depuis sa tablette avec Claude Code dans le navigateur, u
 
 1. Une seule étape du plan à la fois ; Claude Code explique d’abord ce qu’il va faire et ce que Yanis doit faire de son côté, puis attend son accord.
 2. Claude Code propose ses changements sur GitHub ; Yanis les accepte d’un clic.
-3. Test sur Expo Go. En cas d’erreur, Yanis envoie le message ou une capture, Claude Code corrige.
+3. Test sur l’iPhone de Yanis avec Expo Go (App Store). En cas d’erreur, Yanis envoie le message ou une capture, Claude Code corrige.
 4. Aucune clé secrète dans le code : Claude Code indique où la ranger.
 
 ## Les étapes

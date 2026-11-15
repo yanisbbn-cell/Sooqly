@@ -9,7 +9,7 @@ Références, à lire avant toute étape :
 
 ## Avec qui tu travailles
 
-Yanis n’est pas développeur. Il travaille uniquement depuis le navigateur d’une tablette Android, sans ordinateur. Il parle français.
+Yanis n’est pas développeur. Il travaille uniquement depuis le navigateur d’une tablette Android (Xiaomi Pad 7), sans ordinateur, et teste l’application sur son iPhone avec Expo Go (QR code scanné avec l’appareil photo de l’iPhone). Il parle français.
 
 - Réponds en français, avec des mots simples ; explique tout terme technique en une phrase.
 - Une seule étape du plan à la fois. Avant d’agir : explique ce que tu vas faire et ce que Yanis devra faire de son côté, puis attends son accord.
