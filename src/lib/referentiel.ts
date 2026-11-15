@@ -136,3 +136,40 @@ async function chargerReglages(): Promise<Reglages> {
 
 export const useCategories = () => useDonnees('categories', chargerCategories);
 export const useReglages = () => useDonnees('reglages', chargerReglages);
+
+// ---------- Mots interdits (étape 5) ----------
+
+export type FamilleInterdite = {
+  cle: string;
+  effet: 'interdit' | 'professionnel';
+  motif_fr: string;
+  motif_ar: string;
+  termes: { langue: 'fr' | 'ar'; terme: string }[];
+};
+
+async function chargerMotsInterdits(): Promise<FamilleInterdite[]> {
+  const { data, error } = await supabase.from('banned_families').select('cle, effet, motif_fr, motif_ar, termes:banned_terms(langue, terme)');
+  if (error) throw error;
+  return data as FamilleInterdite[];
+}
+
+export const useMotsInterdits = () => useDonnees('motsInterdits', chargerMotsInterdits);
+
+/**
+ * Détecteur de mots interdits (mêmes règles que la base, voir supabase/migrations/…_mots_interdits.sql) :
+ * mot latin de 5 lettres ou plus = début d'un mot du texte ; plus court = mot identique ; mot arabe = présent n'importe où.
+ * La famille « professionnel » ne concerne qu'un particulier.
+ */
+export function famillesDetectees(texte: string, estPro: boolean, familles: FamilleInterdite[]): FamilleInterdite[] {
+  const t = normaliser(texte);
+  const mots = t.split(/[^a-z0-9]+/).filter(Boolean);
+  return familles.filter(
+    (f) =>
+      (f.effet === 'interdit' || !estPro) &&
+      f.termes.some(({ langue, terme }) => {
+        const n = normaliser(terme);
+        if (langue === 'ar') return t.includes(n);
+        return n.length >= 5 ? mots.some((m) => m.startsWith(n)) : mots.includes(n);
+      }),
+  );
+}

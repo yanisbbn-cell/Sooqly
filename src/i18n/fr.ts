@@ -355,6 +355,15 @@ export const fr = {
       ['Logements et véhicules', 'Pièces vides de personnes, sans cadres représentant des êtres animés. Pour un véhicule : extérieur, intérieur, compteur.'],
     ],
   },
+  detecteur: {
+    titre: 'Détecteur de conformité',
+    corriger: 'Détecteur : {{motif}}. Corrigez le texte.',
+    professionnel: 'Annonce professionnelle : choisissez « Professionnel » à l’étape 1',
+    conforme: 'Annonce conforme',
+    conformeTexte: 'Aucun élément interdit détecté dans les photos, le titre, les caractéristiques ou la description.',
+    nonConforme: 'Annonce non conforme',
+    nonConformeTexte: 'Corrigez les points signalés aux étapes précédentes pour pouvoir publier.',
+  },
   commun: {
     retour: 'Retour',
     fermer: 'Fermer',
