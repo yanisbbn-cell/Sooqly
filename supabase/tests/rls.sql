@@ -14,6 +14,7 @@ declare
   n int;
   t text;
   ok boolean;
+  procedure_texte text;
 
 begin
   -- ---------- 0. Contenu de départ ----------
@@ -175,6 +176,24 @@ begin
   select count(*) into n from public.profiles where id = d and charte_acceptee_le is not null; assert n = 1, 'D : date de la charte absente';
   update public.profiles set avatar = 7 where id = d;
   get diagnostics n = row_count; assert n = 1, 'D : ne peut pas choisir son image de profil';
+  reset role;
+
+  -- ---------- 11. Annonces : prix incohérent et type imposé par la catégorie ----------
+  perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+  set local role authenticated;
+  begin
+    insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code)
+      values (a, 'vente', 'vehicules', 'Voiture à 42 DA', 42, 16);
+    assert false, 'A : voiture à 42 DA acceptée';
+  exception when raise_exception then null; end;
+  begin
+    insert into public.listings (auteur_id, type, categorie, sous_categorie_id, titre, prix_da, wilaya_code)
+      values (a, 'vente', 'electro', (select id from public.subcategories where categorie = 'vehicules' limit 1), 'Mauvaise sous-catégorie', 45000, 16);
+    assert false, 'A : sous-catégorie d''une autre catégorie acceptée';
+  exception when raise_exception then null; end;
+  insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code)
+    values (a, 'vente', 'dons', 'Lot de vêtements enfant', 5000, 16) returning type, prix_da::text into t, procedure_texte;
+  assert t = 'don' and procedure_texte = '0', 'A : un don n''est pas gratuit';
   reset role;
 
   raise exception 'TESTS_OK';
