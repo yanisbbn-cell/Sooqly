@@ -218,5 +218,74 @@ begin
     values (a, 'vente', 'electro', 'Vélo vintage', 45000, 16);
   reset role;
 
+  -- ---------- 13. Location : totaux de la recherche façon Booking ----------
+  declare
+    l1 uuid; l2 uuid; v1 uuid; res record; nb int;
+  begin
+    -- Données préparées « côté serveur » (sans utilisateur connecté), comme le ferait la modération.
+    perform set_config('request.jwt.claims', '', true);
+    insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code, statut, caracteristiques)
+      values (a, 'location', 'immobilier', 'F3 test', 5000, 16, 'en_ligne', '{"type":"F3","personnes":4}') returning id into l1;
+    insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code, statut, caracteristiques)
+      values (a, 'location', 'immobilier', 'Studio test', 50000, 16, 'en_ligne', '{"type":"Studio","personnes":2}') returning id into l2;
+    insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code, statut, caracteristiques)
+      values (a, 'location', 'vehicules', 'Citadine test', 4000, 16, 'en_ligne', '{"type_vehicule":"Citadine","boite":"Manuelle","places":"5"}') returning id into v1;
+    insert into public.listing_rates (annonce_id, unite, prix_da) values
+      (l1, 'nuit', 5000), (l1, 'mois', 60000), (l1, '6_mois', 300000), (l2, 'mois', 50000), (v1, 'jour', 4000), (v1, 'semaine', 25000);
+    insert into public.availability (annonce_id, debut, fin) values
+      (l1, '2030-12-01', '2031-12-31'), (l2, '2030-12-01', '2031-12-31'), (v1, '2030-12-01', '2031-12-31');
+    begin
+      insert into public.listing_rates (annonce_id, unite, prix_da) values (v1, 'nuit', 4000);
+      assert false, 'tarif « nuit » accepté pour un véhicule';
+    exception when raise_exception then null; end;
+    begin
+      insert into public.listing_rates (annonce_id, unite, prix_da) values (l2, 'nuit', 10);
+      assert false, 'tarif incohérent (10 DA la nuit) accepté';
+    exception when raise_exception then null; end;
+
+    perform set_config('request.jwt.claims', '{"role":"anon"}', true);
+    set local role anon;
+    -- 3 nuits : 3 × 5 000 = 15 000 ; studio au mois seulement : 1 mois = 50 000
+    select total into res from public.chercher_locations('logement', '2030-12-10', '2030-12-13', 'dates') where annonce_id = l1;
+    assert res.total = 15000, 'F3, 3 nuits : ' || res.total;
+    select total into res from public.chercher_locations('logement', '2030-12-10', '2030-12-13', 'dates') where annonce_id = l2;
+    assert res.total = 50000, 'Studio, 3 nuits au tarif mensuel : ' || res.total;
+    -- 6 mois : tarif 6 mois (300 000) ; sinon 6 × mensuel (300 000)
+    select total into res from public.chercher_locations('logement', '2030-12-10', null, '6_mois') where annonce_id = l1;
+    assert res.total = 300000, 'F3, 6 mois : ' || res.total;
+    select total into res from public.chercher_locations('logement', '2030-12-10', null, '6_mois') where annonce_id = l2;
+    assert res.total = 300000, 'Studio, 6 mois : ' || res.total;
+    -- 1 an sans tarif annuel : 12 × mensuel
+    select total into res from public.chercher_locations('logement', '2030-12-10', null, '1_an') where annonce_id = l1;
+    assert res.total = 720000, 'F3, 1 an : ' || res.total;
+    -- véhicule 3 jours : 3 × 4 000
+    select total into res from public.chercher_locations('vehicule', '2030-12-10', '2030-12-12', 'dates') where annonce_id = v1;
+    assert res.total = 12000, 'Citadine, 3 jours : ' || res.total;
+    -- pas libre au-delà du calendrier
+    select count(*) into nb from public.chercher_locations('logement', '2031-08-01', null, '6_mois');
+    assert nb = 0, 'bien proposé hors de ses disponibilités';
+    -- budget, personnes, type
+    select count(*) into nb from public.chercher_locations('logement', '2030-12-10', null, '1_an', 16::smallint, null, null, null, null, 650000);
+    assert nb = 1, 'budget 650 000 sur 1 an : ' || nb;
+    reset role;
+    -- Un logement qui n'indique pas sa capacité n'est pas écarté (correction après le test de Yanis).
+    perform set_config('request.jwt.claims', '', true);
+    insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code, statut, caracteristiques)
+      values (a, 'location', 'immobilier', 'F2 sans capacité', 50000, 31, 'en_ligne', '{"type":"F2"}') returning id into l2;
+    insert into public.listing_rates (annonce_id, unite, prix_da) values (l2, 'mois', 40000);
+    insert into public.availability (annonce_id, debut, fin) values (l2, '2030-12-01', '2031-12-31');
+    perform set_config('request.jwt.claims', '{"role":"anon"}', true);
+    set local role anon;
+    select count(*) into nb from public.chercher_locations('logement', '2030-12-10', null, '6_mois', 16::smallint, null, 3);
+    assert nb = 1, 'au moins 3 personnes à Alger : ' || nb;
+    select count(*) into nb from public.chercher_locations('logement', '2030-12-10', null, '6_mois', 31::smallint, null, 3);
+    assert nb = 1, 'logement sans capacité indiquée écarté : ' || nb;
+    select count(*) into nb from public.chercher_locations('logement', '2030-12-10', null, '6_mois', 16::smallint, array['Studio']);
+    assert nb = 1, 'type Studio : ' || nb;
+    select count(*) into nb from public.chercher_locations('vehicule', '2030-12-10', '2030-12-12', 'dates', null, null, null, 'Automatique');
+    assert nb = 0, 'boîte automatique : ' || nb;
+    reset role;
+  end;
+
   raise exception 'TESTS_OK';
 end $$;

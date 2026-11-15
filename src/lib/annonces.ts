@@ -1,3 +1,4 @@
+import type { Periode, Tarif } from './location';
 import { supabase } from './supabase';
 
 /** Annonces : types partagés et envoi d'une nouvelle annonce. */
@@ -29,6 +30,8 @@ export type NouvelleAnnonce = {
   wilaya: number;
   ville: string;
   pro: { activite: ActivitePro; nomCommercial: string } | null;
+  /** Location d'un logement ou d'un véhicule (sinon : type imposé par la catégorie). */
+  location?: boolean;
 };
 
 /**
@@ -52,7 +55,7 @@ export async function envoyerAnnonce(a: NouvelleAnnonce): Promise<{ id: string |
     .from('listings')
     .insert({
       auteur_id: a.auteurId,
-      type: typePourCategorie(a.categorie),
+      type: a.location ? 'location' : typePourCategorie(a.categorie),
       categorie: a.categorie,
       sous_categorie_id: a.sousCategorieId,
       titre: a.titre.trim(),
@@ -95,6 +98,8 @@ export type AnnonceResume = {
   auteur: Pick<AuteurAnnonce, 'est_pro'> | null;
   /** Photos visibles par la personne connectée (le public ne voit que les photos acceptées). */
   photos?: PhotoAnnonce[];
+  /** Tarifs d'une location (vide pour une vente). */
+  tarifs?: Tarif[];
 };
 
 export type PhotoAnnonce = {
@@ -116,13 +121,14 @@ export type Annonce = AnnonceResume & {
   expire_le: string | null;
   auteur_id: string;
   auteur: AuteurAnnonce | null;
+  disponibilites?: Periode[];
 };
 
 // Deux liens existent entre annonces et profils (auteur, acheteur) : on précise celui de l'auteur.
 const RESUME =
-  'id, type, categorie, sous_categorie_id, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, auteur:profiles!listings_auteur_id_fkey(est_pro), photos:listing_photos(fichier, ordre, angle, decision_moderation, resultat_detecteur)';
+  'id, type, categorie, sous_categorie_id, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, auteur:profiles!listings_auteur_id_fkey(est_pro), photos:listing_photos(fichier, ordre, angle, decision_moderation, resultat_detecteur), tarifs:listing_rates(unite, prix_da)';
 const COMPLET =
-  'id, type, categorie, sous_categorie_id, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, description, caracteristiques, motif_refus, expire_le, auteur_id, auteur:profiles!listings_auteur_id_fkey(id, nom_affiche, avatar, est_pro, nom_commercial, cree_le), photos:listing_photos(fichier, ordre, angle, decision_moderation, resultat_detecteur)';
+  'id, type, categorie, sous_categorie_id, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, description, caracteristiques, motif_refus, expire_le, auteur_id, auteur:profiles!listings_auteur_id_fkey(id, nom_affiche, avatar, est_pro, nom_commercial, cree_le), photos:listing_photos(fichier, ordre, angle, decision_moderation, resultat_detecteur), tarifs:listing_rates(unite, prix_da), disponibilites:availability(debut, fin)';
 
 export const estSponsorisee = (a: Pick<AnnonceResume, 'sponsorise_jusqu'>) =>
   !!a.sponsorise_jusqu && new Date(a.sponsorise_jusqu).getTime() > Date.now();
@@ -175,4 +181,12 @@ export async function refuserAnnonce(id: string, motif: string) {
     .update({ statut: 'refuse', motif_refus: motif.trim() || null })
     .eq('id', id);
   return !error;
+}
+
+/** Résumés de plusieurs annonces (résultats de la recherche de location). */
+export async function lireAnnoncesParIds(ids: string[]): Promise<AnnonceResume[]> {
+  if (!ids.length) return [];
+  const { data, error } = await supabase.from('listings').select(RESUME).in('id', ids);
+  if (error) throw error;
+  return data as unknown as AnnonceResume[];
 }

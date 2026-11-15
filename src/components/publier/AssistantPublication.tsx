@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { Bouton } from '@/components/Bouton';
+import { Calendrier } from '@/components/Calendrier';
 import { Champ, Libelle, styleChamp } from '@/components/Champ';
 import { EtatChargement } from '@/components/EtatChargement';
 import { FeuilleWilayas } from '@/components/FeuilleWilayas';
@@ -23,6 +24,14 @@ import {
   type Etat,
 } from '@/lib/annonces';
 import type { Profil } from '@/lib/auth';
+import {
+  UNITES,
+  cleFourchette,
+  enregistrerLocation,
+  genrePourCategorie,
+  depuisTexte,
+  type Unite,
+} from '@/lib/location';
 import { envoyerPhotos, type PhotoLocale } from '@/lib/photos';
 import { usePreferences } from '@/lib/preferences';
 import { formaterEuro, formaterNombre, fourchette, lirePrix } from '@/lib/prix';
@@ -63,6 +72,10 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
   const [carac, setCarac] = useState<Record<string, string>>({});
   const [etat, setEtat] = useState<Etat | null>(null);
   const [prixSaisi, setPrixSaisi] = useState('');
+  const [enLocation, setEnLocation] = useState(false);
+  const [tarifsSaisis, setTarifsSaisis] = useState<Partial<Record<Unite, string>>>({});
+  const [dispo, setDispo] = useState<{ debut: string | null; fin: string | null }>({ debut: null, fin: null });
+  const [locationEnregistree, setLocationEnregistree] = useState(false);
   const [wilaya, setWilaya] = useState<number | null>(profil.wilaya_code);
   const [ville, setVille] = useState(profil.ville ?? '');
   const [feuilleWilayas, setFeuilleWilayas] = useState(false);
@@ -79,9 +92,12 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
 
   const categorie: Categorie | undefined = categories.donnees?.find((c) => c.cle === cleCategorie);
   const sous = categorie?.sous_categories.find((s) => s.id === sousCategorie);
-  const type = cleCategorie ? typePourCategorie(cleCategorie) : 'vente';
+  const genre = cleCategorie ? genrePourCategorie(cleCategorie) : null;
+  const location = !!genre && enLocation;
+  const type = location ? 'location' : cleCategorie ? typePourCategorie(cleCategorie) : 'vente';
   const estDon = type === 'don';
-  const avecEtat = !!cleCategorie && etatDemande(cleCategorie);
+  // L'état de l'objet concerne la vente et le don, pas la location.
+  const avecEtat = !!cleCategorie && etatDemande(cleCategorie) && !location;
   const etapes: CleEtape[] = ['cat', 'desc', ...(avecEtat ? (['etat'] as const) : []), 'photos', 'prix', 'recap'];
   const i = Math.min(index, etapes.length - 1);
   const etape = etapes[i]!;
@@ -91,7 +107,26 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
 
   // ---------- Prix ----------
   const prix = lirePrix(prixSaisi);
-  const bornes = categorie ? fourchette(categorie.fourchettes_prix, type) : null;
+  const bornes = categorie && type !== 'location' ? fourchette(categorie.fourchettes_prix, type) : null;
+
+  // ---------- Location : tarifs par durée et disponibilités ----------
+  const unites = cleCategorie === 'immobilier' || cleCategorie === 'vehicules' ? UNITES[cleCategorie] : [];
+  const tarifs = unites
+    .map((u) => ({ unite: u, prix_da: lirePrix(tarifsSaisis[u] ?? '') }))
+    .filter((x): x is { unite: Unite; prix_da: number } => x.prix_da !== null);
+  const problemesTarifs = tarifs
+    .map((x) => {
+      const b = categorie?.fourchettes_prix[cleFourchette(x.unite)];
+      return b && (x.prix_da < b[0] || x.prix_da > b[1])
+        ? t('location.tarifIncoherent', { unite: t(`location.suffixe.${x.unite}`), min: formaterNombre(b[0]), max: formaterNombre(b[1]) })
+        : '';
+    })
+    .filter(Boolean);
+  const mois = t('mois', { returnObjects: true }) as unknown as string[];
+  const dateCourte = (d: string) => {
+    const x = depuisTexte(d);
+    return `${x.getDate()} ${mois[x.getMonth()]} ${x.getFullYear()}`;
+  };
   const quoi = cleCategorie ? t(`publier.quoi.${cleCategorie}` as 'publier.quoi.electro') : '';
   let problemePrix = '';
   if (!estDon && prix !== null && bornes) {
@@ -131,8 +166,15 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
       : photos.some((p) => !p.analyse)
         ? t('photos.bloqueAnalyse')
         : '',
-    prix:
-      !estDon && prix === null
+    prix: location
+      ? !tarifs.length || problemesTarifs.length
+        ? t('location.bloqueTarif')
+        : !dispo.debut || !dispo.fin
+          ? t('location.bloqueDispo')
+          : !wilaya || !ville.trim()
+            ? t('publier.bloque.lieu')
+            : ''
+      : !estDon && prix === null
         ? t('publier.bloque.prix')
         : problemePrix
           ? t('publier.bloque.prixIncoherent')
@@ -144,7 +186,8 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
   const toutEstBon = etapes.every((e) => !bloque[e]);
 
   // ---------- Jauge de qualité ----------
-  const criteres = categorie?.criteres ?? [];
+  // Les caractéristiques propres à la location (capacité, type de véhicule) ne sont demandées qu'en location.
+  const criteres = (categorie?.criteres ?? []).filter((c) => !c.location || location);
   const nbCarac = Object.values(carac).filter((v) => v.trim()).length;
   const points: { cle: keyof typeof pointsEtape; ok: boolean }[] = [
     { cle: 'photos', ok: photos.length >= 4 && !photos.some((p) => p.analyse?.interdit) },
@@ -152,7 +195,7 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
     { cle: 'description', ok: description.trim().length >= 60 },
     { cle: 'caracteristiques', ok: nbCarac >= Math.min(2, criteres.length) },
     ...(avecEtat ? [{ cle: 'etat' as const, ok: !!etat }] : []),
-    { cle: 'prix', ok: estDon || (prix !== null && !problemePrix) },
+    { cle: 'prix', ok: estDon || (location ? tarifs.length > 0 && !problemesTarifs.length : prix !== null && !problemePrix) },
     { cle: 'lieu', ok: !!wilaya && !!ville.trim() },
   ];
   const pointsEtape = { photos: 'photos', titre: 'desc', description: 'desc', caracteristiques: 'desc', etat: 'etat', prix: 'prix', lieu: 'prix' } as const;
@@ -190,9 +233,12 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
         description,
         etat,
         caracteristiques: Object.fromEntries(
-          Object.entries(carac).map(([k, v]) => [k, criteres.find((c) => c.cle === k)?.type === 'nombre' && v ? Number(v) : v]),
+          Object.entries(carac)
+            .filter(([k]) => criteres.some((c) => c.cle === k))
+            .map(([k, v]) => [k, criteres.find((c) => c.cle === k)?.type === 'nombre' && v ? Number(v) : v]),
         ),
-        prixDa: prix ?? 0,
+        prixDa: location ? tarifs[0]!.prix_da : (prix ?? 0),
+        location,
         wilaya,
         ville,
         pro: pro && activite ? { activite, nomCommercial: nomCommercial.trim() } : null,
@@ -204,6 +250,15 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
       }
       id = r.id;
       setAnnonceCreee(id);
+    }
+    if (location && !locationEnregistree && dispo.debut && dispo.fin) {
+      const ok = await enregistrerLocation(id, tarifs, { debut: dispo.debut, fin: dispo.fin });
+      if (!ok) {
+        setOccupe(false);
+        setErreur(true);
+        return;
+      }
+      setLocationEnregistree(true);
     }
     const photosOk = await envoyerPhotos(profil.id, id, photos, angles);
     setOccupe(false);
@@ -225,6 +280,10 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
     setEnvoyee(false);
     setPhotos([]);
     setAnnonceCreee(null);
+    setEnLocation(false);
+    setTarifsSaisis({});
+    setDispo({ debut: null, fin: null });
+    setLocationEnregistree(false);
     setErreurPhotos(false);
   };
 
@@ -386,6 +445,16 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
               )}
             </View>
 
+            {genre && (
+              <View style={styles.bloc}>
+                <Libelle>{t('location.typeAnnonce')}</Libelle>
+                <View style={styles.rangee}>
+                  <Pastille libelle={t('location.vente')} choisi={!enLocation} onPress={() => setEnLocation(false)} largeur />
+                  <Pastille libelle={t('location.location')} choisi={enLocation} onPress={() => setEnLocation(true)} largeur />
+                </View>
+              </View>
+            )}
+
             {estDon && <Texte style={styles.encart}>{t('publier.infoDon')}</Texte>}
           </>
         )}
@@ -481,7 +550,62 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
         {/* ---------- 5. Prix et lieu ---------- */}
         {etape === 'prix' && (
           <>
-            {estDon ? (
+            {location ? (
+              <>
+                <View style={styles.bloc}>
+                  <Libelle>{t('location.tarifs')}</Libelle>
+                  <Texte style={styles.aide}>{t('location.tarifsAide')}</Texte>
+                  {unites.map((u) => {
+                    const v = lirePrix(tarifsSaisis[u] ?? '');
+                    return (
+                      <View key={u} style={styles.ligneTarif}>
+                        <Texte poids={600} style={{ flex: 1, fontSize: 14 }}>
+                          {t(`location.par.${u}`)}
+                        </Texte>
+                        <View style={{ width: 150, direction: 'ltr' }}>
+                          <Champ
+                            ltr
+                            accessibilityLabel={t(`location.par.${u}`)}
+                            placeholder="—"
+                            value={v === null ? '' : formaterNombre(v)}
+                            onChangeText={(x) => setTarifsSaisis({ ...tarifsSaisis, [u]: x })}
+                            keyboardType="number-pad"
+                            maxLength={14}
+                          />
+                        </View>
+                        <Texte poids={700} style={{ fontSize: 14 }}>
+                          {t('da')}
+                        </Texte>
+                      </View>
+                    );
+                  })}
+                  <Texte style={styles.aide}>{t('publier.prixRegle', { euro: formaterEuro(1000, taux) })}</Texte>
+                  {problemesTarifs.map((m) => (
+                    <View key={m} style={styles.alerte} accessibilityRole="alert">
+                      <Texte poids={600} style={styles.alerteTexte}>
+                        {m}
+                      </Texte>
+                    </View>
+                  ))}
+                </View>
+                <View style={styles.bloc}>
+                  <Libelle>{t('location.disponibilites')}</Libelle>
+                  <Calendrier
+                    debut={dispo.debut}
+                    fin={dispo.fin}
+                    onChange={(debut, fin) => setDispo({ debut, fin })}
+                    memeJour
+                  />
+                  <Texte poids={600} style={styles.apercu}>
+                    {!dispo.debut
+                      ? t('location.dispoAide')
+                      : !dispo.fin
+                        ? t('location.dispoDebut', { debut: dateCourte(dispo.debut) })
+                        : t('location.dispoDu', { debut: dateCourte(dispo.debut), fin: dateCourte(dispo.fin) })}
+                  </Texte>
+                </View>
+              </>
+            ) : estDon ? (
               <View style={styles.encartDon}>
                 <Texte variante="titre" poids={700} style={{ fontSize: 22, color: colors.vert }}>
                   {t('publier.gratuit')}
@@ -630,8 +754,22 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
                 ))}
               <LigneRecap
                 libelle={t('publier.recap.prix')}
-                valeur={estDon ? t('publier.gratuit') : prix !== null ? `${formaterNombre(prix)} ${t('da')}` : '—'}
+                valeur={
+                  location
+                    ? tarifs.map((x) => `${formaterNombre(x.prix_da)} ${t('da')} ${t(`location.suffixe.${x.unite}`)}`).join(' · ')
+                    : estDon
+                      ? t('publier.gratuit')
+                      : prix !== null
+                        ? `${formaterNombre(prix)} ${t('da')}`
+                        : '—'
+                }
               />
+              {location && dispo.debut && dispo.fin && (
+                <LigneRecap
+                  libelle={t('location.disponibilites')}
+                  valeur={t('location.du', { debut: dateCourte(dispo.debut), fin: dateCourte(dispo.fin) })}
+                />
+              )}
               <LigneRecap
                 libelle={t('publier.recap.photos')}
                 valeur={photos.length ? t('photos.recapPhotos', { count: photos.length }) : t('photos.recapAucune')}
@@ -869,6 +1007,7 @@ const styles = StyleSheet.create({
   carteEtatChoisie: { borderWidth: 2, borderColor: colors.accent },
   radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: colors.sable4, alignItems: 'center', justifyContent: 'center' },
   radioPoint: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent },
+  ligneTarif: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   unite: { ...styleChamp, backgroundColor: colors.sable2, justifyContent: 'center' },
   apercu: { fontSize: 13 },
   conformite: { borderRadius: 14, padding: 14, gap: 4 },

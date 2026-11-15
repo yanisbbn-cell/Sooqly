@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
+import { BlocLocation } from '@/components/annonces/BlocLocation';
 import { Galerie } from '@/components/annonces/Galerie';
 import { couleursTuile } from '@/components/annonces/tuile';
 import { Bouton } from '@/components/Bouton';
@@ -20,9 +21,11 @@ import { formaterEuro, formaterNombre } from '@/lib/prix';
 import { useCategories, useReglages, useWilayas } from '@/lib/referentiel';
 import { colors, toucheMin } from '@/theme';
 
+const ORDRE_UNITES = ['nuit', 'jour', 'semaine', 'mois', '6_mois', 'an'];
+
 /** Fiche d'une annonce. */
 export default function FicheAnnonce() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, debut, fin } = useLocalSearchParams<{ id: string; debut?: string; fin?: string }>();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { langue, rtl } = usePreferences();
@@ -87,6 +90,7 @@ export default function FicheAnnonce() {
   const depuis = a.auteur ? new Date(a.auteur.cree_le) : null;
   const caracteristiques = (categorie?.criteres ?? []).filter((c) => a.caracteristiques?.[c.cle]);
   const visibleParTous = a.statut === 'en_ligne' || a.statut === 'reserve';
+  const premierTarif = [...(a.tarifs ?? [])].sort((x, y) => ORDRE_UNITES.indexOf(x.unite) - ORDRE_UNITES.indexOf(y.unite))[0];
 
   return (
     <View style={styles.ecran}>
@@ -155,6 +159,11 @@ export default function FicheAnnonce() {
           <View>
             <Texte variante="titre" poids={700} style={styles.prix}>
               {don ? t('carte.gratuit') : `${formaterNombre(a.prix_da)} ${t('da')}`}
+              {a.type === 'location' && premierTarif && (
+                <Texte poids={600} style={{ fontSize: 16, color: colors.brunMoyen }}>
+                  {` ${t(`location.suffixe.${premierTarif.unite}`)}`}
+                </Texte>
+              )}
             </Texte>
             {!don && <Texte style={styles.secondaire}>{formaterEuro(a.prix_da, taux)}</Texte>}
           </View>
@@ -195,6 +204,17 @@ export default function FicheAnnonce() {
           </Texte>
 
           {a.description ? <Texte style={styles.description}>{a.description}</Texte> : null}
+
+          {a.type === 'location' && (a.tarifs?.length ?? 0) > 0 && (
+            <BlocLocation
+              tarifs={a.tarifs ?? []}
+              periodes={a.disponibilites ?? []}
+              vehicule={a.categorie === 'vehicules'}
+              taux={taux}
+              debutInitial={debut}
+              finInitiale={fin}
+            />
+          )}
 
           {a.auteur && (
             <View style={styles.vendeur}>
