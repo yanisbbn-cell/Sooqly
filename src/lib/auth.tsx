@@ -171,6 +171,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const deconnecter = useCallback(async () => {
+    // Ce téléphone ne doit plus recevoir les notifications de ce compte.
+    const { retirerJetonDuTelephone } = await import('./notifications');
+    await retirerJetonDuTelephone();
     // « local » : ne déconnecte que cet appareil.
     await supabase.auth.signOut({ scope: 'local' });
     setSession(null);

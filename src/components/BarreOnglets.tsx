@@ -8,21 +8,30 @@ import { colors, toucheMin } from '@/theme';
 import { IconePlus } from './Icones';
 import { Texte } from './Texte';
 
-type BoutonProps = TabTriggerSlotProps & { libelle: string; Icone: ComponentType<{ couleur: string }> };
+type BoutonProps = TabTriggerSlotProps & { libelle: string; Icone: ComponentType<{ couleur: string }>; pastille?: number };
 
 /** Un onglet classique : icône + libellé, barre d'accent en haut quand il est actif. */
 // Les « props » reçues contiennent aussi la « ref » fournie par Expo Router (React 19).
-export function BoutonOnglet({ isFocused, libelle, Icone, ...props }: BoutonProps) {
+export function BoutonOnglet({ isFocused, libelle, Icone, pastille, ...props }: BoutonProps) {
   const couleurTexte = isFocused ? colors.sable1 : colors.sable3;
   return (
     <Pressable
       {...(props as PressableProps)}
       accessibilityRole="tab"
       accessibilityState={{ selected: !!isFocused }}
-      accessibilityLabel={libelle}
+      accessibilityLabel={pastille ? `${libelle} (${pastille})` : libelle}
       style={[styles.onglet, { borderTopColor: isFocused ? colors.accent : 'transparent' }]}
     >
-      <Icone couleur={isFocused ? colors.accent : colors.sable3} />
+      <View>
+        <Icone couleur={isFocused ? colors.accent : colors.sable3} />
+        {!!pastille && (
+          <View style={styles.compteur}>
+            <Texte poids={700} style={styles.compteurTexte}>
+              {pastille > 99 ? '99+' : String(pastille)}
+            </Texte>
+          </View>
+        )}
+      </View>
       <Texte poids={600} numberOfLines={1} style={[styles.libelle, { color: couleurTexte }]}>
         {libelle}
       </Texte>
@@ -66,6 +75,19 @@ export function ConteneurBarre({ style, children, ...props }: TabListProps & { c
 }
 
 const styles = StyleSheet.create({
+  compteur: {
+    position: 'absolute',
+    top: -6,
+    end: -12,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 4,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  compteurTexte: { fontSize: 10, color: colors.blanc, textAlign: 'center' },
   barre: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -33,6 +33,7 @@ import {
   marquerLus,
   type Message,
 } from '@/lib/messagerie';
+import { useNonLus } from '@/lib/notifications';
 import { usePreferences } from '@/lib/preferences';
 import { ecrire, lire } from '@/lib/stockage';
 import { supabase } from '@/lib/supabase';
@@ -47,6 +48,7 @@ export default function Discussion() {
   const insets = useSafeAreaInsets();
   const { rtl } = usePreferences();
   const { profil } = useAuth();
+  const { rafraichir: rafraichirNonLus } = useNonLus();
   const liste = useRef<TypeFlatList<Message>>(null);
 
   const [annonce, setAnnonce] = useState<{ id: string; titre: string } | null>(null);
@@ -79,11 +81,11 @@ export default function Discussion() {
       if (p.data)
         setAutre({ id: p.data.id, nom: p.data.est_pro && p.data.nom_commercial ? p.data.nom_commercial : p.data.nom_affiche, avatar: p.data.avatar });
       setMessages(m);
-      marquerLus(d.id, profil.id);
+      marquerLus(d.id, profil.id).then(rafraichirNonLus);
     } catch {
       setIntrouvable(true);
     }
-  }, [id, profil]);
+  }, [id, profil, rafraichirNonLus]);
 
   useEffect(() => {
     charger();
@@ -95,12 +97,12 @@ export default function Discussion() {
     if (!profil) return;
     const canal = ecouterMessages(`discussion-${id}`, `conversation_id=eq.${id}`, (m) => {
       setMessages((liste) => (liste && !liste.some((x) => x.id === m.id) ? [...liste, m] : liste));
-      if (m.auteur_id !== profil.id) marquerLus(String(id), profil.id);
+      if (m.auteur_id !== profil.id) marquerLus(String(id), profil.id).then(rafraichirNonLus);
     });
     return () => {
       supabase.removeChannel(canal);
     };
-  }, [id, profil]);
+  }, [id, profil, rafraichirNonLus]);
 
   useEffect(() => {
     if (messages?.length) setTimeout(() => liste.current?.scrollToEnd({ animated: true }), 50);
