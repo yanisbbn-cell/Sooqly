@@ -93,7 +93,21 @@ export type AnnonceResume = {
   publie_le: string | null;
   sponsorise_jusqu: string | null;
   auteur: Pick<AuteurAnnonce, 'est_pro'> | null;
+  /** Photos visibles par la personne connectée (le public ne voit que les photos acceptées). */
+  photos?: PhotoAnnonce[];
 };
+
+export type PhotoAnnonce = {
+  fichier: string;
+  ordre: number;
+  angle: string | null;
+  decision_moderation: 'en_attente' | 'acceptee' | 'refusee';
+  resultat_detecteur: { source?: string; detail?: { interdit?: boolean; objets?: { classe: string; score: number }[]; erreur?: boolean } } | null;
+};
+
+/** Photo principale : la première dans l'ordre parmi celles qu'on a le droit de voir. */
+export const photoPrincipale = (a: Pick<AnnonceResume, 'photos'>) =>
+  [...(a.photos ?? [])].sort((x, y) => x.ordre - y.ordre)[0]?.fichier ?? null;
 
 export type Annonce = AnnonceResume & {
   description: string;
@@ -106,9 +120,9 @@ export type Annonce = AnnonceResume & {
 
 // Deux liens existent entre annonces et profils (auteur, acheteur) : on précise celui de l'auteur.
 const RESUME =
-  'id, type, categorie, sous_categorie_id, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, auteur:profiles!listings_auteur_id_fkey(est_pro)';
+  'id, type, categorie, sous_categorie_id, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, auteur:profiles!listings_auteur_id_fkey(est_pro), photos:listing_photos(fichier, ordre, angle, decision_moderation, resultat_detecteur)';
 const COMPLET =
-  'id, type, categorie, sous_categorie_id, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, description, caracteristiques, motif_refus, expire_le, auteur_id, auteur:profiles!listings_auteur_id_fkey(id, nom_affiche, avatar, est_pro, nom_commercial, cree_le)';
+  'id, type, categorie, sous_categorie_id, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, description, caracteristiques, motif_refus, expire_le, auteur_id, auteur:profiles!listings_auteur_id_fkey(id, nom_affiche, avatar, est_pro, nom_commercial, cree_le), photos:listing_photos(fichier, ordre, angle, decision_moderation, resultat_detecteur)';
 
 export const estSponsorisee = (a: Pick<AnnonceResume, 'sponsorise_jusqu'>) =>
   !!a.sponsorise_jusqu && new Date(a.sponsorise_jusqu).getTime() > Date.now();

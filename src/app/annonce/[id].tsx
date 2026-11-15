@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
+import { Galerie } from '@/components/annonces/Galerie';
 import { couleursTuile } from '@/components/annonces/tuile';
 import { Bouton } from '@/components/Bouton';
 import { Champ } from '@/components/Champ';
@@ -90,9 +91,13 @@ export default function FicheAnnonce() {
   return (
     <View style={styles.ecran}>
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}>
-        <View style={[styles.tuile, { backgroundColor: tuile.fond, paddingTop: insets.top }]}>
-          <IconeCategorie icone={categorie?.icone ?? 'grid'} couleur={tuile.trait} taille={72} />
-        </View>
+        {a.photos?.length ? (
+          <Galerie photos={a.photos} hauteur={300 + insets.top} moderation={estModerateur(profil)} />
+        ) : (
+          <View style={[styles.tuile, { backgroundColor: tuile.fond, paddingTop: insets.top }]}>
+            <IconeCategorie icone={categorie?.icone ?? 'grid'} couleur={tuile.trait} taille={72} />
+          </View>
+        )}
 
         <View style={styles.contenu}>
           {confirmation && (
