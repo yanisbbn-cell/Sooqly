@@ -32,6 +32,8 @@ export type NouvelleAnnonce = {
   pro: { activite: ActivitePro; nomCommercial: string } | null;
   /** Location d'un logement ou d'un véhicule (sinon : type imposé par la catégorie). */
   location?: boolean;
+  /** Location de véhicule : le loueur exige le permis du locataire. */
+  permisExige?: boolean;
 };
 
 /**
@@ -65,6 +67,7 @@ export async function envoyerAnnonce(a: NouvelleAnnonce): Promise<{ id: string |
       prix_da: a.categorie === 'dons' ? 0 : a.prixDa,
       wilaya_code: a.wilaya,
       ville: a.ville.trim(),
+      permis_exige: !!a.location && a.categorie === 'vehicules' && !!a.permisExige,
     })
     .select('id')
     .single();
@@ -120,6 +123,7 @@ export type Annonce = AnnonceResume & {
   motif_refus: string | null;
   expire_le: string | null;
   auteur_id: string;
+  permis_exige: boolean;
   auteur: AuteurAnnonce | null;
   disponibilites?: Periode[];
 };
@@ -128,7 +132,7 @@ export type Annonce = AnnonceResume & {
 const RESUME =
   'id, type, categorie, sous_categorie_id, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, auteur:profiles!listings_auteur_id_fkey(est_pro), photos:listing_photos(fichier, ordre, angle, decision_moderation, resultat_detecteur), tarifs:listing_rates(unite, prix_da)';
 const COMPLET =
-  'id, type, categorie, sous_categorie_id, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, description, caracteristiques, motif_refus, expire_le, auteur_id, auteur:profiles!listings_auteur_id_fkey(id, nom_affiche, avatar, est_pro, nom_commercial, cree_le), photos:listing_photos(fichier, ordre, angle, decision_moderation, resultat_detecteur), tarifs:listing_rates(unite, prix_da), disponibilites:availability(debut, fin)';
+  'id, type, categorie, sous_categorie_id, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, description, caracteristiques, motif_refus, expire_le, auteur_id, permis_exige, auteur:profiles!listings_auteur_id_fkey(id, nom_affiche, avatar, est_pro, nom_commercial, cree_le), photos:listing_photos(fichier, ordre, angle, decision_moderation, resultat_detecteur), tarifs:listing_rates(unite, prix_da), disponibilites:availability(debut, fin)';
 
 export const estSponsorisee = (a: Pick<AnnonceResume, 'sponsorise_jusqu'>) =>
   !!a.sponsorise_jusqu && new Date(a.sponsorise_jusqu).getTime() > Date.now();

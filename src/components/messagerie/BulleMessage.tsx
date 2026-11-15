@@ -4,12 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { Texte } from '@/components/Texte';
 import type { Message } from '@/lib/messagerie';
 
+import { BullePermis } from './BullePermis';
 import { CarteLieu } from './CarteLieu';
 import { LecteurVocal } from './LecteurVocal';
 import { colors } from '@/theme';
 
 /** Une bulle de la discussion : à droite (côté fin) pour mes messages, à gauche pour ceux de l'autre membre. */
-export function BulleMessage({ message: m, moi }: { message: Message; moi: boolean }) {
+export function BulleMessage({ message: m, moi, jeSuisLoueur }: { message: Message; moi: boolean; jeSuisLoueur?: boolean }) {
   const { t } = useTranslation();
   const d = new Date(m.cree_le);
   const heure = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
@@ -20,6 +21,8 @@ export function BulleMessage({ message: m, moi }: { message: Message; moi: boole
         <Texte style={{ fontSize: 15, lineHeight: 21, color: couleur }}>{m.contenu}</Texte>
       ) : m.type === 'vocal' && m.fichier ? (
         <LecteurVocal chemin={m.fichier} duree={m.duree_secondes ?? 0} onde={m.onde} clair={moi} />
+      ) : m.type === 'permis' ? (
+        <BullePermis documentId={m.contenu} clair={moi} jeSuisDestinataire={!!jeSuisLoueur} reponse={moi === !!jeSuisLoueur} />
       ) : m.type === 'lieu' && m.lieu_nom ? (
         <CarteLieu nom={m.lieu_nom} lat={m.lieu_lat} lng={m.lieu_lng} clair={moi} />
       ) : (

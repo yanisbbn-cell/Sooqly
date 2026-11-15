@@ -19,6 +19,7 @@ import { IconeEnvoyer, IconeLieu, IconeMicro, IconeRetour } from '@/components/I
 import { ImageProfil } from '@/components/ImageProfil';
 import { Texte } from '@/components/Texte';
 import { BulleMessage } from '@/components/messagerie/BulleMessage';
+import { IconePermis } from '@/components/messagerie/BullePermis';
 import { MicroMaintenu } from '@/components/messagerie/MicroMaintenu';
 import { FeuilleLieu } from '@/components/messagerie/FeuilleLieu';
 import { useAuth } from '@/lib/auth';
@@ -51,7 +52,8 @@ export default function Discussion() {
   const { rafraichir: rafraichirNonLus } = useNonLus();
   const liste = useRef<TypeFlatList<Message>>(null);
 
-  const [annonce, setAnnonce] = useState<{ id: string; titre: string } | null>(null);
+  const [annonce, setAnnonce] = useState<{ id: string; titre: string; permis_exige: boolean; categorie: string; type: string } | null>(null);
+  const [vendeurId, setVendeurId] = useState<string | null>(null);
   const [autre, setAutre] = useState<Autre | null>(null);
   const [messages, setMessages] = useState<Message[] | null>(null);
   const [introuvable, setIntrouvable] = useState(false);
@@ -72,11 +74,12 @@ export default function Discussion() {
       }
       const autreId = d.acheteur_id === profil.id ? d.vendeur_id : d.acheteur_id;
       const [a, p, m] = await Promise.all([
-        supabase.from('listings').select('id, titre').eq('id', d.annonce_id).maybeSingle(),
+        supabase.from('listings').select('id, titre, permis_exige, categorie, type').eq('id', d.annonce_id).maybeSingle(),
         supabase.from('profiles').select('id, nom_affiche, avatar, est_pro, nom_commercial').eq('id', autreId).maybeSingle(),
         lireMessages(d.id),
       ]);
-      setAnnonce(a.data as { id: string; titre: string } | null);
+      setAnnonce(a.data as typeof annonce);
+      setVendeurId(d.vendeur_id);
       if (p.data)
         setAutre({ id: p.data.id, nom: p.data.est_pro && p.data.nom_commercial ? p.data.nom_commercial : p.data.nom_affiche, avatar: p.data.avatar });
       setMessages(m);
@@ -231,7 +234,7 @@ export default function Discussion() {
               </View>
             ) : undefined
           }
-          renderItem={({ item }) => <BulleMessage message={item} moi={item.auteur_id === profil.id} />}
+          renderItem={({ item }) => <BulleMessage message={item} moi={item.auteur_id === profil.id} jeSuisLoueur={vendeurId === profil.id} />}
         />
       )}
 
@@ -303,6 +306,16 @@ export default function Discussion() {
                 >
                   <IconeLieu couleur={colors.brun} />
                 </Pressable>
+                {annonce?.permis_exige && vendeurId !== profil.id && (
+                  <Pressable
+                    onPress={() => router.push({ pathname: '/permis/[id]', params: { id: annonce.id } })}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('permis.joindre')}
+                    style={styles.outil}
+                  >
+                    <IconePermis couleur={colors.brun} />
+                  </Pressable>
+                )}
                 {champ}
               </>
             }

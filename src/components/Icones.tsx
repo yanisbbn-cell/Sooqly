@@ -143,3 +143,13 @@ export function IconePause({ couleur, taille = 16 }: P) {
     </Svg>
   );
 }
+
+/** Cadenas (coordonnées privées, documents), repris de la maquette. */
+export function IconeCadenas({ couleur, taille = 16 }: P) {
+  return (
+    <Svg {...base(taille)} stroke={couleur} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Rect x={5} y={11} width={14} height={10} rx={2} />
+      <Path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    </Svg>
+  );
+}

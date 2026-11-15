@@ -232,6 +232,22 @@ export default function FicheAnnonce() {
             </View>
           )}
 
+          {a.type === 'location' && a.categorie === 'vehicules' && a.permis_exige && (
+            <View style={styles.permis}>
+              <Texte variante="titre" poids={700} style={{ fontSize: 16 }}>
+                {t('permis.titre')}
+              </Texte>
+              <Texte style={{ fontSize: 13, lineHeight: 20, color: colors.brunMoyen }}>
+                {profil?.id === a.auteur_id
+                  ? t('permis.infoLoueur')
+                  : t('permis.info', { loueur: a.auteur?.est_pro && a.auteur.nom_commercial ? a.auteur.nom_commercial : (a.auteur?.nom_affiche ?? '') })}
+              </Texte>
+              {profil && profil.id !== a.auteur_id && visibleParTous && (
+                <Bouton libelle={t('permis.envoyer')} onPress={() => router.push({ pathname: '/permis/[id]', params: { id: a.id } })} variante="sombre" />
+              )}
+            </View>
+          )}
+
           {visibleParTous &&
             (profil?.id === a.auteur_id ? (
               <Texte style={[styles.secondaire, { textAlign: 'center' }]}>{t('messagerie.votreAnnonce')}</Texte>
@@ -368,6 +384,7 @@ const styles = StyleSheet.create({
   ligneCarac: { flexDirection: 'row', gap: 12 },
   description: { fontSize: 15, lineHeight: 25 },
   vendeur: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, backgroundColor: colors.carte },
+  permis: { gap: 8, padding: 16, borderRadius: 16, backgroundColor: colors.carte },
   moderation: { gap: 10, padding: 16, borderRadius: 16, borderWidth: 2, borderColor: colors.sable3 },
   refuser: {
     minHeight: toucheMin + 4,

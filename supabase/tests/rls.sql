@@ -306,5 +306,35 @@ begin
     reset role;
   end;
 
+  -- ---------- 15. Permis : envoyé au seul loueur, statut décidé par lui ----------
+  declare
+    v2 uuid; doc uuid; nb3 int; st text;
+  begin
+    perform set_config('request.jwt.claims', '', true);
+    insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code, statut, permis_exige)
+      values (a, 'location', 'vehicules', 'Berline avec permis', 5000, 16, 'en_ligne', true) returning id into v2;
+    perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    insert into public.private_documents (expediteur_id, destinataire_id, annonce_id, fichier, efface_le)
+      values (c, a, v2, a::text || '/' || c::text || '/permis.jpg', now() + interval '10 days') returning id into doc;
+    begin
+      insert into public.private_documents (expediteur_id, destinataire_id, annonce_id, fichier, efface_le)
+        values (c, a, annonce, a::text || '/' || c::text || '/permis2.jpg', now() + interval '10 days');
+      assert false, 'C : permis envoyé pour une annonce qui ne le demande pas';
+    exception when raise_exception then null; end;
+    update public.private_documents set statut = 'accepte' where id = doc;
+    get diagnostics nb3 = row_count; assert nb3 = 0, 'C : a accepté son propre permis';
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', b, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    select count(*) into nb3 from public.private_documents; assert nb3 = 0, 'B : voit un permis qui ne le concerne pas';
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    update public.private_documents set statut = 'accepte' where id = doc returning statut into st;
+    assert st = 'accepte', 'A (loueur) : ne peut pas accepter le permis';
+    reset role;
+  end;
+
   raise exception 'TESTS_OK';
 end $$;
