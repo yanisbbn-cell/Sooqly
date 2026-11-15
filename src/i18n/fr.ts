@@ -38,7 +38,27 @@ export const fr = {
       titre: 'Compte',
       bientot: 'La connexion et l’inscription arriveront à l’étape 3 du plan.',
       revoir: 'Revoir la présentation',
+      charte: 'Notre charte',
+      charteSous: 'Vente, achat et location dans le respect de la charia',
+      wilaya: 'Ma wilaya (aperçu)',
+      wilayaSous: 'Choisissez votre wilaya',
     },
+  },
+  commun: {
+    retour: 'Retour',
+    fermer: 'Fermer',
+    chargement: 'Chargement…',
+    erreur: 'Impossible de charger les données. Vérifiez votre connexion internet.',
+    reessayer: 'Réessayer',
+  },
+  charte: {
+    titre: 'Notre charte',
+    basmala: 'بسم الله الرحمن الرحيم',
+  },
+  wilayas: {
+    titre: 'Choisir la wilaya',
+    recherche: 'Nom ou numéro (ex. : Oran, 31)',
+    aucune: 'Aucune wilaya ne correspond.',
   },
   accueil: {
     passer: 'Passer',

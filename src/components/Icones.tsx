@@ -61,3 +61,28 @@ export function IconeCoche({ couleur, taille = 12, epaisseur = 3.4 }: P) {
     </Svg>
   );
 }
+
+export function IconeRetour({ couleur, taille = 22 }: P) {
+  return (
+    <Svg {...base(taille)} stroke={couleur} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M15 18l-6-6 6-6" />
+    </Svg>
+  );
+}
+
+export function IconeChevronBas({ couleur, taille = 18 }: P) {
+  return (
+    <Svg {...base(taille)} stroke={couleur} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M6 9l6 6 6-6" />
+    </Svg>
+  );
+}
+
+export function IconeLoupe({ couleur, taille = 20 }: P) {
+  return (
+    <Svg {...base(taille)} stroke={couleur} strokeWidth={2} strokeLinecap="round">
+      <Circle cx={11} cy={11} r={7} />
+      <Path d="M20 20l-3.5-3.5" />
+    </Svg>
+  );
+}
