@@ -148,17 +148,17 @@ begin
   select count(*) into n from public.reports; assert n = 0, 'A : voit qui l''a signalé';
   reset role;
 
-  -- ---------- 10. Inscription : pas de profil sans SMS ni charte ----------
-  insert into auth.users (id, instance_id, aud, role, phone)
-    values (d, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', '213555990001');
+  -- ---------- 10. Inscription : pas de profil sans numéro de téléphone ni charte ----------
+  insert into auth.users (id, instance_id, aud, role)
+    values (d, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated');
   perform set_config('request.jwt.claims', json_build_object('sub', d, 'role', 'authenticated')::text, true);
   set local role authenticated;
   begin
     insert into public.profiles (id, nom_affiche, wilaya_code, ville, charte_version) values (d, 'Abou Test D', 16, 'Alger', 1);
-    assert false, 'D : profil créé sans téléphone vérifié';
+    assert false, 'D : profil créé sans numéro de téléphone';
   exception when raise_exception then null; end;
   reset role;
-  update auth.users set phone_confirmed_at = now() where id = d;
+  update auth.users set phone = '213555990001' where id = d;
   set local role authenticated;
   begin
     insert into public.profiles (id, nom_affiche, wilaya_code, ville) values (d, 'Abou Test D', 16, 'Alger');
@@ -169,9 +169,9 @@ begin
     assert false, 'D : profil créé sans ville';
   exception when raise_exception then null; end;
   insert into public.profiles (id, nom_affiche, wilaya_code, ville, charte_version, role, telephone_verifie)
-    values (d, 'Abou Test D', 16, 'Alger', 1, 'admin', false) returning role, telephone_verifie into t, ok;
+    values (d, 'Abou Test D', 16, 'Alger', 1, 'admin', true) returning role, telephone_verifie into t, ok;
   assert t = 'membre', 'D : a pu se créer un profil admin';
-  assert ok, 'D : téléphone non marqué vérifié';
+  assert not ok, 'D : a pu se déclarer « téléphone vérifié » sans SMS';
   select count(*) into n from public.profiles where id = d and charte_acceptee_le is not null; assert n = 1, 'D : date de la charte absente';
   update public.profiles set avatar = 7 where id = d;
   get diagnostics n = row_count; assert n = 1, 'D : ne peut pas choisir son image de profil';

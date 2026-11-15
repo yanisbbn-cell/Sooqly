@@ -16,6 +16,7 @@ import { Amiri_400Regular, Amiri_700Bold } from '@expo-google-fonts/amiri';
 
 import '@/i18n';
 import { AccueilPremierLancement } from '@/components/AccueilPremierLancement';
+import { AuthProvider } from '@/lib/auth';
 import { PreferencesProvider, usePreferences } from '@/lib/preferences';
 import { colors } from '@/theme';
 
@@ -67,7 +68,9 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <PreferencesProvider>
         {/* En cas d'échec du chargement des polices, l'appli s'ouvre quand même avec les polices du téléphone. */}
-        <Contenu policesPretes={policesChargees || !!erreurPolices} />
+        <AuthProvider>
+          <Contenu policesPretes={policesChargees || !!erreurPolices} />
+        </AuthProvider>
       </PreferencesProvider>
     </SafeAreaProvider>
   );

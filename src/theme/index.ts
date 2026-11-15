@@ -25,6 +25,11 @@ export const colors = {
 
   // Confiance
   vert: '#2F7A4B',
+  vertFond: '#EDF5EF', // fond des encarts de confiance (maquette)
+  vertBord: '#C3DCCA',
+
+  // Bouton désactivé (maquette)
+  inactif: '#D9C6AA',
 
   // Danger
   rouge: '#B5453F',

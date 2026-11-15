@@ -1,3 +1,5 @@
+import { avatarsFr } from './avatars.fr';
+
 /** Textes en français. Chaque texte doit aussi exister dans ar.ts. */
 export const fr = {
   app: {
@@ -36,12 +38,65 @@ export const fr = {
     },
     compte: {
       titre: 'Compte',
-      bientot: 'La connexion et l’inscription arriveront à l’étape 3 du plan.',
       revoir: 'Revoir la présentation',
       charte: 'Notre charte',
       charteSous: 'Vente, achat et location dans le respect de la charia',
-      wilaya: 'Ma wilaya (aperçu)',
-      wilayaSous: 'Choisissez votre wilaya',
+    },
+  },
+  compte: {
+    titreConnexion: 'Assalâmou ‘alaykoum',
+    sousConnexion: 'Connectez-vous pour publier, écrire et participer à l’entraide.',
+    titreInscription: 'Rejoindre Sooqly',
+    sousInscription: 'Créez votre compte gratuitement, en quelques instants.',
+    ongletConnexion: 'Connexion',
+    ongletInscription: 'Inscription',
+    imageProfil: 'Image de profil',
+    imageProfilSous: 'Choisissez une image dans la liste : pas de photo de personne.',
+    changerImage: 'Changer mon image de profil',
+    regleImage:
+      'Conformément à la charte, aucune photo de visage, de personne ou d’animal : choisissez l’une de ces images. Elle apparaît sur vos annonces et dans vos messages.',
+    hommes: 'Hommes',
+    femmes: 'Femmes',
+    valider: 'Valider',
+    apparaitre: 'Comment souhaitez-vous apparaître ?',
+    modeNom: 'Nom et prénom',
+    modeKounia: 'Kounia',
+    prenom: 'Prénom',
+    prenomEx: 'Ex. : Yacine',
+    nom: 'Nom',
+    nomEx: 'Ex. : Benali',
+    kounia: 'Kounia',
+    kouniaEx: 'Ex. : Abou Abdillah',
+    wilaya: 'Votre wilaya',
+    choisirWilaya: 'Choisissez votre wilaya',
+    ville: 'Votre ville ou commune',
+    villeEx: 'Ex. : Bab Ezzouar',
+    telephone: 'Numéro de téléphone',
+    telephoneFormat: 'Numéro de mobile algérien : 9 chiffres, commençant par 5, 6 ou 7.',
+    telephonePourquoi:
+      'Votre numéro n’est jamais affiché sans votre accord. Il protège la communauté contre les faux comptes.',
+    motDePasse: 'Mot de passe',
+    motDePasseAide: 'Au moins 8 caractères.',
+    accepterCharte: 'J’ai lu la charte et je m’engage à la respecter, et à craindre Allah dans mes transactions.',
+    creerCompte: 'Créer mon compte',
+    seConnecter: 'Se connecter',
+    resterConnecte: 'Vous resterez connecté sur cet appareil jusqu’à ce que vous vous déconnectiez.',
+    lireCharte: 'Lire la charte avant de s’inscrire',
+    membreVerifie: 'Téléphone vérifié',
+    monCompte: 'Mon compte',
+    langue: 'Langue : العربية',
+    deconnexion: 'Se déconnecter',
+    deconnexionQuestion: 'Se déconnecter de cet appareil ?',
+    deconnexionOui: 'Oui, me déconnecter',
+    annuler: 'Annuler',
+    suite: 'Annonces, favoris et alertes apparaîtront ici aux prochaines étapes du plan.',
+    erreurs: {
+      tropDeDemandes: 'Trop de demandes. Patientez une minute avant de réessayer.',
+      identifiants: 'Numéro ou mot de passe incorrect.',
+      motDePasseFaible: 'Mot de passe trop simple : au moins 8 caractères.',
+      compteExistant: 'Ce numéro a déjà un compte. Utilisez l’onglet « Connexion ».',
+      reseau: 'Connexion internet indisponible. Réessayez.',
+      inconnue: 'Une erreur est survenue. Réessayez.',
     },
   },
   commun: {
@@ -55,6 +110,7 @@ export const fr = {
     titre: 'Notre charte',
     basmala: 'بسم الله الرحمن الرحيم',
   },
+  avatars: avatarsFr,
   wilayas: {
     titre: 'Choisir la wilaya',
     recherche: 'Nom ou numéro (ex. : Oran, 31)',
@@ -77,7 +133,7 @@ export const fr = {
     verset:
       '« Ô vous qui avez cru ! Ne mangez pas vos biens entre vous illicitement, mais qu’il y ait du négoce par consentement mutuel. » (An-Nisâ’, 29)',
     t3: 'La confiance avant tout',
-    s3: 'Chaque membre vérifie son téléphone. Après chaque échange, acheteur et vendeur se notent en quelques secondes. À 10 ventes notées 5 étoiles : le badge « Vendeur validé ».',
+    s3: 'Chaque membre s’inscrit avec son numéro de téléphone. Après chaque échange, acheteur et vendeur se notent en quelques secondes. À 10 ventes notées 5 étoiles : le badge « Vendeur validé ».',
   },
 };
 
