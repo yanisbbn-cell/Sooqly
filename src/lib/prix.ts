@@ -4,9 +4,12 @@
  */
 export const formaterNombre = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 
-/** Équivalent indicatif en euros : « ≈ 166,50 € » (taux réglé par l'administrateur). */
+/**
+ * Équivalent indicatif en euros : « ≈ 166,50 € » (taux réglé par l'administrateur).
+ * Isolé de gauche à droite (U+2066…U+2069) pour garder cet ordre dans un texte en arabe.
+ */
 export const formaterEuro = (dinars: number, tauxDinarEuro: number) =>
-  `≈ ${(dinars * tauxDinarEuro).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} €`;
+  `\u2066≈ ${(dinars * tauxDinarEuro).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} €\u2069`;
 
 /** Ne garde que les chiffres d'une saisie de prix (« 45 000 DA » → 45000), ou null. */
 export function lirePrix(saisie: string): number | null {

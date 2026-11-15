@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { IconeRetour } from '@/components/Icones';
 import { ImageProfil } from '@/components/ImageProfil';
 import { Texte } from '@/components/Texte';
-import { useAuth, type Profil } from '@/lib/auth';
+import { estModerateur, useAuth, type Profil } from '@/lib/auth';
 import { usePreferences } from '@/lib/preferences';
 import { useWilayas } from '@/lib/referentiel';
 import { colors, toucheMin } from '@/theme';
@@ -64,6 +64,7 @@ export function TableauDeBord({ profil }: { profil: Profil }) {
             {t('compte.monCompte')}
           </Texte>
           <View style={styles.menu}>
+            {estModerateur(profil) && <Ligne libelle={t('moderation.entree')} onPress={() => router.push('/moderation')} />}
             <Ligne libelle={t('compte.changerImage')} onPress={() => setFeuilleImages(true)} />
             <Ligne libelle={t('ecrans.compte.charte')} onPress={() => router.push('/charte')} />
             <Ligne libelle={t('ecrans.compte.revoir')} onPress={revoirAccueil} />
