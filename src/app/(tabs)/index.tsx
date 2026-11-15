@@ -1,6 +1,6 @@
-import { useCallback, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 import { CarteAnnonce } from '@/components/annonces/CarteAnnonce';
@@ -9,35 +9,44 @@ import { couleursTuile } from '@/components/annonces/tuile';
 import { EnTete } from '@/components/EnTete';
 import { EtatChargement } from '@/components/EtatChargement';
 import { IconeCategorie } from '@/components/IconeCategorie';
+import { IconeFiltres, IconeLoupe } from '@/components/Icones';
 import { Texte } from '@/components/Texte';
-import { listerAnnonces, type AnnonceResume } from '@/lib/annonces';
+import type { AnnonceResume } from '@/lib/annonces';
+import { useAuth } from '@/lib/auth';
 import { usePreferences } from '@/lib/preferences';
+import { FILTRES_VIDES, chercherAnnonces, nombreFiltres, useRecherche, type Tri } from '@/lib/recherche';
 import { useCategories, useReglages, useWilayas, type Categorie } from '@/lib/referentiel';
-import { colors, toucheMin } from '@/theme';
+import { colors, fonts, toucheMin } from '@/theme';
 
-/** Onglet Annonces : catégories, puis les annonces en ligne (sponsorisées d'abord, puis les plus récentes). */
+const TRIS: Tri[] = ['recent', 'prix_croissant', 'prix_decroissant', 'proche'];
+
+/** Onglet Annonces : recherche, catégories, tri, puis les annonces en ligne (sponsorisées d'abord). */
 export default function Annonces() {
   const { t } = useTranslation();
-  const { langue } = usePreferences();
+  const { langue, rtl } = usePreferences();
+  const { profil } = useAuth();
   const categories = useCategories();
   const { donnees: wilayas } = useWilayas();
   const { donnees: reglages } = useReglages();
+  const { filtres, setFiltres, tri, setTri } = useRecherche();
 
-  const [categorie, setCategorie] = useState<string | null>(null);
-  const [sousCategories, setSousCategories] = useState<number[]>([]);
+  const [brouillon, setBrouillon] = useState(filtres.texte);
   const [feuille, setFeuille] = useState<Categorie | null>(null);
   const [annonces, setAnnonces] = useState<AnnonceResume[] | null>(null);
   const [erreur, setErreur] = useState(false);
   const [rafraichit, setRafraichit] = useState(false);
 
+  useEffect(() => setBrouillon(filtres.texte), [filtres.texte]);
+
+  const catChoisie = categories.donnees?.find((c) => c.cle === filtres.categorie);
   const charger = useCallback(async () => {
     setErreur(false);
     try {
-      setAnnonces(await listerAnnonces({ categorie, sousCategories }));
+      setAnnonces(await chercherAnnonces(filtres, catChoisie?.criteres ?? [], tri, profil?.wilaya_code ?? null));
     } catch {
       setErreur(true);
     }
-  }, [categorie, sousCategories]);
+  }, [filtres, catChoisie, tri, profil?.wilaya_code]);
 
   // Recharge à chaque retour sur l'onglet (une annonce a pu être validée entre-temps).
   useFocusEffect(
@@ -52,42 +61,111 @@ export default function Annonces() {
     setRafraichit(false);
   };
 
+  const lancer = () => setFiltres({ ...filtres, texte: brouillon.trim() });
+  const effacerTexte = () => {
+    setBrouillon('');
+    setFiltres({ ...filtres, texte: '' });
+  };
+
   const nom = (x: { nom_fr: string; nom_ar: string }) => (langue === 'ar' ? x.nom_ar : x.nom_fr);
-  const catChoisie = categories.donnees?.find((c) => c.cle === categorie);
   const fil = catChoisie
-    ? [
-        nom(catChoisie),
-        ...catChoisie.sous_categories.filter((s) => sousCategories.includes(s.id)).map(nom),
-      ].join(' › ')
+    ? [nom(catChoisie), ...catChoisie.sous_categories.filter((s) => filtres.sousCategories.includes(s.id)).map(nom)].join(' › ')
     : '';
+  const nbFiltres = nombreFiltres(filtres);
+  const recherche = filtres.texte !== '';
+  const enAttente = brouillon.trim() !== filtres.texte;
 
   const choisirCategorie = (c: Categorie | null) => {
-    if (!c) {
-      setCategorie(null);
-      setSousCategories([]);
-    } else if (c.sous_categories.length) {
-      setFeuille(c);
-    } else {
-      setCategorie(c.cle);
-      setSousCategories([]);
-    }
+    if (!c) setFiltres({ ...filtres, categorie: null, sousCategories: [], criteres: {} });
+    else if (c.sous_categories.length) setFeuille(c);
+    else setFiltres({ ...filtres, categorie: c.cle, sousCategories: [], criteres: c.cle === filtres.categorie ? filtres.criteres : {} });
   };
+
+  const tris = TRIS.filter((x) => x !== 'proche' || profil?.wilaya_code);
 
   const enTete = (
     <View>
       <EnTete />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tuiles}>
-        <TuileCategorie libelle={t('accueil2.tout')} icone="grid" active={!categorie} onPress={() => choisirCategorie(null)} />
-        {categories.donnees?.map((c) => (
-          <TuileCategorie
-            key={c.cle}
-            libelle={langue === 'fr' && c.nom_court_fr ? c.nom_court_fr : nom(c)}
-            icone={c.icone}
-            active={categorie === c.cle}
-            onPress={() => choisirCategorie(c)}
-          />
-        ))}
-      </ScrollView>
+      <View style={styles.bandeRecherche}>
+        <View style={styles.rangee}>
+          <View style={styles.recherche}>
+            <TextInput
+              value={brouillon}
+              onChangeText={setBrouillon}
+              onSubmitEditing={lancer}
+              placeholder={t('recherche.champ')}
+              placeholderTextColor={colors.brunMoyen}
+              accessibilityLabel={t('recherche.champ')}
+              returnKeyType="search"
+              autoCorrect={false}
+              maxLength={80}
+              style={[
+                styles.champ,
+                { fontFamily: rtl ? fonts.arabe[400] : fonts.texte[400], textAlign: rtl ? 'right' : 'left' },
+              ]}
+            />
+            {brouillon !== '' && (
+              <Pressable onPress={effacerTexte} accessibilityRole="button" accessibilityLabel={t('recherche.effacer')} style={styles.croix}>
+                <Texte style={styles.croixTexte}>×</Texte>
+              </Pressable>
+            )}
+            <Pressable onPress={lancer} accessibilityRole="button" accessibilityLabel={t('recherche.lancer')} style={styles.loupe}>
+              <IconeLoupe couleur={colors.blanc} taille={18} />
+            </Pressable>
+          </View>
+          <Pressable
+            onPress={() => router.push('/filtres')}
+            accessibilityRole="button"
+            accessibilityLabel={nbFiltres ? `${t('recherche.filtres')} (${nbFiltres})` : t('recherche.filtres')}
+            style={({ pressed }) => [styles.boutonFiltres, pressed && { opacity: 0.8 }]}
+          >
+            <IconeFiltres couleur={colors.sable1} />
+            {nbFiltres > 0 && (
+              <View style={styles.pastilleNombre}>
+                <Texte poids={700} style={styles.pastilleNombreTexte}>
+                  {String(nbFiltres)}
+                </Texte>
+              </View>
+            )}
+          </Pressable>
+        </View>
+        {enAttente && brouillon.trim() !== '' && <Texte style={styles.attente}>{t('recherche.enAttente')}</Texte>}
+      </View>
+
+      {recherche ? (
+        <View style={styles.resultat} accessibilityRole="summary">
+          <View style={{ flex: 1, gap: 2 }}>
+            <Texte poids={700} style={{ fontSize: 16, color: colors.sable1 }}>
+              {t(annonces?.length === 0 ? 'recherche.aucunResultat' : 'recherche.resultats', { q: filtres.texte })}
+            </Texte>
+            {annonces && (
+              <Texte style={{ fontSize: 12, color: colors.sable3 }}>
+                {[t('accueil2.nombre', { count: annonces.length }), nbFiltres ? t('recherche.avecFiltres', { count: nbFiltres }) : '']
+                  .filter(Boolean)
+                  .join(' · ')}
+              </Texte>
+            )}
+          </View>
+          <Pressable onPress={effacerTexte} accessibilityRole="button" style={styles.resultatEffacer}>
+            <Texte poids={700} style={{ fontSize: 13, color: colors.sable1 }}>
+              {t('recherche.effacerCourt')}
+            </Texte>
+          </Pressable>
+        </View>
+      ) : (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tuiles}>
+          <TuileCategorie libelle={t('accueil2.tout')} icone="grid" active={!filtres.categorie} onPress={() => choisirCategorie(null)} />
+          {categories.donnees?.map((c) => (
+            <TuileCategorie
+              key={c.cle}
+              libelle={langue === 'fr' && c.nom_court_fr ? c.nom_court_fr : nom(c)}
+              icone={c.icone}
+              active={filtres.categorie === c.cle}
+              onPress={() => choisirCategorie(c)}
+            />
+          ))}
+        </ScrollView>
+      )}
 
       {catChoisie && (
         <View style={styles.filRangee}>
@@ -113,12 +191,33 @@ export default function Annonces() {
         </View>
       )}
 
-      <View style={styles.titreListe}>
-        <Texte variante="titre" poids={700} style={{ fontSize: 20 }} accessibilityRole="header">
-          {t('accueil2.recentes')}
+      {!recherche && (
+        <View style={styles.titreListe}>
+          <Texte variante="titre" poids={700} style={{ fontSize: 20 }} accessibilityRole="header">
+            {t('accueil2.recentes')}
+          </Texte>
+          {annonces && <Texte style={styles.nombre}>{t('accueil2.nombre', { count: annonces.length })}</Texte>}
+        </View>
+      )}
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tris}>
+        <Texte poids={700} style={styles.trierTexte}>
+          {t('recherche.trier')}
         </Texte>
-        {annonces && <Texte style={styles.nombre}>{t('accueil2.nombre', { count: annonces.length })}</Texte>}
-      </View>
+        {tris.map((x) => (
+          <Pressable
+            key={x}
+            onPress={() => setTri(x)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: tri === x }}
+            style={[styles.tri, tri === x && styles.triActif]}
+          >
+            <Texte poids={600} style={[styles.triTexte, tri === x && { color: colors.sable1 }]}>
+              {t(`recherche.tris.${x}`)}
+            </Texte>
+          </Pressable>
+        ))}
+      </ScrollView>
     </View>
   );
 
@@ -129,8 +228,9 @@ export default function Annonces() {
         keyExtractor={(a) => a.id}
         numColumns={2}
         ListHeaderComponent={enTete}
-        columnWrapperStyle={styles.rangee}
+        columnWrapperStyle={styles.rangeeCartes}
         contentContainerStyle={{ paddingBottom: 24 }}
+        keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={rafraichit} onRefresh={rafraichir} tintColor={colors.accent} />}
         renderItem={({ item, index }) => (
           <View style={[styles.cellule, index === (annonces?.length ?? 0) - 1 && index % 2 === 0 && styles.celluleSeule]}>
@@ -147,9 +247,18 @@ export default function Annonces() {
             <EtatChargement erreur={erreur} reessayer={charger} />
           ) : (
             <View style={styles.vide}>
-              <Texte style={{ fontSize: 14, lineHeight: 21 }}>{t(categorie ? 'accueil2.aucune' : 'accueil2.aucuneEncore')}</Texte>
-              {categorie && (
-                <Pressable onPress={() => choisirCategorie(null)} accessibilityRole="button" style={styles.effacer}>
+              <Texte style={{ fontSize: 14, lineHeight: 21 }}>
+                {t(filtres.categorie || recherche || nbFiltres ? 'accueil2.aucune' : 'accueil2.aucuneEncore')}
+              </Texte>
+              {(filtres.categorie || recherche || nbFiltres > 0) && (
+                <Pressable
+                  onPress={() => {
+                    setBrouillon('');
+                    setFiltres(FILTRES_VIDES);
+                  }}
+                  accessibilityRole="button"
+                  style={styles.effacer}
+                >
                   <Texte poids={600} style={{ fontSize: 14 }}>
                     {t('accueil2.effacer')}
                   </Texte>
@@ -162,11 +271,16 @@ export default function Annonces() {
 
       <FeuilleSousCategories
         categorie={feuille}
-        choisies={feuille && feuille.cle === categorie ? sousCategories : []}
+        choisies={feuille && feuille.cle === filtres.categorie ? filtres.sousCategories : []}
         onFermer={() => setFeuille(null)}
         onValider={(ids) => {
-          if (feuille) setCategorie(feuille.cle);
-          setSousCategories(ids);
+          if (feuille)
+            setFiltres({
+              ...filtres,
+              categorie: feuille.cle,
+              sousCategories: ids,
+              criteres: feuille.cle === filtres.categorie ? filtres.criteres : {},
+            });
           setFeuille(null);
         }}
       />
@@ -202,6 +316,64 @@ function TuileCategorie({ libelle, icone, active, onPress }: { libelle: string; 
 
 const styles = StyleSheet.create({
   ecran: { flex: 1, backgroundColor: colors.blanc },
+  bandeRecherche: { backgroundColor: colors.brun, paddingHorizontal: 20, paddingBottom: 16, gap: 8 },
+  rangee: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  recherche: {
+    flex: 1,
+    height: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.carte,
+    borderRadius: 24,
+    paddingStart: 16,
+    paddingEnd: 6,
+    gap: 4,
+  },
+  champ: { flex: 1, minWidth: 0, height: '100%', fontSize: 15, color: colors.brun },
+  croix: { width: 36, height: toucheMin, alignItems: 'center', justifyContent: 'center' },
+  croixTexte: { fontSize: 22, color: colors.brunMoyen, lineHeight: 26 },
+  loupe: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
+  boutonFiltres: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colors.sable3,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pastilleNombre: {
+    position: 'absolute',
+    top: -4,
+    end: -4,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    paddingHorizontal: 4,
+    backgroundColor: colors.accentFonce,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pastilleNombreTexte: { fontSize: 11, color: colors.blanc, textAlign: 'center' },
+  attente: { fontSize: 12, color: colors.sable3 },
+  resultat: {
+    marginHorizontal: 20,
+    marginTop: 16,
+    padding: 14,
+    borderRadius: 16,
+    backgroundColor: colors.brun,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  resultatEffacer: {
+    minHeight: toucheMin - 4,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.sable3,
+    justifyContent: 'center',
+  },
   tuiles: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 6, gap: 4 },
   tuile: { width: 80, alignItems: 'center', gap: 6 },
   tuileIcone: { width: 60, height: 60, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
@@ -230,9 +402,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   filCroixTexte: { fontSize: 18, color: colors.sable1, lineHeight: 22 },
-  titreListe: { paddingHorizontal: 20, paddingTop: 14, paddingBottom: 10, gap: 2 },
+  titreListe: { paddingHorizontal: 20, paddingTop: 14, gap: 2 },
   nombre: { fontSize: 13, color: colors.brunMoyen },
-  rangee: { paddingHorizontal: 20, gap: 12 },
+  tris: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 12, gap: 8, alignItems: 'center' },
+  trierTexte: { fontSize: 12, color: colors.brunMoyen },
+  tri: {
+    minHeight: 36,
+    paddingHorizontal: 12,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: colors.sable3,
+    justifyContent: 'center',
+  },
+  triActif: { backgroundColor: colors.brun, borderColor: colors.brun },
+  triTexte: { fontSize: 13 },
+  rangeeCartes: { paddingHorizontal: 20, gap: 12 },
   cellule: { flex: 1, marginBottom: 12 },
   celluleSeule: { maxWidth: '50%', paddingEnd: 6 },
   vide: { marginHorizontal: 20, padding: 20, borderRadius: 14, backgroundColor: colors.sable2, gap: 12 },

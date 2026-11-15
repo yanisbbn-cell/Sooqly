@@ -16,10 +16,12 @@ type Props = {
   valeur: number | null;
   onChoisir: (code: number) => void;
   onFermer: () => void;
+  /** Ajoute en tête la ligne « Toutes les wilayas (69) » (pour les filtres). */
+  onToutes?: () => void;
 };
 
 /** Feuille « Choisir la wilaya » : les 69 wilayas lues dans Supabase, avec recherche par nom ou numéro. */
-export function FeuilleWilayas({ visible, valeur, onChoisir, onFermer }: Props) {
+export function FeuilleWilayas({ visible, valeur, onChoisir, onFermer, onToutes }: Props) {
   const { t } = useTranslation();
   const { langue, rtl } = usePreferences();
   const insets = useSafeAreaInsets();
@@ -87,6 +89,24 @@ export function FeuilleWilayas({ visible, valeur, onChoisir, onFermer }: Props) 
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={styles.liste}
               ListEmptyComponent={<Texte style={styles.aucune}>{t('wilayas.aucune')}</Texte>}
+              ListHeaderComponent={
+                onToutes && !recherche ? (
+                  <Pressable
+                    onPress={() => {
+                      onToutes();
+                      fermer();
+                    }}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: valeur === null }}
+                    style={({ pressed }) => [styles.ligne, pressed && { backgroundColor: colors.carte }]}
+                  >
+                    <Texte poids={700} style={styles.nom}>
+                      {t('filtres.toutesWilayas')}
+                    </Texte>
+                    {valeur === null && <IconeCoche couleur={colors.accent} taille={20} epaisseur={2.6} />}
+                  </Pressable>
+                ) : undefined
+              }
               renderItem={({ item }) => (
                 <LigneWilaya
                   wilaya={item}

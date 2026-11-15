@@ -23,7 +23,8 @@ export type NouvelleAnnonce = {
   titre: string;
   description: string;
   etat: Etat | null;
-  caracteristiques: Record<string, string>;
+  /** Les caractéristiques de type « nombre » sont enregistrées en nombres (pour les filtres min / max). */
+  caracteristiques: Record<string, string | number>;
   prixDa: number;
   wilaya: number;
   ville: string;
@@ -44,8 +45,8 @@ export async function envoyerAnnonce(a: NouvelleAnnonce): Promise<{ id: string |
   }
   const caracteristiques = Object.fromEntries(
     Object.entries(a.caracteristiques)
-      .map(([k, v]) => [k, v.trim()])
-      .filter(([, v]) => v),
+      .map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v])
+      .filter(([, v]) => v !== ''),
   );
   const { data, error } = await supabase
     .from('listings')
@@ -96,7 +97,7 @@ export type AnnonceResume = {
 
 export type Annonce = AnnonceResume & {
   description: string;
-  caracteristiques: Record<string, string>;
+  caracteristiques: Record<string, string | number>;
   motif_refus: string | null;
   expire_le: string | null;
   auteur_id: string;

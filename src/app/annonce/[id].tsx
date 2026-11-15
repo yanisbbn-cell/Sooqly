@@ -171,7 +171,7 @@ export default function FicheAnnonce() {
                 {t('fiche.caracteristiques')}
               </Texte>
               {caracteristiques.map((c) => {
-                const v = a.caracteristiques[c.cle]!;
+                const v = String(a.caracteristiques[c.cle]);
                 const o = c.options?.find((x) => x.v === v);
                 return (
                   <View key={c.cle} style={styles.ligneCarac}>

@@ -146,7 +146,9 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
       titre,
       description,
       etat,
-      caracteristiques: carac,
+      caracteristiques: Object.fromEntries(
+        Object.entries(carac).map(([k, v]) => [k, criteres.find((c) => c.cle === k)?.type === 'nombre' && v ? Number(v) : v]),
+      ),
       prixDa: prix ?? 0,
       wilaya,
       ville,

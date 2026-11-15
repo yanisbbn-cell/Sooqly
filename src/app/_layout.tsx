@@ -18,6 +18,7 @@ import '@/i18n';
 import { AccueilPremierLancement } from '@/components/AccueilPremierLancement';
 import { AuthProvider } from '@/lib/auth';
 import { PreferencesProvider, usePreferences } from '@/lib/preferences';
+import { RechercheProvider } from '@/lib/recherche';
 import { colors } from '@/theme';
 
 SplashScreen.preventAutoHideAsync();
@@ -69,7 +70,9 @@ export default function RootLayout() {
       <PreferencesProvider>
         {/* En cas d'échec du chargement des polices, l'appli s'ouvre quand même avec les polices du téléphone. */}
         <AuthProvider>
-          <Contenu policesPretes={policesChargees || !!erreurPolices} />
+          <RechercheProvider>
+            <Contenu policesPretes={policesChargees || !!erreurPolices} />
+          </RechercheProvider>
         </AuthProvider>
       </PreferencesProvider>
     </SafeAreaProvider>
