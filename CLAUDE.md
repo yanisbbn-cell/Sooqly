@@ -44,7 +44,7 @@ Yanis n’est pas développeur. Il travaille uniquement depuis le navigateur d�
 ## Pile technique
 
 - Expo (React Native) + Expo Router, TypeScript strict.
-- Supabase : PostgreSQL, Auth (téléphone par SMS), Storage, Realtime, Edge Functions.
+- Supabase : PostgreSQL, Auth (téléphone obligatoire, sans vérification par SMS pour l’instant), Storage, Realtime, Edge Functions.
 - EAS Build et EAS Submit pour les magasins ; web Expo hébergé sur Vercel.
 - Règles RLS sur toutes les tables, sans exception.
 - Aucune clé secrète dans le code ni dans Git : variables d’environnement, et dis à Yanis où les ranger.

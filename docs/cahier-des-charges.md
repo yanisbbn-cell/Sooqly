@@ -62,7 +62,7 @@ Inscription, en un seul écran :
 
 1. Nom et prénom, ou kounia (au choix).
 2. Wilaya, choisie dans la liste des 69 avec un champ de recherche, puis ville.
-3. Numéro de téléphone (+213), vérifié par un code à 6 chiffres reçu par SMS : obligatoire pour créer le compte.
+3. Numéro de téléphone mobile : obligatoire pour créer le compte. Pays acceptés : Algérie (+213), France (+33), Belgique (+32), Espagne (+34), Allemagne (+49), Italie (+39). Décision du 15 novembre 2026 : pas de vérification par SMS pour l’instant (les SMS sont payants) ; elle pourra être activée plus tard sans refaire l’inscription.
 4. Mot de passe.
 5. Case obligatoire « J’ai lu la charte et je m’engage à la respecter, et à craindre Allah dans mes transactions ».
 
@@ -195,7 +195,7 @@ Sooqly stocke des numéros de téléphone, des permis de conduire et des convers
 - Sécurité au niveau des lignes (RLS) sur toutes les tables, testée avec un compte membre et un compte visiteur.
 - Permis et documents dans un espace de stockage privé, accessibles par liens temporaires, effacés automatiquement à la date prévue.
 - Aucune clé secrète dans le code de l’application ; les opérations sensibles (détecteur photo, effacements, notifications, SMS) tournent côté serveur (fonctions Supabase).
-- Mots de passe et sessions gérés par Supabase Auth ; téléphone vérifié par code SMS à l’inscription ; session renouvelée automatiquement jusqu’à la déconnexion.
+- Mots de passe et sessions gérés par Supabase Auth ; numéro de téléphone obligatoire à l’inscription (sans vérification par SMS pour l’instant) ; session renouvelée automatiquement jusqu’à la déconnexion.
 - Aucune coordonnée personnelle affichée publiquement ; numéros et e-mails masqués automatiquement dans les messages et descriptions.
 - Signalement anonyme sur chaque annonce, profil et discussion ; blocage d’un membre ; détection des demandes d’avance dans les messages.
 
@@ -229,7 +229,7 @@ La version 1 est acceptée quand :
 
 - [ ] Chaque écran de la maquette existe et fonctionne sur Android, iPhone et le web, en français et en arabe (de droite à gauche).
 - [ ] Une annonce contenant un mot interdit, une photo avec visage ou un prix incohérent ne peut pas être envoyée.
-- [ ] Un compte ne peut pas être créé sans numéro vérifié par SMS, et reste connecté après fermeture de l’application.
+- [ ] Un compte ne peut pas être créé sans numéro de téléphone ni acceptation de la charte, et reste connecté après fermeture de l’application.
 - [ ] Une recherche de location sur 6 mois n’affiche que les biens qui ont un tarif adapté et sont disponibles.
 - [ ] Une nouvelle annonce validée déclenche la notification des alertes qui lui correspondent.
 - [ ] Une annonce passe en « Expirée » après 60 jours et peut être republiée.
