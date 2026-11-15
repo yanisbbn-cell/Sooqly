@@ -265,11 +265,22 @@ begin
     select count(*) into nb from public.chercher_locations('logement', '2031-08-01', null, '6_mois');
     assert nb = 0, 'bien proposé hors de ses disponibilités';
     -- budget, personnes, type
-    select count(*) into nb from public.chercher_locations('logement', '2030-12-10', null, '1_an', null, null, null, null, null, 650000);
+    select count(*) into nb from public.chercher_locations('logement', '2030-12-10', null, '1_an', 16::smallint, null, null, null, null, 650000);
     assert nb = 1, 'budget 650 000 sur 1 an : ' || nb;
-    select count(*) into nb from public.chercher_locations('logement', '2030-12-10', null, '6_mois', null, null, 3);
-    assert nb = 1, 'au moins 3 personnes : ' || nb;
-    select count(*) into nb from public.chercher_locations('logement', '2030-12-10', null, '6_mois', null, array['Studio']);
+    reset role;
+    -- Un logement qui n'indique pas sa capacité n'est pas écarté (correction après le test de Yanis).
+    perform set_config('request.jwt.claims', '', true);
+    insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code, statut, caracteristiques)
+      values (a, 'location', 'immobilier', 'F2 sans capacité', 50000, 31, 'en_ligne', '{"type":"F2"}') returning id into l2;
+    insert into public.listing_rates (annonce_id, unite, prix_da) values (l2, 'mois', 40000);
+    insert into public.availability (annonce_id, debut, fin) values (l2, '2030-12-01', '2031-12-31');
+    perform set_config('request.jwt.claims', '{"role":"anon"}', true);
+    set local role anon;
+    select count(*) into nb from public.chercher_locations('logement', '2030-12-10', null, '6_mois', 16::smallint, null, 3);
+    assert nb = 1, 'au moins 3 personnes à Alger : ' || nb;
+    select count(*) into nb from public.chercher_locations('logement', '2030-12-10', null, '6_mois', 31::smallint, null, 3);
+    assert nb = 1, 'logement sans capacité indiquée écarté : ' || nb;
+    select count(*) into nb from public.chercher_locations('logement', '2030-12-10', null, '6_mois', 16::smallint, array['Studio']);
     assert nb = 1, 'type Studio : ' || nb;
     select count(*) into nb from public.chercher_locations('vehicule', '2030-12-10', '2030-12-12', 'dates', null, null, null, 'Automatique');
     assert nb = 0, 'boîte automatique : ' || nb;
