@@ -86,3 +86,14 @@ export function IconeLoupe({ couleur, taille = 20 }: P) {
     </Svg>
   );
 }
+
+export function IconeFiltres({ couleur, taille = 20 }: P) {
+  return (
+    <Svg {...base(taille)} stroke={couleur} strokeWidth={2} strokeLinecap="round">
+      <Path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" />
+      <Circle cx={16} cy={6} r={2} />
+      <Circle cx={10} cy={12} r={2} />
+      <Circle cx={18} cy={18} r={2} />
+    </Svg>
+  );
+}

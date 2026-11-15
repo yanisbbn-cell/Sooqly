@@ -15,7 +15,8 @@ export default function OngletsLayout() {
   return (
     <Tabs style={styles.conteneur}>
       <View style={styles.ecran}>
-        <TabSlot />
+        {/* Par défaut, l'écran ne rétrécit pas : sur le web, son bas passerait sous la barre d'onglets. */}
+        <TabSlot style={styles.slot} />
       </View>
       <TabList asChild>
         <ConteneurBarre>
@@ -42,5 +43,7 @@ export default function OngletsLayout() {
 
 const styles = StyleSheet.create({
   conteneur: { flex: 1, backgroundColor: colors.blanc },
-  ecran: { flex: 1 },
+  // « minHeight: 0 » : sur le web, l'écran ne dépasse pas sous la barre d'onglets.
+  ecran: { flex: 1, minHeight: 0 },
+  slot: { flexShrink: 1, minHeight: 0 },
 });

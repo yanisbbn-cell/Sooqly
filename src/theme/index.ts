@@ -33,6 +33,7 @@ export const colors = {
 
   // Danger
   rouge: '#B5453F',
+  rougeFond: '#FBE3D6', // fond des alertes (maquette)
 } as const;
 
 /** Noms des polices chargées dans app/_layout.tsx. */

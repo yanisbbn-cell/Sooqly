@@ -19,6 +19,7 @@ export type Profil = {
   ville: string | null;
   avatar: number | null;
   telephone_verifie: boolean;
+  role: 'membre' | 'moderateur' | 'admin';
 };
 
 /** Clés de traduction « compte.erreurs.* ». */
@@ -67,7 +68,7 @@ function traduireErreur(e: { message?: string; status?: number; code?: string } 
   return defaut;
 }
 
-const COLONNES = 'id, nom_affiche, wilaya_code, ville, avatar, telephone_verifie';
+const COLONNES = 'id, nom_affiche, wilaya_code, ville, avatar, telephone_verifie, role';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [pret, setPret] = useState(false);
@@ -183,6 +184,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return <Contexte.Provider value={valeur}>{children}</Contexte.Provider>;
 }
+
+/** Vrai pour un modérateur ou un administrateur. */
+export const estModerateur = (p: Profil | null) => p?.role === 'moderateur' || p?.role === 'admin';
 
 export function useAuth(): Auth {
   const a = useContext(Contexte);

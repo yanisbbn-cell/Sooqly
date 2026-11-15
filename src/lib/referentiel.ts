@@ -87,3 +87,52 @@ export function normaliser(texte: string): string {
     .replace(/[’']/g, '')
     .trim();
 }
+
+// ---------- Catégories et réglages (étape 4) ----------
+
+export type Critere = {
+  cle: string;
+  fr: string;
+  ar: string;
+  type: 'texte' | 'nombre' | 'choix';
+  options?: { v: string; fr: string; ar: string }[];
+};
+export type SousCategorie = { id: number; nom_fr: string; nom_ar: string; ordre: number };
+export type Categorie = {
+  cle: string;
+  ordre: number;
+  nom_fr: string;
+  nom_ar: string;
+  nom_court_fr: string | null;
+  icone: string;
+  criteres: Critere[];
+  fourchettes_prix: Record<string, [number, number]>;
+  titre_exemple: TexteBilingue;
+  conseil_description: TexteBilingue;
+  sous_categories: SousCategorie[];
+};
+export type Reglages = { taux_dinar_euro: number; seuil_badge: number; duree_vie_annonce_jours: number };
+
+async function chargerCategories(): Promise<Categorie[]> {
+  const { data, error } = await supabase
+    .from('categories')
+    .select(
+      'cle, ordre, nom_fr, nom_ar, nom_court_fr, icone, criteres, fourchettes_prix, titre_exemple, conseil_description, sous_categories:subcategories(id, nom_fr, nom_ar, ordre)',
+    )
+    .order('ordre');
+  if (error) throw error;
+  return (data as Categorie[]).map((c) => ({ ...c, sous_categories: [...c.sous_categories].sort((a, b) => a.ordre - b.ordre) }));
+}
+
+async function chargerReglages(): Promise<Reglages> {
+  const { data, error } = await supabase
+    .from('settings')
+    .select('taux_dinar_euro, seuil_badge, duree_vie_annonce_jours')
+    .eq('id', 1)
+    .single();
+  if (error) throw error;
+  return { ...data, taux_dinar_euro: Number(data.taux_dinar_euro) } as Reglages;
+}
+
+export const useCategories = () => useDonnees('categories', chargerCategories);
+export const useReglages = () => useDonnees('reglages', chargerReglages);
