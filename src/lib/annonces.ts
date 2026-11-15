@@ -182,3 +182,11 @@ export async function refuserAnnonce(id: string, motif: string) {
     .eq('id', id);
   return !error;
 }
+
+/** Résumés de plusieurs annonces (résultats de la recherche de location). */
+export async function lireAnnoncesParIds(ids: string[]): Promise<AnnonceResume[]> {
+  if (!ids.length) return [];
+  const { data, error } = await supabase.from('listings').select(RESUME).in('id', ids);
+  if (error) throw error;
+  return data as unknown as AnnonceResume[];
+}
