@@ -72,7 +72,8 @@ export const fr = {
     ville: 'Votre ville ou commune',
     villeEx: 'Ex. : Bab Ezzouar',
     telephone: 'Numéro de téléphone',
-    telephoneFormat: 'Numéro de mobile algérien : 9 chiffres, commençant par 5, 6 ou 7.',
+    telephoneFormat: 'Numéro de mobile incomplet ou incorrect pour ce pays.',
+    pays: 'Pays du numéro',
     telephonePourquoi:
       'Votre numéro n’est jamais affiché sans votre accord. Il protège la communauté contre les faux comptes.',
     motDePasse: 'Mot de passe',
@@ -98,6 +99,14 @@ export const fr = {
       reseau: 'Connexion internet indisponible. Réessayez.',
       inconnue: 'Une erreur est survenue. Réessayez.',
     },
+  },
+  pays: {
+    dz: 'Algérie',
+    fr: 'France',
+    be: 'Belgique',
+    es: 'Espagne',
+    de: 'Allemagne',
+    it: 'Italie',
   },
   commun: {
     retour: 'Retour',

@@ -62,7 +62,7 @@ Inscription, en un seul écran :
 
 1. Nom et prénom, ou kounia (au choix).
 2. Wilaya, choisie dans la liste des 69 avec un champ de recherche, puis ville.
-3. Numéro de téléphone (+213) : obligatoire pour créer le compte. Décision du 15 novembre 2026 : pas de vérification par SMS pour l’instant (les SMS sont payants) ; elle pourra être activée plus tard sans refaire l’inscription.
+3. Numéro de téléphone mobile : obligatoire pour créer le compte. Pays acceptés : Algérie (+213), France (+33), Belgique (+32), Espagne (+34), Allemagne (+49), Italie (+39). Décision du 15 novembre 2026 : pas de vérification par SMS pour l’instant (les SMS sont payants) ; elle pourra être activée plus tard sans refaire l’inscription.
 4. Mot de passe.
 5. Case obligatoire « J’ai lu la charte et je m’engage à la respecter, et à craindre Allah dans mes transactions ».
 

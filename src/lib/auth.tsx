@@ -5,7 +5,7 @@ import { supabase, supabaseConfigure } from './supabase';
 
 /**
  * Comptes Sooqly.
- * - Le numéro de téléphone (+213) est obligatoire pour s'inscrire. Il n'est pas vérifié par SMS
+ * - Le numéro de téléphone est obligatoire (format international, voir telephone.ts) pour s'inscrire. Il n'est pas vérifié par SMS
  *   (décision de Yanis : les SMS sont payants) ; la vérification pourra être activée plus tard.
  * - Un membre est « connecté » quand il a une session ET un profil (créé à la fin de l'inscription).
  * - La session est gardée sur l'appareil jusqu'à la déconnexion.
@@ -36,6 +36,7 @@ type Auth = {
   pret: boolean;
   profil: Profil | null;
   inscrire: (d: {
+    /** Numéro complet, format international (« +213… », « +33… »). */
     telephone: string;
     nomAffiche: string;
     wilaya: number;
@@ -51,13 +52,7 @@ type Auth = {
 
 const Contexte = createContext<Auth | null>(null);
 
-/** Un mobile algérien : 9 chiffres commençant par 5, 6 ou 7 (après +213). */
-export const numeroValide = (n: string) => /^[567]\d{8}$/.test(chiffres(n));
-export const chiffres = (n: string) => n.replace(/\D/g, '').replace(/^(213|0)/, '');
-export const numeroComplet = (n: string) => `+213${chiffres(n)}`;
-/** « 555000001 » → « +213 555 00 00 01 » */
-export const numeroLisible = (n: string) =>
-  `+213 ${chiffres(n).replace(/^(\d{3})(\d{2})(\d{2})(\d{2})$/, '$1 $2 $3 $4')}`;
+const chiffres = (n: string) => n.replace(/\D/g, '');
 export const MOT_DE_PASSE_MIN = 8;
 
 function traduireErreur(e: { message?: string; status?: number; code?: string } | null, defaut: ErreurCompte): ErreurCompte {
@@ -124,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       let sessionCourante = s.session;
       if (!sessionCourante) {
-        const { data, error } = await supabase.auth.signUp({ phone: numeroComplet(telephone), password: motDePasse });
+        const { data, error } = await supabase.auth.signUp({ phone: telephone, password: motDePasse });
         if (error || !data.session) return { erreur: traduireErreur(error, 'inconnue') };
         sessionCourante = data.session;
         setSession(data.session);
@@ -154,7 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const connecter = useCallback<Auth['connecter']>(
     async (numero, motDePasse) => {
-      const { data, error } = await supabase.auth.signInWithPassword({ phone: numeroComplet(numero), password: motDePasse });
+      const { data, error } = await supabase.auth.signInWithPassword({ phone: numero, password: motDePasse });
       if (error || !data.session) return { erreur: traduireErreur(error, 'identifiants') };
       setSession(data.session);
       await chargerProfil(data.session);

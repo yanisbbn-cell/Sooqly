@@ -10,18 +10,14 @@ import { FeuilleWilayas } from '@/components/FeuilleWilayas';
 import { IconeChevronBas, IconeCoche } from '@/components/Icones';
 import { ImageProfil } from '@/components/ImageProfil';
 import { Texte } from '@/components/Texte';
-import {
-  MOT_DE_PASSE_MIN,
-  chiffres,
-  numeroValide,
-  useAuth,
-  type ErreurCompte,
-} from '@/lib/auth';
+import { MOT_DE_PASSE_MIN, useAuth, type ErreurCompte } from '@/lib/auth';
 import { usePreferences } from '@/lib/preferences';
 import { numeroWilaya, useWilayas } from '@/lib/referentiel';
+import { PAYS, nettoyer, numeroComplet, numeroValide, type Pays } from '@/lib/telephone';
 import { colors, toucheMin } from '@/theme';
 
 import { FeuilleImagesProfil } from './FeuilleImagesProfil';
+import { FeuillePays } from './FeuillePays';
 
 type Mode = 'connexion' | 'inscription';
 
@@ -43,6 +39,8 @@ export function FormulaireCompte() {
   const [avatar, setAvatar] = useState<number | null>(null);
   const [wilaya, setWilaya] = useState<number | null>(null);
   const [ville, setVille] = useState('');
+  const [pays, setPays] = useState<Pays>(PAYS[0]!);
+  const [feuillePays, setFeuillePays] = useState(false);
   const [telephone, setTelephone] = useState('');
   const [motDePasse, setMotDePasse] = useState('');
   const [charte, setCharte] = useState(false);
@@ -54,7 +52,8 @@ export function FormulaireCompte() {
 
   const nomAffiche = (modeNom === 'nom' ? `${prenom.trim()} ${nom.trim()}` : kounia).trim();
   const nomOk = modeNom === 'nom' ? prenom.trim().length > 0 && nom.trim().length > 0 : kounia.trim().length >= 2;
-  const telOk = numeroValide(telephone);
+  const telOk = numeroValide(telephone, pays);
+  const numero = numeroComplet(telephone, pays);
   const mdpOk = motDePasse.length >= MOT_DE_PASSE_MIN;
   const w = wilayas?.find((x) => x.code === wilaya);
 
@@ -68,8 +67,8 @@ export function FormulaireCompte() {
     setErreur(null);
     const r =
       inscription && wilaya
-        ? await auth.inscrire({ telephone, nomAffiche, wilaya, ville: ville.trim(), avatar, motDePasse, langue })
-        : await auth.connecter(telephone, motDePasse);
+        ? await auth.inscrire({ telephone: numero, nomAffiche, wilaya, ville: ville.trim(), avatar, motDePasse, langue })
+        : await auth.connecter(numero, motDePasse);
     setOccupe(false);
     setErreur(r.erreur);
   };
@@ -205,20 +204,26 @@ export function FormulaireCompte() {
 
             {/* Le numéro s'écrit toujours de gauche à droite, même en arabe. */}
             <View style={styles.ligneTel}>
-              <View style={styles.indicatif}>
+              <Pressable
+                onPress={() => setFeuillePays(true)}
+                accessibilityRole="button"
+                accessibilityLabel={`${t('compte.pays')} : ${t(`pays.${pays.cle}`)} +${pays.indicatif}`}
+                style={({ pressed }) => [styles.indicatif, pressed && { opacity: 0.8 }]}
+              >
                 <Texte poids={700} style={{ fontSize: 15, writingDirection: 'ltr' }}>
-                  +213
+                  +{pays.indicatif}
                 </Texte>
-              </View>
+                <IconeChevronBas couleur={colors.brun} taille={16} />
+              </Pressable>
               <Champ
                 ltr
                 accessibilityLabel={t('compte.telephone')}
-                placeholder="5XX XX XX XX"
+                placeholder={pays.exemple}
                 value={telephone}
-                onChangeText={(v) => setTelephone(chiffres(v).slice(0, 9))}
+                onChangeText={(v) => setTelephone(nettoyer(v, pays))}
                 keyboardType="phone-pad"
                 autoComplete="tel"
-                maxLength={12}
+                maxLength={pays.longueurMax + 1}
               />
             </View>
             {inscription && telephone.length > 0 && !telOk && (
@@ -286,6 +291,15 @@ export function FormulaireCompte() {
         valeur={avatar}
         onChoisir={setAvatar}
         onFermer={() => setFeuilleImages(false)}
+      />
+      <FeuillePays
+        visible={feuillePays}
+        valeur={pays}
+        onChoisir={(p) => {
+          setPays(p);
+          setTelephone('');
+        }}
+        onFermer={() => setFeuillePays(false)}
       />
       <FeuilleWilayas
         visible={feuilleWilayas}
@@ -380,7 +394,14 @@ const styles = StyleSheet.create({
   selecteur: { ...styleChamp, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   selecteurTexte: { flex: 1, fontSize: 15 },
   ligneTel: { flexDirection: 'row', gap: 8, direction: 'ltr' },
-  indicatif: { ...styleChamp, backgroundColor: colors.sable2, paddingHorizontal: 12, justifyContent: 'center' },
+  indicatif: {
+    ...styleChamp,
+    backgroundColor: colors.sable2,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   caseCharte: {
     flexDirection: 'row',
     alignItems: 'flex-start',
