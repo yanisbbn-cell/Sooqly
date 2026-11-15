@@ -11,6 +11,8 @@ import { FeuilleWilayas } from '@/components/FeuilleWilayas';
 import { IconeChevronBas, IconeCoche, IconeRetour } from '@/components/Icones';
 import { Pastille } from '@/components/Pastille';
 import { Texte } from '@/components/Texte';
+
+import { EtapePhotos } from './EtapePhotos';
 import {
   ACTIVITES_PRO,
   ETATS,
@@ -21,9 +23,19 @@ import {
   type Etat,
 } from '@/lib/annonces';
 import type { Profil } from '@/lib/auth';
+import { envoyerPhotos, type PhotoLocale } from '@/lib/photos';
 import { usePreferences } from '@/lib/preferences';
 import { formaterEuro, formaterNombre, fourchette, lirePrix } from '@/lib/prix';
-import { numeroWilaya, useCategories, useReglages, useWilayas, type Categorie, type Critere } from '@/lib/referentiel';
+import {
+  famillesDetectees,
+  numeroWilaya,
+  useCategories,
+  useMotsInterdits,
+  useReglages,
+  useWilayas,
+  type Categorie,
+  type Critere,
+} from '@/lib/referentiel';
 import { colors, fonts, toucheMin } from '@/theme';
 
 type CleEtape = 'cat' | 'desc' | 'etat' | 'photos' | 'prix' | 'recap';
@@ -34,6 +46,7 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
   const { langue, rtl } = usePreferences();
   const categories = useCategories();
   const reglages = useReglages();
+  const { donnees: motsInterdits } = useMotsInterdits();
   const { donnees: wilayas } = useWilayas();
   const defilement = useRef<ScrollViewInstance>(null);
 
@@ -56,6 +69,10 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
   const [occupe, setOccupe] = useState(false);
   const [erreur, setErreur] = useState(false);
   const [envoyee, setEnvoyee] = useState(false);
+  const [photos, setPhotos] = useState<PhotoLocale[]>([]);
+  // Annonce déjà créée lors d'un essai précédent (si l'envoi des photos a échoué) : on ne la recrée pas.
+  const [annonceCreee, setAnnonceCreee] = useState<string | null>(null);
+  const [erreurPhotos, setErreurPhotos] = useState(false);
 
   const nom = (x: { nom_fr: string; nom_ar: string }) => (langue === 'ar' ? x.nom_ar : x.nom_fr);
   const bi = (x: { fr: string; ar: string }) => x[langue];
@@ -69,6 +86,8 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
   const i = Math.min(index, etapes.length - 1);
   const etape = etapes[i]!;
   const taux = reglages.donnees?.taux_dinar_euro ?? 0.0037;
+  const anglesParCategorie = t('photos.angles', { returnObjects: true }) as unknown as Record<string, string[]>;
+  const angles = anglesParCategorie[cleCategorie ?? ''] ?? anglesParCategorie.defaut ?? [];
 
   // ---------- Prix ----------
   const prix = lirePrix(prixSaisi);
@@ -81,6 +100,13 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
   }
 
   // ---------- Ce qui bloque chaque étape ----------
+  // ---------- Détecteur de mots interdits (pendant la saisie) ----------
+  const detectees = famillesDetectees(
+    [titre, description, ...Object.values(carac)].join(' '),
+    pro,
+    motsInterdits ?? [],
+  );
+
   const bloque: Record<CleEtape, string> = {
     cat: !cleCategorie
       ? t('publier.bloque.categorie')
@@ -89,9 +115,22 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
         : pro && (!activite || nomCommercial.trim().length < 2)
           ? t('publier.bloque.nomCommercial')
           : '',
-    desc: titre.trim().length < 3 ? t('publier.bloque.titre') : '',
+    desc: titre.trim().length < 3 ? t('publier.bloque.titre') : detectees.length
+        ? t('detecteur.corriger', {
+            motif:
+              detectees[0]!.effet === 'professionnel'
+                ? t('detecteur.professionnel')
+                : langue === 'ar'
+                  ? detectees[0]!.motif_ar
+                  : detectees[0]!.motif_fr,
+          })
+        : '',
     etat: avecEtat && !etat ? t('publier.bloque.etat') : '',
-    photos: '',
+    photos: photos.some((p) => p.analyse?.interdit)
+      ? t('photos.bloquePhoto')
+      : photos.some((p) => !p.analyse)
+        ? t('photos.bloqueAnalyse')
+        : '',
     prix:
       !estDon && prix === null
         ? t('publier.bloque.prix')
@@ -108,6 +147,7 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
   const criteres = categorie?.criteres ?? [];
   const nbCarac = Object.values(carac).filter((v) => v.trim()).length;
   const points: { cle: keyof typeof pointsEtape; ok: boolean }[] = [
+    { cle: 'photos', ok: photos.length >= 4 && !photos.some((p) => p.analyse?.interdit) },
     { cle: 'titre', ok: titre.trim().length >= 12 },
     { cle: 'description', ok: description.trim().length >= 60 },
     { cle: 'caracteristiques', ok: nbCarac >= Math.min(2, criteres.length) },
@@ -115,7 +155,7 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
     { cle: 'prix', ok: estDon || (prix !== null && !problemePrix) },
     { cle: 'lieu', ok: !!wilaya && !!ville.trim() },
   ];
-  const pointsEtape = { titre: 'desc', description: 'desc', caracteristiques: 'desc', etat: 'etat', prix: 'prix', lieu: 'prix' } as const;
+  const pointsEtape = { photos: 'photos', titre: 'desc', description: 'desc', caracteristiques: 'desc', etat: 'etat', prix: 'prix', lieu: 'prix' } as const;
   const nbOk = points.filter((p) => p.ok).length;
 
   const allerA = (n: number) => {
@@ -139,23 +179,35 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
     if (!toutEstBon || !cleCategorie || !wilaya || occupe) return;
     setOccupe(true);
     setErreur(false);
-    const r = await envoyerAnnonce({
-      auteurId: profil.id,
-      categorie: cleCategorie,
-      sousCategorieId: sousCategorie,
-      titre,
-      description,
-      etat,
-      caracteristiques: Object.fromEntries(
-        Object.entries(carac).map(([k, v]) => [k, criteres.find((c) => c.cle === k)?.type === 'nombre' && v ? Number(v) : v]),
-      ),
-      prixDa: prix ?? 0,
-      wilaya,
-      ville,
-      pro: pro && activite ? { activite, nomCommercial: nomCommercial.trim() } : null,
-    });
+    setErreurPhotos(false);
+    let id = annonceCreee;
+    if (!id) {
+      const r = await envoyerAnnonce({
+        auteurId: profil.id,
+        categorie: cleCategorie,
+        sousCategorieId: sousCategorie,
+        titre,
+        description,
+        etat,
+        caracteristiques: Object.fromEntries(
+          Object.entries(carac).map(([k, v]) => [k, criteres.find((c) => c.cle === k)?.type === 'nombre' && v ? Number(v) : v]),
+        ),
+        prixDa: prix ?? 0,
+        wilaya,
+        ville,
+        pro: pro && activite ? { activite, nomCommercial: nomCommercial.trim() } : null,
+      });
+      if (r.erreur || !r.id) {
+        setOccupe(false);
+        setErreur(true);
+        return;
+      }
+      id = r.id;
+      setAnnonceCreee(id);
+    }
+    const photosOk = await envoyerPhotos(profil.id, id, photos, angles);
     setOccupe(false);
-    if (r.erreur) setErreur(true);
+    if (!photosOk) setErreurPhotos(true);
     else setEnvoyee(true);
   };
 
@@ -171,6 +223,9 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
     setEtat(null);
     setPrixSaisi('');
     setEnvoyee(false);
+    setPhotos([]);
+    setAnnonceCreee(null);
+    setErreurPhotos(false);
   };
 
   // ---------- Annonce envoyée ----------
@@ -349,6 +404,8 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
               <Texte style={styles.aide}>{t('publier.titreAide')}</Texte>
             </View>
 
+            {detectees.length > 0 && <PanneauDetecteur familles={detectees} />}
+
             {criteres.length > 0 && (
               <View style={styles.bloc}>
                 <Texte variante="titre" poids={700} style={styles.section}>
@@ -419,7 +476,7 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
         )}
 
         {/* ---------- 4. Photos (étape 5 du plan) ---------- */}
-        {etape === 'photos' && <Texte style={styles.encart}>{t('publier.photosBientot')}</Texte>}
+        {etape === 'photos' && <EtapePhotos angles={angles} photos={photos} setPhotos={setPhotos} />}
 
         {/* ---------- 5. Prix et lieu ---------- */}
         {etape === 'prix' && (
@@ -575,9 +632,24 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
                 libelle={t('publier.recap.prix')}
                 valeur={estDon ? t('publier.gratuit') : prix !== null ? `${formaterNombre(prix)} ${t('da')}` : '—'}
               />
+              <LigneRecap
+                libelle={t('publier.recap.photos')}
+                valeur={photos.length ? t('photos.recapPhotos', { count: photos.length }) : t('photos.recapAucune')}
+              />
               <LigneRecap libelle={t('publier.recap.lieu')} valeur={[ville.trim(), w ? nom(w) : ''].filter(Boolean).join(langue === 'ar' ? '، ' : ', ')} />
             </View>
 
+            <View style={[styles.conformite, toutEstBon ? styles.conforme : styles.nonConforme]}>
+              <Texte poids={700} style={{ fontSize: 12, color: toutEstBon ? colors.sable3 : colors.rouge }}>
+                {t('detecteur.titre')}
+              </Texte>
+              <Texte poids={700} style={{ fontSize: 16, color: toutEstBon ? colors.sable1 : colors.rouge }}>
+                {t(toutEstBon ? 'detecteur.conforme' : 'detecteur.nonConforme')}
+              </Texte>
+              <Texte style={{ fontSize: 13, lineHeight: 19, color: toutEstBon ? colors.sable1 : colors.brun }}>
+                {t(toutEstBon ? 'detecteur.conformeTexte' : 'detecteur.nonConformeTexte')}
+              </Texte>
+            </View>
             <Texte style={styles.aide}>{t('publier.engagement')}</Texte>
             <Pressable onPress={() => router.push('/charte')} accessibilityRole="link" style={styles.lien}>
               <Texte poids={700} style={styles.lienTexte}>
@@ -587,6 +659,11 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
             {erreur && (
               <Texte poids={600} style={styles.erreur} accessibilityLiveRegion="polite">
                 {t('publier.erreurEnvoi')}
+              </Texte>
+            )}
+            {erreurPhotos && (
+              <Texte poids={600} style={styles.erreur} accessibilityLiveRegion="polite">
+                {t('photos.erreurEnvoiPhotos')}
               </Texte>
             )}
           </>
@@ -617,6 +694,24 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
 
       <FeuilleWilayas visible={feuilleWilayas} valeur={wilaya} onChoisir={setWilaya} onFermer={() => setFeuilleWilayas(false)} />
     </KeyboardAvoidingView>
+  );
+}
+
+/** Encadré rouge du détecteur de mots : ce qui est interdit, et pourquoi. */
+function PanneauDetecteur({ familles }: { familles: { cle: string; effet: string; motif_fr: string; motif_ar: string }[] }) {
+  const { t } = useTranslation();
+  const { langue } = usePreferences();
+  return (
+    <View style={styles.alerte} accessibilityRole="alert">
+      <Texte poids={700} style={styles.alerteTexte}>
+        {t('detecteur.titre')}
+      </Texte>
+      {familles.map((f) => (
+        <Texte key={f.cle} style={styles.alerteTexte}>
+          • {f.effet === 'professionnel' ? t('detecteur.professionnel') : langue === 'ar' ? f.motif_ar : f.motif_fr}
+        </Texte>
+      ))}
+    </View>
   );
 }
 
@@ -776,7 +871,10 @@ const styles = StyleSheet.create({
   radioPoint: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent },
   unite: { ...styleChamp, backgroundColor: colors.sable2, justifyContent: 'center' },
   apercu: { fontSize: 13 },
-  alerte: { backgroundColor: colors.rougeFond, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: colors.rouge },
+  conformite: { borderRadius: 14, padding: 14, gap: 4 },
+  conforme: { backgroundColor: colors.brun },
+  nonConforme: { backgroundColor: colors.rougeFond, borderWidth: 1, borderColor: colors.rouge },
+  alerte: { gap: 4, backgroundColor: colors.rougeFond, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: colors.rouge },
   alerteTexte: { fontSize: 13, lineHeight: 19, color: colors.rouge },
   selecteur: { ...styleChamp, flexDirection: 'row', alignItems: 'center', gap: 10 },
   carte: { backgroundColor: colors.carte, borderRadius: 16, padding: 16, gap: 10 },

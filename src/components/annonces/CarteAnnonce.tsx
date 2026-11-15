@@ -1,10 +1,11 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 import { IconeCategorie } from '@/components/IconeCategorie';
 import { Texte } from '@/components/Texte';
-import { estSponsorisee, type AnnonceResume } from '@/lib/annonces';
+import { estSponsorisee, photoPrincipale, type AnnonceResume } from '@/lib/annonces';
+import { urlPhoto } from '@/lib/photos';
 import { usePreferences } from '@/lib/preferences';
 import { formaterEuro, formaterNombre } from '@/lib/prix';
 import type { Categorie, Wilaya } from '@/lib/referentiel';
@@ -36,7 +37,11 @@ export function CarteAnnonce({ annonce: a, categorie, wilaya, taux }: Props) {
       style={({ pressed }) => [styles.carte, pressed && { opacity: 0.85 }]}
     >
       <View style={[styles.tuile, { backgroundColor: tuile.fond }]}>
-        <IconeCategorie icone={categorie?.icone ?? 'grid'} couleur={tuile.trait} taille={40} />
+        {photoPrincipale(a) ? (
+          <Image source={{ uri: urlPhoto(photoPrincipale(a)!) }} style={StyleSheet.absoluteFill} resizeMode="cover" accessibilityIgnoresInvertColors />
+        ) : (
+          <IconeCategorie icone={categorie?.icone ?? 'grid'} couleur={tuile.trait} taille={40} />
+        )}
         <View style={styles.type}>
           <Texte poids={600} style={styles.typeTexte}>
             {a.statut === 'reserve' ? t('carte.reserve') : t(`publier.types.${a.type}`)}

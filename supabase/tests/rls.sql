@@ -196,5 +196,27 @@ begin
   assert t = 'don' and procedure_texte = '0', 'A : un don n''est pas gratuit';
   reset role;
 
+  -- ---------- 12. Mots interdits ----------
+  perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+  set local role authenticated;
+  begin
+    insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code)
+      values (a, 'vente', 'electro', 'Guitare électrique', 45000, 16);
+    assert false, 'A : mot interdit (guitare) accepté';
+  exception when raise_exception then null; end;
+  begin
+    insert into public.listings (auteur_id, type, categorie, titre, description, prix_da, wilaya_code)
+      values (a, 'vente', 'electro', 'Téléviseur', 'بيع بالتقسيط مع فائدة', 45000, 16);
+    assert false, 'A : mot interdit arabe (فائدة) accepté';
+  exception when raise_exception then null; end;
+  begin
+    insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code)
+      values (a, 'vente', 'electro', 'Agence de location', 45000, 16);
+    assert false, 'A : particulier écrivant « agence » accepté';
+  exception when raise_exception then null; end;
+  insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code)
+    values (a, 'vente', 'electro', 'Vélo vintage', 45000, 16);
+  reset role;
+
   raise exception 'TESTS_OK';
 end $$;

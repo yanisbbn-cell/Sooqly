@@ -7,6 +7,7 @@ import { EcranProvisoire } from '@/components/EcranProvisoire';
 import { EtatChargement } from '@/components/EtatChargement';
 import { AssistantPublication } from '@/components/publier/AssistantPublication';
 import { useAuth } from '@/lib/auth';
+import { DetecteurProvider } from '@/lib/detecteur';
 import { colors } from '@/theme';
 
 /** Onglet Publier : l'assistant pour un membre connecté, sinon une invitation à se connecter. */
@@ -28,7 +29,12 @@ export default function Publier() {
     );
   }
   // La clé remet l'assistant à zéro si un autre membre se connecte.
-  return <AssistantPublication key={profil.id} profil={profil} />;
+  // Le détecteur de photos se prépare dès l'ouverture de l'assistant.
+  return (
+    <DetecteurProvider>
+      <AssistantPublication key={profil.id} profil={profil} />
+    </DetecteurProvider>
+  );
 }
 
 const styles = StyleSheet.create({
