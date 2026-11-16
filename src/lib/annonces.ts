@@ -129,7 +129,7 @@ export type Annonce = AnnonceResume & {
 };
 
 // Deux liens existent entre annonces et profils (auteur, acheteur) : on précise celui de l'auteur.
-const RESUME =
+export const RESUME =
   'id, type, categorie, sous_categorie_id, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, auteur:profiles!listings_auteur_id_fkey(id, est_pro), photos:listing_photos(fichier, ordre, angle, decision_moderation, resultat_detecteur), tarifs:listing_rates(unite, prix_da)';
 const COMPLET =
   'id, type, categorie, sous_categorie_id, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, description, caracteristiques, motif_refus, expire_le, auteur_id, permis_exige, auteur:profiles!listings_auteur_id_fkey(id, nom_affiche, avatar, est_pro, nom_commercial, cree_le), photos:listing_photos(fichier, ordre, angle, decision_moderation, resultat_detecteur), tarifs:listing_rates(unite, prix_da), disponibilites:availability(debut, fin)';
@@ -206,4 +206,59 @@ export async function annoncesDuMembre(id: string): Promise<AnnonceResume[]> {
     .limit(50);
   if (error) throw error;
   return data as unknown as AnnonceResume[];
+}
+
+// ---------- Modifier une annonce (étape 10) ----------
+
+export type ModificationAnnonce = Omit<NouvelleAnnonce, 'auteurId' | 'pro'> & {
+  /** Location : tarifs et période de disponibilité, remplacés en entier. */
+  tarifs: Tarif[] | null;
+  periode: Periode | null;
+};
+
+/**
+ * Enregistre les modifications. La base décide du statut : seul un changement de prix garde l'annonce en ligne,
+ * toute autre modification la renvoie « En vérification ».
+ */
+export async function modifierAnnonce(id: string, m: ModificationAnnonce): Promise<boolean> {
+  const caracteristiques = Object.fromEntries(
+    Object.entries(m.caracteristiques)
+      .map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v])
+      .filter(([, v]) => v !== ''),
+  );
+  const { error } = await supabase
+    .from('listings')
+    .update({
+      type: m.location ? 'location' : typePourCategorie(m.categorie),
+      categorie: m.categorie,
+      sous_categorie_id: m.sousCategorieId,
+      titre: m.titre.trim(),
+      description: m.description.trim(),
+      etat: etatDemande(m.categorie) && !m.location ? m.etat : null,
+      caracteristiques,
+      prix_da: m.categorie === 'dons' ? 0 : m.prixDa,
+      wilaya_code: m.wilaya,
+      ville: m.ville.trim(),
+      permis_exige: !!m.location && m.categorie === 'vehicules' && !!m.permisExige,
+    })
+    .eq('id', id);
+  if (error) return false;
+  if (m.tarifs) {
+    const d = await supabase.from('listing_rates').delete().eq('annonce_id', id);
+    if (d.error) return false;
+    const r = await supabase.from('listing_rates').insert(m.tarifs.map((t) => ({ annonce_id: id, ...t })));
+    if (r.error) return false;
+  }
+  if (m.periode) {
+    const d = await supabase.from('availability').delete().eq('annonce_id', id);
+    if (d.error) return false;
+    const r = await supabase.from('availability').insert({ annonce_id: id, ...m.periode });
+    if (r.error) return false;
+  }
+  return true;
+}
+
+export async function lireStatut(id: string): Promise<StatutAnnonce | null> {
+  const { data } = await supabase.from('listings').select('statut').eq('id', id).maybeSingle();
+  return (data?.statut as StatutAnnonce | undefined) ?? null;
 }

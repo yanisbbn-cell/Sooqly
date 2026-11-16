@@ -19,8 +19,11 @@ import {
   ETATS,
   envoyerAnnonce,
   etatDemande,
+  lireStatut,
+  modifierAnnonce,
   typePourCategorie,
   type ActivitePro,
+  type Annonce,
   type Etat,
 } from '@/lib/annonces';
 import type { Profil } from '@/lib/auth';
@@ -30,9 +33,11 @@ import {
   enregistrerLocation,
   genrePourCategorie,
   depuisTexte,
+  type Periode,
+  type Tarif,
   type Unite,
 } from '@/lib/location';
-import { envoyerPhotos, type PhotoLocale } from '@/lib/photos';
+import { enregistrerPhotosModifiees, envoyerPhotos, MAX_PHOTOS, urlPhoto, type PhotoLocale } from '@/lib/photos';
 import { usePreferences } from '@/lib/preferences';
 import { formaterEuro, formaterNombre, fourchette, lirePrix } from '@/lib/prix';
 import {
@@ -49,8 +54,15 @@ import { colors, fonts, toucheMin } from '@/theme';
 
 type CleEtape = 'cat' | 'desc' | 'etat' | 'photos' | 'prix' | 'recap';
 
-/** Assistant « Publier une annonce » : catégorie, description, état, photos, prix et lieu, vérification. */
-export function AssistantPublication({ profil }: { profil: Profil }) {
+/** Annonce à modifier (étape 10) : l'assistant s'ouvre pré-rempli. */
+export type AnnonceExistante = { annonce: Annonce; tarifs: Tarif[]; periodes: Periode[] };
+
+/**
+ * Assistant « Publier une annonce » : catégorie, description, état, photos, prix et lieu, vérification.
+ * Avec `existante`, il sert à modifier une annonce : seul un changement de prix reste en ligne,
+ * toute autre modification la renvoie en vérification (règle appliquée par la base).
+ */
+export function AssistantPublication({ profil, existante }: { profil: Profil; existante?: AnnonceExistante }) {
   const { t } = useTranslation();
   const { langue, rtl } = usePreferences();
   const categories = useCategories();
@@ -60,30 +72,57 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
   const defilement = useRef<ScrollViewInstance>(null);
 
   const [index, setIndex] = useState(0);
-  const [pro, setPro] = useState(false);
+  const ex = existante?.annonce;
+  const modification = !!ex;
+  const [pro, setPro] = useState(!!ex?.auteur?.est_pro);
   const [activite, setActivite] = useState<ActivitePro | null>(null);
   const [nomCommercial, setNomCommercial] = useState('');
-  const [cleCategorie, setCleCategorie] = useState<string | null>(null);
-  const [sousCategorie, setSousCategorie] = useState<number | null>(null);
-  const [listeOuverte, setListeOuverte] = useState(true);
+  const [cleCategorie, setCleCategorie] = useState<string | null>(ex?.categorie ?? null);
+  const [sousCategorie, setSousCategorie] = useState<number | null>(ex?.sous_categorie_id ?? null);
+  const [listeOuverte, setListeOuverte] = useState(!ex);
   const [ouverte, setOuverte] = useState<string | null>(null);
-  const [titre, setTitre] = useState('');
-  const [description, setDescription] = useState('');
-  const [carac, setCarac] = useState<Record<string, string>>({});
-  const [etat, setEtat] = useState<Etat | null>(null);
-  const [prixSaisi, setPrixSaisi] = useState('');
-  const [enLocation, setEnLocation] = useState(false);
-  const [tarifsSaisis, setTarifsSaisis] = useState<Partial<Record<Unite, string>>>({});
-  const [dispo, setDispo] = useState<{ debut: string | null; fin: string | null }>({ debut: null, fin: null });
+  const [titre, setTitre] = useState(ex?.titre ?? '');
+  const [description, setDescription] = useState(ex?.description ?? '');
+  const [carac, setCarac] = useState<Record<string, string>>(() =>
+    Object.fromEntries(Object.entries(ex?.caracteristiques ?? {}).map(([k, v]) => [k, String(v)])),
+  );
+  const [etat, setEtat] = useState<Etat | null>(ex?.etat ?? null);
+  const [prixSaisi, setPrixSaisi] = useState(ex && ex.type !== 'don' && ex.type !== 'location' ? String(ex.prix_da) : '');
+  const [enLocation, setEnLocation] = useState(ex?.type === 'location');
+  const [tarifsSaisis, setTarifsSaisis] = useState<Partial<Record<Unite, string>>>(() =>
+    Object.fromEntries((existante?.tarifs ?? []).map((x) => [x.unite, String(x.prix_da)])),
+  );
+  const [dispo, setDispo] = useState<{ debut: string | null; fin: string | null }>(() => {
+    const p = existante?.periodes ?? [];
+    return p.length ? { debut: p[0]!.debut, fin: p[p.length - 1]!.fin } : { debut: null, fin: null };
+  });
   const [locationEnregistree, setLocationEnregistree] = useState(false);
-  const [permisExige, setPermisExige] = useState(false);
-  const [wilaya, setWilaya] = useState<number | null>(profil.wilaya_code);
-  const [ville, setVille] = useState(profil.ville ?? '');
+  const [permisExige, setPermisExige] = useState(!!ex?.permis_exige);
+  const [wilaya, setWilaya] = useState<number | null>(ex?.wilaya_code ?? profil.wilaya_code);
+  const [ville, setVille] = useState(ex?.ville ?? profil.ville ?? '');
   const [feuilleWilayas, setFeuilleWilayas] = useState(false);
   const [occupe, setOccupe] = useState(false);
   const [erreur, setErreur] = useState(false);
   const [envoyee, setEnvoyee] = useState(false);
-  const [photos, setPhotos] = useState<PhotoLocale[]>([]);
+  const [photos, setPhotos] = useState<PhotoLocale[]>(() => {
+    if (!ex) return [];
+    // Photos déjà en ligne : chacune dans la case de son angle (sinon la première case libre).
+    const parCategorie = t('photos.angles', { returnObjects: true }) as unknown as Record<string, string[]>;
+    const liste = parCategorie[ex.categorie] ?? parCategorie.defaut ?? [];
+    const prises = new Set<number>();
+    return [...(ex.photos ?? [])]
+      .sort((x, y) => x.ordre - y.ordre)
+      .map((p) => {
+        let emplacement = p.angle ? liste.indexOf(p.angle) : -1;
+        if (emplacement < 0 || prises.has(emplacement)) {
+          emplacement = 0;
+          while (prises.has(emplacement) && emplacement < MAX_PHOTOS - 1) emplacement++;
+        }
+        prises.add(emplacement);
+        return { emplacement, uri: urlPhoto(p.fichier), base64: '', analyse: { interdit: false, objets: [] }, fichier: p.fichier };
+      });
+  });
+  const [resultat, setResultat] = useState<null | 'verification' | 'prix' | 'ok'>(null);
   // Annonce déjà créée lors d'un essai précédent (si l'envoi des photos a échoué) : on ne la recrée pas.
   const [annonceCreee, setAnnonceCreee] = useState<string | null>(null);
   const [erreurPhotos, setErreurPhotos] = useState(false);
@@ -148,7 +187,7 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
       ? t('publier.bloque.categorie')
       : categorie?.sous_categories.length && !sousCategorie
         ? t('publier.bloque.sousCategorie')
-        : pro && (!activite || nomCommercial.trim().length < 2)
+        : pro && !modification && (!activite || nomCommercial.trim().length < 2)
           ? t('publier.bloque.nomCommercial')
           : '',
     desc: titre.trim().length < 3 ? t('publier.bloque.titre') : detectees.length
@@ -219,11 +258,55 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
     else setListeOuverte(false);
   };
 
+  const caracteristiquesFinales = () =>
+    Object.fromEntries(
+      Object.entries(carac)
+        .filter(([k]) => criteres.some((c) => c.cle === k))
+        .map(([k, v]) => [k, criteres.find((c) => c.cle === k)?.type === 'nombre' && v ? Number(v) : v]),
+    );
+
+  // Modification : annonce, puis tarifs et disponibilités, puis photos (dans cet ordre, voir la base).
+  const enregistrerModification = async () => {
+    if (!ex || !cleCategorie || !wilaya) return;
+    const r = await modifierAnnonce(ex.id, {
+      categorie: cleCategorie,
+      sousCategorieId: sousCategorie,
+      titre,
+      description,
+      etat,
+      caracteristiques: caracteristiquesFinales(),
+      prixDa: location ? tarifs[0]!.prix_da : (prix ?? 0),
+      location,
+      permisExige,
+      wilaya,
+      ville,
+      tarifs: location ? tarifs : null,
+      periode: location && dispo.debut && dispo.fin ? { debut: dispo.debut, fin: dispo.fin } : null,
+    });
+    if (!r) {
+      setOccupe(false);
+      setErreur(true);
+      return;
+    }
+    const photosOk = await enregistrerPhotosModifiees(
+      profil.id,
+      ex.id,
+      photos,
+      angles,
+      (ex.photos ?? []).map((p) => ({ fichier: p.fichier, ordre: p.ordre })),
+    );
+    setOccupe(false);
+    if (!photosOk) return setErreurPhotos(true);
+    const statut = await lireStatut(ex.id);
+    setResultat(statut === 'verification' ? 'verification' : !location && prix !== ex.prix_da ? 'prix' : 'ok');
+  };
+
   const envoyer = async () => {
     if (!toutEstBon || !cleCategorie || !wilaya || occupe) return;
     setOccupe(true);
     setErreur(false);
     setErreurPhotos(false);
+    if (modification) return enregistrerModification();
     let id = annonceCreee;
     if (!id) {
       const r = await envoyerAnnonce({
@@ -233,11 +316,7 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
         titre,
         description,
         etat,
-        caracteristiques: Object.fromEntries(
-          Object.entries(carac)
-            .filter(([k]) => criteres.some((c) => c.cle === k))
-            .map(([k, v]) => [k, criteres.find((c) => c.cle === k)?.type === 'nombre' && v ? Number(v) : v]),
-        ),
+        caracteristiques: caracteristiquesFinales(),
         prixDa: location ? tarifs[0]!.prix_da : (prix ?? 0),
         location,
         permisExige,
@@ -290,6 +369,29 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
     setErreurPhotos(false);
   };
 
+  // ---------- Modification enregistrée ----------
+  if (resultat) {
+    return (
+      <View style={styles.ecran}>
+        <EnTetePublier titre={t('mesAnnonces.modifierTitre')} />
+        <View style={styles.succes}>
+          <View style={styles.succesRond}>
+            <IconeCoche couleur={colors.blanc} taille={34} epaisseur={3} />
+          </View>
+          <Texte variante="titre" poids={700} style={styles.succesTitre} accessibilityRole="header">
+            {t('mesAnnonces.modifieeTitre')}
+          </Texte>
+          {resultat !== 'ok' && (
+            <Texte style={styles.succesTexte}>{t(resultat === 'verification' ? 'mesAnnonces.modifieeVerif' : 'mesAnnonces.modifieePrix')}</Texte>
+          )}
+          <View style={{ alignSelf: 'stretch', gap: 10 }}>
+            <Bouton libelle={t('mesAnnonces.retourMesAnnonces')} onPress={() => (router.canGoBack() ? router.back() : router.replace('/mes-annonces'))} />
+          </View>
+        </View>
+      </View>
+    );
+  }
+
   // ---------- Annonce envoyée ----------
   if (envoyee) {
     return (
@@ -327,9 +429,10 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
   return (
     <KeyboardAvoidingView style={styles.ecran} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <EnTetePublier
-        titre={t('publier.titre')}
+        titre={modification ? t('mesAnnonces.modifierTitre') : t('publier.titre')}
         sousTitre={t('publier.etape', { n: i + 1, total: etapes.length, nom: t(`publier.etapes.${etape}`) })}
         progression={(i + 1) / etapes.length}
+        onRetour={modification ? () => (router.canGoBack() ? router.back() : router.replace('/mes-annonces')) : undefined}
       />
 
       <ScrollView ref={defilement} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.contenu}>
@@ -343,6 +446,8 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
         {/* ---------- 1. Catégorie ---------- */}
         {etape === 'cat' && (
           <>
+            {modification && <Texte style={styles.aide}>{t('mesAnnonces.regleModif')}</Texte>}
+            {!modification && (
             <View style={styles.bloc}>
               <Libelle>{t('publier.enTantQue')}</Libelle>
               <View style={styles.rangee}>
@@ -351,8 +456,9 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
               </View>
               <Texte style={styles.aide}>{t('publier.noteProfessionnel')}</Texte>
             </View>
+            )}
 
-            {pro && (
+            {pro && !modification && (
               <>
                 <View style={styles.bloc}>
                   <Libelle>{t('publier.activite')}</Libelle>
@@ -548,7 +654,12 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
         )}
 
         {/* ---------- 4. Photos (étape 5 du plan) ---------- */}
-        {etape === 'photos' && <EtapePhotos angles={angles} photos={photos} setPhotos={setPhotos} />}
+        {etape === 'photos' && (
+          <>
+            {modification && photos.some((p) => p.fichier) && <Texte style={styles.aide}>{t('mesAnnonces.photosExistantes')}</Texte>}
+            <EtapePhotos angles={angles} photos={photos} setPhotos={setPhotos} />
+          </>
+        )}
 
         {/* ---------- 5. Prix et lieu ---------- */}
         {etape === 'prix' && (
@@ -760,7 +871,7 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
               </Texte>
               <LigneRecap
                 libelle={t('publier.recap.annonceur')}
-                valeur={pro ? `${t('publier.professionnel')} · ${nomCommercial.trim()}` : t('publier.particulier')}
+                valeur={pro ? [t('publier.professionnel'), modification ? ex?.auteur?.nom_commercial : nomCommercial.trim()].filter(Boolean).join(' · ') : t('publier.particulier')}
               />
               <LigneRecap libelle={t('publier.recap.categorie')} valeur={sous ? `${nom(categorie)} › ${nom(sous)}` : nom(categorie)} />
               <LigneRecap libelle={t('publier.recap.type')} valeur={t(`publier.types.${type}`)} />
@@ -844,7 +955,12 @@ export function AssistantPublication({ profil }: { profil: Profil }) {
           )}
           <View style={{ flex: i > 0 ? 1.4 : 1 }}>
             {etape === 'recap' ? (
-              <Bouton libelle={t('publier.envoyer')} onPress={envoyer} actif={toutEstBon} occupe={occupe} />
+              <Bouton
+                libelle={modification ? t('mesAnnonces.enregistrer') : t('publier.envoyer')}
+                onPress={envoyer}
+                actif={toutEstBon}
+                occupe={occupe}
+              />
             ) : (
               <Bouton libelle={t('publier.suivant')} onPress={suivant} actif={!bloque[etape]} />
             )}
@@ -881,13 +997,39 @@ function valeurCritere(c: Critere, v: string, langue: 'fr' | 'ar') {
   return o ? o[langue] : v;
 }
 
-function EnTetePublier({ titre, sousTitre, progression }: { titre: string; sousTitre?: string; progression?: number }) {
+function EnTetePublier({
+  titre,
+  sousTitre,
+  progression,
+  onRetour,
+}: {
+  titre: string;
+  sousTitre?: string;
+  progression?: number;
+  onRetour?: () => void;
+}) {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
+  const { rtl } = usePreferences();
   return (
     <View style={[styles.entete, { paddingTop: insets.top + 18 }]}>
-      <Texte variante="titre" poids={700} style={styles.enteteTitre} accessibilityRole="header">
-        {titre}
-      </Texte>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        {onRetour && (
+          <Pressable
+            onPress={onRetour}
+            accessibilityRole="button"
+            accessibilityLabel={t('commun.retour')}
+            style={{ width: toucheMin, height: toucheMin, alignItems: 'center', justifyContent: 'center', marginStart: -10 }}
+          >
+            <View style={rtl && { transform: [{ scaleX: -1 }] }}>
+              <IconeRetour couleur={colors.sable1} />
+            </View>
+          </Pressable>
+        )}
+        <Texte variante="titre" poids={700} style={styles.enteteTitre} accessibilityRole="header">
+          {titre}
+        </Texte>
+      </View>
       {sousTitre ? <Texte style={styles.enteteSous}>{sousTitre}</Texte> : null}
       {progression !== undefined && (
         <View style={styles.progression}>

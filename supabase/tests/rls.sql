@@ -391,5 +391,52 @@ begin
     reset role;
   end;
 
+  -- ---------- 17. Mes annonces : modification, republication, vues, statistiques ----------
+  declare
+    v3 uuid; st3 text; nb5 int; exp3 timestamptz;
+  begin
+    perform set_config('request.jwt.claims', '', true);
+    insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code, statut, publie_le, expire_le)
+      values (a, 'vente', 'electro', 'Frigo test', 30000, 16, 'en_ligne', now(), now() + interval '60 days') returning id into v3;
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    update public.listings set prix_da = 28000 where id = v3 returning statut into st3;
+    assert st3 = 'en_ligne', 'prix modifié : ' || st3;
+    update public.listings set titre = 'Frigo test modifié' where id = v3 returning statut into st3;
+    assert st3 = 'verification', 'titre modifié sans nouvelle vérification : ' || st3;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    update public.listings set statut = 'expire' where id = v3;
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    update public.listings set statut = 'en_ligne' where id = v3 returning statut, expire_le into st3, exp3;
+    assert st3 = 'en_ligne' and exp3 > now() + interval '59 days', 'republication : ' || st3;
+    insert into public.listing_photos (annonce_id, fichier, ordre) values (v3, a::text || '/' || v3::text || '/x.jpg', 1);
+    select statut into st3 from public.listings where id = v3;
+    assert st3 = 'verification', 'photo ajoutée sans nouvelle vérification : ' || st3;
+    perform public.compter_vue(v3);  -- l'auteur ne compte pas (et l'annonce est en vérification)
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    update public.listings set statut = 'en_ligne' where id = v3;
+    perform set_config('request.jwt.claims', '{"role":"anon"}', true);
+    set local role anon;
+    perform public.compter_vue(v3);
+    perform public.compter_vue(v3);
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    select s.vues into nb5 from public.stats_mes_annonces() s where s.annonce_id = v3;
+    assert nb5 = 2, 'vues : ' || nb5;
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    select count(*) into nb5 from public.stats_mes_annonces(); assert nb5 = 0, 'C : voit les statistiques de A';
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    update public.listings set expire_le = now() - interval '1 minute' where id = v3;
+    perform prive.expirer_annonces();
+    select statut into st3 from public.listings where id = v3; assert st3 = 'expire', 'expiration : ' || st3;
+  end;
+
   raise exception 'TESTS_OK';
 end $$;

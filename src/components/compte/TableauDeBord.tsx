@@ -11,6 +11,7 @@ import { estModerateur, useAuth, type Profil } from '@/lib/auth';
 import { transactionsANoter } from '@/lib/confiance';
 import { nombreDocumentsEnAttente } from '@/lib/permis';
 import { usePreferences } from '@/lib/preferences';
+import { supabase } from '@/lib/supabase';
 import { useWilayas } from '@/lib/referentiel';
 import { colors, toucheMin } from '@/theme';
 
@@ -27,9 +28,16 @@ export function TableauDeBord({ profil }: { profil: Profil }) {
   const [demandeDeconnexion, setDemandeDeconnexion] = useState(false);
   const [documents, setDocuments] = useState(0);
   const [aNoter, setANoter] = useState(0);
+  const [enLigne, setEnLigne] = useState(0);
   useFocusEffect(
     useCallback(() => {
       nombreDocumentsEnAttente(profil.id).then(setDocuments);
+      supabase
+        .from('listings')
+        .select('id', { count: 'exact', head: true })
+        .eq('auteur_id', profil.id)
+        .eq('statut', 'en_ligne')
+        .then(({ count }) => setEnLigne(count ?? 0));
       transactionsANoter().then((l) => setANoter(l.filter((x) => !x.note_id).length), () => setANoter(0));
     }, [profil.id]),
   );
@@ -75,6 +83,10 @@ export function TableauDeBord({ profil }: { profil: Profil }) {
           </Texte>
           <View style={styles.menu}>
             {estModerateur(profil) && <Ligne libelle={t('moderation.entree')} onPress={() => router.push('/moderation')} />}
+            <Ligne
+              libelle={enLigne ? t('mesAnnonces.entreeNb', { count: enLigne }) : t('mesAnnonces.entree')}
+              onPress={() => router.push('/mes-annonces')}
+            />
             <Ligne
               libelle={documents ? t('permis.documentsEntree', { count: documents }) : t('permis.documents')}
               onPress={() => router.push('/documents')}

@@ -17,6 +17,8 @@ export type PhotoLocale = {
   /** JPEG allégé (1280 px de large au plus), en base64, prêt à envoyer. */
   base64: string;
   analyse: Analyse | null;
+  /** Photo déjà enregistrée (modification d'une annonce) : son chemin dans le seau. */
+  fichier?: string;
 };
 
 export type Source = 'camera' | 'galerie';
@@ -50,20 +52,54 @@ export async function envoyerPhotos(
   annonceId: string,
   photos: PhotoLocale[],
   angles: string[],
+  /** Nombre de photos déjà enregistrées avant celles-ci (modification). */
+  depart = 0,
 ): Promise<boolean> {
   for (let i = 0; i < photos.length; i++) {
     const p = photos[i]!;
-    const chemin = `${auteurId}/${annonceId}/${Date.now().toString(36)}-${i + 1}.jpg`;
+    const chemin = `${auteurId}/${annonceId}/${Date.now().toString(36)}-${depart + i + 1}.jpg`;
     const envoi = await supabase.storage.from(SEAU).upload(chemin, decode(p.base64), { contentType: 'image/jpeg', upsert: false });
     if (envoi.error) return false;
     const { error } = await supabase.from('listing_photos').insert({
       annonce_id: annonceId,
       fichier: chemin,
-      ordre: i + 1,
+      ordre: depart + i + 1,
       angle: angles[p.emplacement] ?? null,
       resultat_detecteur: p.analyse ? { interdit: p.analyse.interdit, objets: p.analyse.objets, erreur: !!p.analyse.erreur } : null,
     });
     if (error) return false;
   }
   return true;
+}
+
+/**
+ * Modification d'une annonce : retire les photos enlevées (fichiers compris), resserre l'ordre des photos gardées,
+ * puis envoie les nouvelles à la suite. La première de la liste reste la photo principale.
+ */
+export async function enregistrerPhotosModifiees(
+  auteurId: string,
+  annonceId: string,
+  photos: PhotoLocale[],
+  angles: string[],
+  anciennes: { fichier: string; ordre: number }[],
+): Promise<boolean> {
+  const gardees = new Set(photos.filter((p) => p.fichier).map((p) => p.fichier!));
+  const retirees = anciennes.filter((a) => !gardees.has(a.fichier)).map((a) => a.fichier);
+  if (retirees.length) {
+    const { error } = await supabase.from('listing_photos').delete().eq('annonce_id', annonceId).in('fichier', retirees);
+    if (error) return false;
+    await supabase.storage.from(SEAU).remove(retirees);
+  }
+  // Ordre croissant : chaque photo gardée descend vers une place déjà libérée (pas de doublon d'ordre).
+  const restantes = anciennes.filter((a) => gardees.has(a.fichier)).sort((x, y) => x.ordre - y.ordre);
+  for (let i = 0; i < restantes.length; i++) {
+    if (restantes[i]!.ordre === i + 1) continue;
+    const { error } = await supabase
+      .from('listing_photos')
+      .update({ ordre: i + 1 })
+      .eq('annonce_id', annonceId)
+      .eq('fichier', restantes[i]!.fichier);
+    if (error) return false;
+  }
+  return envoyerPhotos(auteurId, annonceId, photos.filter((p) => !p.fichier), angles, restantes.length);
 }

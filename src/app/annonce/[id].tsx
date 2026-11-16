@@ -19,6 +19,7 @@ import { Texte } from '@/components/Texte';
 import { estSponsorisee, lireAnnonce, refuserAnnonce, validerAnnonce, type Annonce } from '@/lib/annonces';
 import { estModerateur, useAuth } from '@/lib/auth';
 import { statsMembre, type StatsMembre } from '@/lib/confiance';
+import { compterVue } from '@/lib/mesAnnonces';
 import { usePreferences } from '@/lib/preferences';
 import { formaterEuro, formaterNombre } from '@/lib/prix';
 import { useCategories, useReglages, useWilayas } from '@/lib/referentiel';
@@ -48,6 +49,11 @@ export default function FicheAnnonce() {
   useEffect(() => {
     if (auteurId) statsMembre(auteurId).then(setStatsVendeur, () => setStatsVendeur(null));
   }, [auteurId]);
+
+  // Statistiques « Mes annonces » : une vue par ouverture de la fiche (le serveur ignore l'auteur).
+  useEffect(() => {
+    if (id) compterVue(String(id));
+  }, [id]);
 
   const charger = useCallback(async () => {
     setErreur(false);
