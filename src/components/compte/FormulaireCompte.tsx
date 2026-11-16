@@ -14,6 +14,7 @@ import { MOT_DE_PASSE_MIN, useAuth, type ErreurCompte } from '@/lib/auth';
 import { usePreferences } from '@/lib/preferences';
 import { numeroWilaya, useWilayas } from '@/lib/referentiel';
 import { PAYS, nettoyer, numeroComplet, numeroValide, type Pays } from '@/lib/telephone';
+import { codeParrainageExiste, utiliserCodeParrainage } from '@/lib/parrainage';
 import { colors, toucheMin } from '@/theme';
 
 import { FeuilleImagesProfil } from './FeuilleImagesProfil';
@@ -44,6 +45,8 @@ export function FormulaireCompte() {
   const [telephone, setTelephone] = useState('');
   const [motDePasse, setMotDePasse] = useState('');
   const [charte, setCharte] = useState(false);
+  const [codeParrain, setCodeParrain] = useState('');
+  const [codeInvalide, setCodeInvalide] = useState(false);
 
   const [feuilleImages, setFeuilleImages] = useState(false);
   const [feuilleWilayas, setFeuilleWilayas] = useState(false);
@@ -65,10 +68,18 @@ export function FormulaireCompte() {
     if (!pret || occupe) return;
     setOccupe(true);
     setErreur(null);
+    setCodeInvalide(false);
+    // Code de parrainage (facultatif) : vérifié avant de créer le compte, pour prévenir d'une faute de frappe.
+    if (inscription && codeParrain.trim() && !(await codeParrainageExiste(codeParrain))) {
+      setOccupe(false);
+      setCodeInvalide(true);
+      return;
+    }
     const r =
       inscription && wilaya
         ? await auth.inscrire({ telephone: numero, nomAffiche, wilaya, ville: ville.trim(), avatar, motDePasse, langue })
         : await auth.connecter(numero, motDePasse);
+    if (!r.erreur && inscription && codeParrain.trim()) await utiliserCodeParrainage(codeParrain);
     setOccupe(false);
     setErreur(r.erreur);
   };
@@ -247,6 +258,30 @@ export function FormulaireCompte() {
             />
             {inscription && <Texte style={styles.aide}>{t('compte.motDePasseAide')}</Texte>}
           </View>
+
+          {inscription && (
+            <View style={styles.bloc}>
+              <Champ
+                ltr
+                libelle={t('parrainage.champ')}
+                placeholder="AB12CD34"
+                value={codeParrain}
+                onChangeText={(v) => {
+                  setCodeParrain(v.toUpperCase());
+                  setCodeInvalide(false);
+                }}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                maxLength={12}
+              />
+              <Texte style={styles.aide}>{t('parrainage.champAide')}</Texte>
+              {codeInvalide && (
+                <Texte poids={600} style={{ fontSize: 13, color: colors.rouge }} accessibilityRole="alert">
+                  {t('parrainage.invalide')}
+                </Texte>
+              )}
+            </View>
+          )}
 
           {inscription && (
             <Pressable

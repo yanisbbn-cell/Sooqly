@@ -98,6 +98,13 @@ export function CarteAnnonce({ annonce: a, categorie, wilaya, taux }: Props) {
             {lieu}
           </Texte>
         ) : null}
+        {(a.envoi_algerie || a.livraison_wilaya) && (
+          <Texte poids={600} style={styles.livraison} numberOfLines={1}>
+            {a.envoi_algerie
+              ? t('options.livraison69')
+              : t('options.livraisonVille', { lieu: wilaya ? (langue === 'ar' ? wilaya.nom_ar : wilaya.nom_fr) : '' })}
+          </Texte>
+        )}
       </View>
     </Pressable>
   );
@@ -124,6 +131,7 @@ const styles = StyleSheet.create({
   pro: { borderWidth: 1.5, borderColor: colors.brun, borderRadius: 4, paddingHorizontal: 5 },
   proTexte: { fontSize: 10 },
   badge: { position: 'absolute', top: 6, end: 6 },
+  livraison: { fontSize: 11, color: colors.vert },
   sponsorise: { fontSize: 11, color: colors.brunMoyen },
   titre: { fontSize: 13, lineHeight: 18, minHeight: 36 },
   prix: { fontSize: 16 },

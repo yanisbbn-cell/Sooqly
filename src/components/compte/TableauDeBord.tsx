@@ -16,6 +16,7 @@ import { supabase } from '@/lib/supabase';
 import { useWilayas } from '@/lib/referentiel';
 import { colors, toucheMin } from '@/theme';
 
+import { CarteParrainage } from './CarteParrainage';
 import { FeuilleImagesProfil } from './FeuilleImagesProfil';
 
 /** Écran Compte d'un membre connecté. Les blocs annonces, favoris et alertes arrivent aux étapes suivantes. */
@@ -80,6 +81,8 @@ export function TableauDeBord({ profil }: { profil: Profil }) {
         </View>
 
         <View style={styles.contenu}>
+          <CarteParrainage membreId={profil.id} />
+
           <Texte variante="titre" poids={700} style={styles.section} accessibilityRole="header">
             {t('compte.monCompte')}
           </Texte>

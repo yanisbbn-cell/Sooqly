@@ -26,6 +26,11 @@ export type Filtres = {
   type: TypeFiltre;
   annonceur: Annonceur;
   etats: Etat[];
+  /** « Livrable chez moi » : envoi partout, ou vendeur qui livre dans la wilaya du membre (wilayaLivraison). */
+  livrable: boolean;
+  wilayaLivraison: number | null;
+  /** « Vendeurs validés uniquement » (badge). */
+  validesSeulement: boolean;
 };
 
 export const FILTRES_VIDES: Filtres = {
@@ -39,6 +44,9 @@ export const FILTRES_VIDES: Filtres = {
   type: 'tous',
   annonceur: 'tous',
   etats: [],
+  livrable: false,
+  wilayaLivraison: null,
+  validesSeulement: false,
 };
 
 const critereActif = (v: ValeurCritere | undefined) =>
@@ -52,12 +60,14 @@ export function nombreFiltres(f: Filtres): number {
     (f.prixMin !== null || f.prixMax !== null ? 1 : 0) +
     (f.type !== 'tous' ? 1 : 0) +
     (f.annonceur !== 'tous' ? 1 : 0) +
-    (f.etats.length ? 1 : 0)
+    (f.etats.length ? 1 : 0) +
+    (f.livrable ? 1 : 0) +
+    (f.validesSeulement ? 1 : 0)
   );
 }
 
 const RESUME =
-  'id, type, categorie, sous_categorie_id, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, photos:listing_photos(fichier, ordre, angle, decision_moderation, resultat_detecteur), tarifs:listing_rates(unite, prix_da)';
+  'id, type, categorie, sous_categorie_id, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, livraison_wilaya, envoi_algerie, photos:listing_photos(fichier, ordre, angle, decision_moderation, resultat_detecteur), tarifs:listing_rates(unite, prix_da)';
 
 /** Mots de la recherche, normalisés ; on ne garde que lettres et chiffres (pas de caractères spéciaux). */
 export function mots(texte: string): string[] {
@@ -68,7 +78,15 @@ export function mots(texte: string): string[] {
     .slice(0, 6);
 }
 
-function requete(f: Filtres, criteres: Critere[], options: { compter?: boolean } = {}) {
+/** Membres qui ont le badge « Vendeur validé » (pour le filtre « Vendeurs validés uniquement »). */
+async function idsValides(f: Filtres): Promise<string[] | null> {
+  if (!f.validesSeulement) return null;
+  const { data, error } = await supabase.rpc('tous_vendeurs_valides');
+  if (error) throw error;
+  return (data ?? []) as string[];
+}
+
+function requete(f: Filtres, criteres: Critere[], options: { compter?: boolean } = {}, valides: string[] | null = null) {
   // « !inner » : nécessaire pour filtrer sur le statut pro de l'auteur.
   const auteur = f.annonceur === 'tous' ? 'auteur:profiles!listings_auteur_id_fkey(id, est_pro)' : 'auteur:profiles!listings_auteur_id_fkey!inner(id, est_pro)';
   let q = supabase
@@ -85,6 +103,12 @@ function requete(f: Filtres, criteres: Critere[], options: { compter?: boolean }
   if (f.type !== 'tous') q = q.eq('type', f.type);
   if (f.etats.length) q = q.in('etat', f.etats);
   if (f.annonceur !== 'tous') q = q.eq('auteur.est_pro', f.annonceur === 'professionnels');
+  if (f.livrable)
+    q = f.wilayaLivraison
+      ? q.or(`envoi_algerie.eq.true,and(livraison_wilaya.eq.true,wilaya_code.eq.${f.wilayaLivraison})`)
+      : q.eq('envoi_algerie', true);
+  // Aucun vendeur validé : un identifiant impossible, pour une liste vide.
+  if (valides) q = q.in('auteur_id', valides.length ? valides : ['00000000-0000-0000-0000-000000000000']);
 
   // Critères propres à la catégorie (seulement ceux de la catégorie choisie).
   for (const c of f.categorie ? criteres : []) {
@@ -104,7 +128,7 @@ function requete(f: Filtres, criteres: Critere[], options: { compter?: boolean }
 }
 
 export async function compterAnnonces(f: Filtres, criteres: Critere[]): Promise<number> {
-  const { count, error } = await requete(f, criteres, { compter: true });
+  const { count, error } = await requete(f, criteres, { compter: true }, await idsValides(f));
   if (error) throw error;
   return count ?? 0;
 }
@@ -114,7 +138,7 @@ export async function compterAnnonces(f: Filtres, criteres: Critere[]): Promise<
  * « Près de chez moi » : d'abord la wilaya du membre, puis les plus récentes.
  */
 export async function chercherAnnonces(f: Filtres, criteres: Critere[], tri: Tri, maWilaya: number | null): Promise<AnnonceResume[]> {
-  let q = requete(f, criteres);
+  let q = requete(f, criteres, {}, await idsValides(f));
   q =
     tri === 'prix_croissant'
       ? q.order('prix_da', { ascending: true })

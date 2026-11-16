@@ -499,5 +499,43 @@ begin
     reset role;
   end;
 
+  -- ---------- 20. Livraison, échange, parrainage ----------
+  declare
+    v6 uuid; v7 uuid; r6 record; ok6 boolean; nb7 int; codeA text;
+  begin
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code, ville, livraison_wilaya, envoi_algerie, echange_accepte, prix_ferme)
+      values (a, 'location', 'immobilier', 'F3 livraison test', 30000, 16, 'Alger', true, true, true, false) returning id into v6;
+    select remise_main_propre, livraison_wilaya, envoi_algerie, echange_accepte into r6 from public.listings where id = v6;
+    assert not r6.livraison_wilaya and not r6.envoi_algerie and not r6.echange_accepte, 'options de livraison sur un logement';
+    insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code, ville, livraison_wilaya, echange_accepte)
+      values (a, 'vente', 'ameublement', 'Table livraison test', 8000, 16, 'Alger', true, true) returning id into v7;
+    select livraison_wilaya, echange_accepte into r6 from public.listings where id = v7;
+    assert r6.livraison_wilaya and r6.echange_accepte, 'options d''un objet perdues';
+    select code_parrainage into codeA from public.profiles where id = a;
+    -- On ne choisit pas son parrain soi-même.
+    begin
+      update public.profiles set parrain_id = c where id = a;
+      assert false, 'A : parrain modifié directement';
+    exception when raise_exception then null; end;
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', b, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    ok6 := public.utiliser_code_parrainage(lower(codeA)); assert ok6, 'code de parrainage refusé';
+    ok6 := public.utiliser_code_parrainage(codeA); assert not ok6, 'parrain changé une deuxième fois';
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    nb7 := public.nombre_filleuls(); assert nb7 = 1, 'filleuls : ' || nb7;
+    ok6 := public.utiliser_code_parrainage(codeA); assert not ok6, 'parrain de soi-même';
+    reset role;
+    -- Alerte « livrable chez moi » (wilaya 16) : la table livrée dans la wilaya 16 correspond.
+    select prive.options_correspondent('{"livrable":true,"wilayaLivraison":16}', l) into ok6 from public.listings l where l.id = v7;
+    assert ok6, 'livrable chez moi (même wilaya)';
+    select prive.options_correspondent('{"livrable":true,"wilayaLivraison":31}', l) into ok6 from public.listings l where l.id = v7;
+    assert not ok6, 'livrable chez moi (autre wilaya)';
+  end;
+
   raise exception 'TESTS_OK';
 end $$;
