@@ -223,6 +223,7 @@ export const ar: Traduction = {
     etat: 'الحالة',
     caracteristiques: 'المواصفات',
     vendeur: 'البائع',
+    agrandir: 'عرض بملء الشاشة',
     membreDepuis: 'عضو منذ {{date}}',
     introuvable: 'هذا الإعلان لم يعد موجودًا أو لم يُنشر بعد.',
     statut: {

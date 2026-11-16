@@ -193,3 +193,12 @@ export function IconeCloche({ couleur, taille = 20, plein = false }: P & { plein
     </Svg>
   );
 }
+
+/** Croix : fermer (visionneuse de photos). */
+export function IconeFermer({ couleur, taille = 22 }: P) {
+  return (
+    <Svg {...base(taille)} stroke={couleur} strokeWidth={2.4} strokeLinecap="round">
+      <Path d="M6 6l12 12M18 6L6 18" />
+    </Svg>
+  );
+}

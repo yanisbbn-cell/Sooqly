@@ -223,6 +223,7 @@ export const fr = {
     etat: 'État',
     caracteristiques: 'Caractéristiques',
     vendeur: 'Vendeur',
+    agrandir: 'Voir en plein écran',
     membreDepuis: 'Membre depuis {{date}}',
     introuvable: 'Cette annonce n’existe plus ou n’est pas encore en ligne.',
     statut: {
