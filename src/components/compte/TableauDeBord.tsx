@@ -81,13 +81,21 @@ export function TableauDeBord({ profil }: { profil: Profil }) {
         </View>
 
         <View style={styles.contenu}>
+          {profil.suspendu && (
+            <View style={styles.suspendu} accessibilityRole="alert">
+              <Texte poids={700} style={{ fontSize: 15, color: colors.rouge }}>
+                {t('mesAnnonces.suspenduTitre')}
+              </Texte>
+              <Texte style={{ fontSize: 13, lineHeight: 19 }}>{t('mesAnnonces.suspenduTexte')}</Texte>
+            </View>
+          )}
           <CarteParrainage membreId={profil.id} />
 
           <Texte variante="titre" poids={700} style={styles.section} accessibilityRole="header">
             {t('compte.monCompte')}
           </Texte>
           <View style={styles.menu}>
-            {estModerateur(profil) && <Ligne libelle={t('moderation.entree')} onPress={() => router.push('/moderation')} />}
+            {estModerateur(profil) && <Ligne libelle={t('moderation.entreeEspace')} onPress={() => router.push('/moderation')} />}
             <Ligne
               libelle={enLigne ? t('mesAnnonces.entreeNb', { count: enLigne }) : t('mesAnnonces.entree')}
               onPress={() => router.push('/mes-annonces')}
@@ -182,6 +190,7 @@ function Ligne({ libelle, onPress, dernier }: { libelle: string; onPress: () => 
 }
 
 const styles = StyleSheet.create({
+  suspendu: { gap: 4, padding: 14, borderRadius: 14, backgroundColor: colors.rougeFond, borderWidth: 1, borderColor: colors.rouge },
   ecran: { flex: 1, backgroundColor: colors.blanc },
   entete: {
     backgroundColor: colors.brun,

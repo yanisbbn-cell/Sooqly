@@ -162,6 +162,7 @@ function CarteMonAnnonce({
   const tarif = location ? tarifCourt(a.tarifs ?? []) ?? a.tarifs?.[0] ?? null : null;
   const enCours = a.statut === 'en_ligne' || a.statut === 'reserve';
   const termine = a.statut === 'vendu' || a.statut === 'loue';
+  const correction = a.statut === 'refuse' && a.correction_demandee;
   const jours = joursRestants(a.expire_le);
   const avecStats = !!s && a.statut !== 'verification' && a.statut !== 'refuse';
   const conseil = !!s && s.vues >= 60 && s.messages <= 1 && (a.statut === 'en_ligne' || a.statut === 'expire');
@@ -217,9 +218,13 @@ function CarteMonAnnonce({
             {don ? t('carte.gratuit') : `${formaterNombre(tarif?.prix_da ?? a.prix_da)} ${t('da')}`}
             {tarif ? ` ${t(`location.suffixe.${tarif.unite}`)}` : ''}
           </Texte>
-          <View style={[styles.pastille, { backgroundColor: PASTILLE[a.statut].fond }]}>
-            <Texte poids={700} style={{ fontSize: 11, color: PASTILLE[a.statut].texte }}>
-              {a.statut === 'vendu' && location ? t('mesAnnonces.statut.loue') : t(`mesAnnonces.statut.${a.statut}`)}
+          <View style={[styles.pastille, { backgroundColor: correction ? colors.accent : PASTILLE[a.statut].fond }]}>
+            <Texte poids={700} style={{ fontSize: 11, color: correction ? colors.blanc : PASTILLE[a.statut].texte }}>
+              {correction
+                ? t('mesAnnonces.statut.correction')
+                : a.statut === 'vendu' && location
+                  ? t('mesAnnonces.statut.loue')
+                  : t(`mesAnnonces.statut.${a.statut}`)}
             </Texte>
           </View>
         </View>
@@ -274,7 +279,9 @@ function CarteMonAnnonce({
       {a.statut === 'verification' && <Texte style={styles.note}>{t('mesAnnonces.verificationNote')}</Texte>}
       {a.statut === 'refuse' && (
         <View style={{ gap: 2 }}>
-          <Texte style={[styles.note, { color: colors.rouge }]}>{t('mesAnnonces.refuseeNote')}</Texte>
+          <Texte style={[styles.note, { color: correction ? colors.accentFonce : colors.rouge }]}>
+            {correction ? t('mesAnnonces.correctionNote') : t('mesAnnonces.refuseeNote')}
+          </Texte>
           {a.motif_refus && <Texte style={styles.note}>{t('mesAnnonces.motif', { motif: a.motif_refus })}</Texte>}
         </View>
       )}

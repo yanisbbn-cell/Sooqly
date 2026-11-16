@@ -537,5 +537,67 @@ begin
     assert not ok6, 'livrable chez moi (autre wilaya)';
   end;
 
+  -- ---------- 21. Modération : décisions, correction, suspension, exclusion ----------
+  declare
+    v8 uuid; v9 uuid; st8 text; ok8 boolean; nb8 int; j8 json;
+  begin
+    perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code, ville)
+      values (c, 'vente', 'ameublement', 'Buffet modération test', 15000, 16, 'Alger') returning id into v8;
+    insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code, ville)
+      values (c, 'vente', 'ameublement', 'Lit modération test', 25000, 16, 'Alger') returning id into v9;
+    begin
+      perform public.moderer_annonce(v8, 'valider');
+      assert false, 'C : a validé sa propre annonce';
+    exception when insufficient_privilege then null; end;
+    begin
+      update public.listings set correction_demandee = true where id = v8;
+      assert false, 'C : a modifié correction_demandee';
+    exception when raise_exception then null; end;
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', m, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    ok8 := public.moderer_annonce(v8, 'correction', 'Photo floue'); assert ok8, 'correction refusée';
+    ok8 := public.moderer_annonce(v9, 'valider'); assert ok8, 'validation refusée';
+    reset role;
+    -- L'auteur corrige : l'annonce repart en vérification.
+    perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    update public.listings set description = 'Nouvelle photo' where id = v8 returning statut into st8;
+    assert st8 = 'verification', 'correction : ' || st8;
+    reset role;
+    -- Suspension : les annonces de C disparaissent pour les autres, C ne peut plus publier.
+    perform set_config('request.jwt.claims', json_build_object('sub', m, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    ok8 := public.moderer_membre(c, 'suspendre', 'Arnaque'); assert ok8, 'suspension refusée';
+    j8 := public.historique_membre(c);
+    assert (j8 -> 'membre' ->> 'suspendu')::boolean, 'historique : suspendu';
+    assert json_array_length(j8 -> 'actions') >= 1, 'historique : actions';
+    reset role;
+    perform set_config('request.jwt.claims', '{"role":"anon"}', true);
+    set local role anon;
+    select count(*) into nb8 from public.listings where id = v9; assert nb8 = 0, 'annonce d''un suspendu visible';
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    begin
+      insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code, ville)
+        values (c, 'vente', 'ameublement', 'Interdit', 1000, 16, 'Alger');
+      assert false, 'suspendu : a publié';
+    exception when insufficient_privilege then null; end;
+    begin
+      select count(*) into nb8 from public.signalements_a_traiter();
+      assert false, 'C : lit les signalements';
+    exception when insufficient_privilege then null; end;
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', m, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    ok8 := public.moderer_membre(c, 'exclure'); assert ok8, 'exclusion refusée';
+    select statut into st8 from public.listings where id = v9; assert st8 = 'refuse', 'exclusion : annonce ' || st8;
+    ok8 := public.moderer_membre(c, 'reactiver'); assert ok8, 'réactivation refusée';
+    reset role;
+  end;
+
   raise exception 'TESTS_OK';
 end $$;
