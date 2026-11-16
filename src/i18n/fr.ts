@@ -82,6 +82,7 @@ export const fr = {
       compteExistant: 'Ce numéro a déjà un compte. Utilisez l’onglet « Connexion ».',
       reseau: 'Connexion internet indisponible. Réessayez.',
       inconnue: 'Une erreur est survenue. Réessayez.',
+      captcha: 'La vérification anti-robot a échoué ou expiré. Recommencez-la, puis réessayez.',
       administrateur: 'Le compte administrateur ne peut pas être supprimé : confiez d’abord ce rôle à quelqu’un d’autre.',
     },
   },

@@ -32,6 +32,7 @@ export type ErreurCompte =
   | 'reseau'
   | 'ancienMotDePasse'
   | 'administrateur'
+  | 'captcha'
   | 'inconnue';
 
 type Resultat = { erreur: ErreurCompte | null };
@@ -48,14 +49,16 @@ type Auth = {
     avatar: number | null;
     motDePasse: string;
     langue: 'fr' | 'ar';
+    /** Jeton du CAPTCHA Cloudflare Turnstile (à usage unique). */
+    captcha: string | null;
   }) => Promise<Resultat>;
-  connecter: (numero: string, motDePasse: string) => Promise<Resultat>;
+  connecter: (numero: string, motDePasse: string, captcha: string | null) => Promise<Resultat>;
   changerAvatar: (numero: number) => Promise<Resultat>;
   /** Vérifie l'ancien mot de passe, puis enregistre le nouveau. */
-  changerMotDePasse: (ancien: string, nouveau: string) => Promise<Resultat>;
+  changerMotDePasse: (ancien: string, nouveau: string, captcha: string | null) => Promise<Resultat>;
   deconnecter: () => Promise<void>;
   /** Vérifie le mot de passe, puis efface le compte et ses données (voir supprimer_mon_compte). */
-  supprimerCompte: (motDePasse: string) => Promise<Resultat>;
+  supprimerCompte: (motDePasse: string, captcha: string | null) => Promise<Resultat>;
 };
 
 const Contexte = createContext<Auth | null>(null);
@@ -71,6 +74,7 @@ function traduireErreur(e: { message?: string; status?: number; code?: string } 
   if (code === 'user_already_exists') return 'compteExistant';
   if (code === 'invalid_credentials') return 'identifiants';
   if (code === 'weak_password') return 'motDePasseFaible';
+  if (code === 'captcha_failed' || message.includes('captcha')) return 'captcha';
   if (message.includes('network') || message.includes('fetch')) return 'reseau';
   return defaut;
 }
@@ -117,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [chargerProfil]);
 
   const inscrire = useCallback<Auth['inscrire']>(
-    async ({ telephone, nomAffiche, wilaya, ville, avatar, motDePasse, langue }) => {
+    async ({ telephone, nomAffiche, wilaya, ville, avatar, motDePasse, langue, captcha }) => {
       // 1. Le compte (numéro + mot de passe). Si une tentative précédente s'est arrêtée après cette étape
       //    (coupure de réseau), on reprend avec la session déjà ouverte pour ce même numéro.
       let { data: s } = await supabase.auth.getSession();
@@ -127,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       let sessionCourante = s.session;
       if (!sessionCourante) {
-        const { data, error } = await supabase.auth.signUp({ phone: telephone, password: motDePasse });
+        const { data, error } = await supabase.auth.signUp({ phone: telephone, password: motDePasse, options: { captchaToken: captcha ?? undefined } });
         if (error || !data.session) return { erreur: traduireErreur(error, 'inconnue') };
         sessionCourante = data.session;
         setSession(data.session);
@@ -156,8 +160,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const connecter = useCallback<Auth['connecter']>(
-    async (numero, motDePasse) => {
-      const { data, error } = await supabase.auth.signInWithPassword({ phone: numero, password: motDePasse });
+    async (numero, motDePasse, captcha) => {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        phone: numero,
+        password: motDePasse,
+        options: { captchaToken: captcha ?? undefined },
+      });
       if (error || !data.session) return { erreur: traduireErreur(error, 'identifiants') };
       setSession(data.session);
       await chargerProfil(data.session);
@@ -177,12 +185,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [profil],
   );
 
-  const changerMotDePasse = useCallback<Auth['changerMotDePasse']>(async (ancien, nouveau) => {
+  const changerMotDePasse = useCallback<Auth['changerMotDePasse']>(async (ancien, nouveau, captcha) => {
     const { data: s } = await supabase.auth.getSession();
     const telephone = s.session?.user.phone;
     if (!telephone) return { erreur: 'inconnue' };
     // On vérifie l'ancien mot de passe en se reconnectant avec : quelqu'un qui emprunte le téléphone ne peut pas le changer.
-    const verif = await supabase.auth.signInWithPassword({ phone: `+${telephone.replace(/^\+/, '')}`, password: ancien });
+    const verif = await supabase.auth.signInWithPassword({
+      phone: `+${telephone.replace(/^\+/, '')}`,
+      password: ancien,
+      options: { captchaToken: captcha ?? undefined },
+    });
     if (verif.error) return { erreur: verif.error.code === 'invalid_credentials' ? 'ancienMotDePasse' : traduireErreur(verif.error, 'inconnue') };
     const { error } = await supabase.auth.updateUser({ password: nouveau });
     return { erreur: error ? traduireErreur(error, 'inconnue') : null };
@@ -198,11 +210,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfil(null);
   }, []);
 
-  const supprimerCompte = useCallback<Auth['supprimerCompte']>(async (motDePasse) => {
+  const supprimerCompte = useCallback<Auth['supprimerCompte']>(async (motDePasse, captcha) => {
     const { data: s } = await supabase.auth.getSession();
     const telephone = s.session?.user.phone;
     if (!telephone) return { erreur: 'inconnue' };
-    const verif = await supabase.auth.signInWithPassword({ phone: `+${telephone.replace(/^\+/, '')}`, password: motDePasse });
+    const verif = await supabase.auth.signInWithPassword({
+      phone: `+${telephone.replace(/^\+/, '')}`,
+      password: motDePasse,
+      options: { captchaToken: captcha ?? undefined },
+    });
     if (verif.error) return { erreur: verif.error.code === 'invalid_credentials' ? 'ancienMotDePasse' : traduireErreur(verif.error, 'inconnue') };
     const { data, error } = await supabase.rpc('supprimer_mon_compte');
     if (error) return { erreur: traduireErreur(error, 'inconnue') };

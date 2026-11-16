@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 import { Bouton } from '@/components/Bouton';
+import { Captcha } from '@/components/Captcha';
 import { Champ } from '@/components/Champ';
 import { EnTeteRetour } from '@/components/EnTeteRetour';
 import { Texte } from '@/components/Texte';
@@ -18,12 +19,16 @@ export default function SupprimerCompte() {
   const [occupe, setOccupe] = useState(false);
   const [erreur, setErreur] = useState<ErreurCompte | null>(null);
   const [fait, setFait] = useState(false);
+  const [jeton, setJeton] = useState<string | null>(null);
+  const [cleCaptcha, setCleCaptcha] = useState(0);
 
   const supprimer = async () => {
     if (!motDePasse || occupe) return;
     setOccupe(true);
     setErreur(null);
-    const r = await supprimerCompte(motDePasse);
+    const r = await supprimerCompte(motDePasse, jeton);
+    setJeton(null);
+    setCleCaptcha((n) => n + 1);
     setOccupe(false);
     if (r.erreur) return setErreur(r.erreur);
     setFait(true);
@@ -61,7 +66,8 @@ export default function SupprimerCompte() {
                 {t(`compte.erreurs.${erreur}`)}
               </Texte>
             )}
-            <Bouton libelle={t('supprimerCompte.bouton')} onPress={supprimer} actif={!!motDePasse} occupe={occupe} variante="danger" />
+            <Captcha key={cleCaptcha} onJeton={setJeton} />
+            <Bouton libelle={t('supprimerCompte.bouton')} onPress={supprimer} actif={!!motDePasse && !!jeton} occupe={occupe} variante="danger" />
           </>
         ) : null}
       </ScrollView>

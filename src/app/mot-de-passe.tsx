@@ -3,6 +3,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 're
 import { useTranslation } from 'react-i18next';
 
 import { Bouton } from '@/components/Bouton';
+import { Captcha } from '@/components/Captcha';
 import { Champ } from '@/components/Champ';
 import { EnTeteRetour } from '@/components/EnTeteRetour';
 import { Texte } from '@/components/Texte';
@@ -21,13 +22,17 @@ export default function ChangerMotDePasse() {
   const [reussi, setReussi] = useState(false);
 
   const different = confirmation.length > 0 && confirmation !== nouveau;
-  const pret = ancien.length > 0 && nouveau.length >= MOT_DE_PASSE_MIN && confirmation === nouveau;
+  const [jeton, setJeton] = useState<string | null>(null);
+  const [cleCaptcha, setCleCaptcha] = useState(0);
+  const pret = !!jeton && ancien.length > 0 && nouveau.length >= MOT_DE_PASSE_MIN && confirmation === nouveau;
 
   const enregistrer = async () => {
     if (!pret || occupe) return;
     setOccupe(true);
     setErreur(null);
-    const r = await changerMotDePasse(ancien, nouveau);
+    const r = await changerMotDePasse(ancien, nouveau, jeton);
+    setJeton(null);
+    setCleCaptcha((n) => n + 1);
     setOccupe(false);
     if (r.erreur) return setErreur(r.erreur);
     setReussi(true);
@@ -72,6 +77,7 @@ export default function ChangerMotDePasse() {
             {t(`compte.erreurs.${erreur}`)}
           </Texte>
         )}
+        <Captcha key={cleCaptcha} onJeton={setJeton} />
         <Bouton libelle={t('motDePasse.enregistrer')} onPress={enregistrer} actif={pret} occupe={occupe} grand />
       </ScrollView>
     </KeyboardAvoidingView>
