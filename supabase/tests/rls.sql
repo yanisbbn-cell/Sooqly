@@ -738,5 +738,38 @@ begin
     reset role;
   end;
 
+  -- ---------- 25. Bannière de la Page Pro ----------
+  declare
+    pro uuid := gen_random_uuid(); v11 uuid; ok11 boolean; bn text;
+  begin
+    perform set_config('request.jwt.claims', '', true);
+    insert into auth.users (id, instance_id, aud, role, email, phone)
+      values (pro, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', pro || '@test.invalid', '213577777777');
+    insert into public.profiles (id, nom_affiche, wilaya_code, est_pro, nom_commercial) values (pro, 'Pro bannière', 16, true, 'Agence test');
+    insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code, statut, publie_le, expire_le)
+      values (pro, 'vente', 'ameublement', 'Bureau pro test', 9000, 16, 'en_ligne', now(), now() + interval '60 days') returning id into v11;
+    insert into public.listing_photos (annonce_id, fichier, ordre, decision_moderation) values (v11, pro::text || '/' || v11::text || '/a.jpg', 1, 'acceptee');
+    perform set_config('request.jwt.claims', json_build_object('sub', pro, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    begin
+      update public.profiles set banniere = 'photos-annonces/autre.jpg' where id = pro;
+      assert false, 'bannière modifiée directement';
+    exception when raise_exception then null; end;
+    ok11 := public.choisir_banniere_annonce('autre/fichier.jpg'); assert not ok11, 'photo d''un autre acceptée';
+    ok11 := public.choisir_banniere_annonce(pro::text || '/' || v11::text || '/a.jpg'); assert ok11, 'photo d''annonce refusée';
+    select banniere into bn from public.profiles where id = pro; assert bn like 'photos-annonces/%', 'bannière : ' || coalesce(bn, 'vide');
+    ok11 := public.proposer_banniere(pro::text || '/inexistante.jpg'); assert not ok11, 'fichier inexistant proposé';
+    ok11 := public.retirer_banniere(); assert ok11, 'retrait refusé';
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    ok11 := public.choisir_banniere_annonce(pro::text || '/' || v11::text || '/a.jpg'); assert not ok11, 'non-pro : bannière choisie';
+    begin
+      perform public.bannieres_a_verifier();
+      assert false, 'membre : lit les bannières à vérifier';
+    exception when insufficient_privilege then null; end;
+    reset role;
+  end;
+
   raise exception 'TESTS_OK';
 end $$;

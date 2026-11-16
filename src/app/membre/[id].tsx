@@ -16,6 +16,7 @@ import { FeuilleConfirmation } from '@/components/confiance/FeuilleConfirmation'
 import { FeuilleSignalement } from '@/components/confiance/FeuilleSignalement';
 import { annoncesDuMembre, type ActivitePro, type AnnonceResume, type TypeAnnonce } from '@/lib/annonces';
 import { BanniereVitrine } from '@/components/BanniereVitrine';
+import { urlBanniere } from '@/lib/banniere';
 import { Pastille } from '@/components/Pastille';
 import { useAuth } from '@/lib/auth';
 import { avisRecus, bloquer, debloquer, estBloque, statsMembre, type Avis, type StatsMembre } from '@/lib/confiance';
@@ -36,6 +37,7 @@ type Membre = {
   wilaya_code: number | null;
   ville: string | null;
   cree_le: string;
+  banniere: string | null;
 };
 
 /** Profil public d'un membre : notes, avis, progression du badge « Vendeur validé », ses annonces, signaler / bloquer. */
@@ -63,7 +65,7 @@ export default function ProfilMembre() {
     setErreur(false);
     try {
       const [m, s, a, l] = await Promise.all([
-        supabase.from('profiles').select('id, nom_affiche, avatar, est_pro, nom_commercial, activite_pro, wilaya_code, ville, cree_le').eq('id', String(id)).maybeSingle(),
+        supabase.from('profiles').select('id, nom_affiche, avatar, est_pro, nom_commercial, activite_pro, wilaya_code, ville, cree_le, banniere').eq('id', String(id)).maybeSingle(),
         statsMembre(String(id)),
         avisRecus(String(id)),
         annoncesDuMembre(String(id)),
@@ -113,7 +115,7 @@ export default function ProfilMembre() {
 
   return (
     <View style={styles.ecran}>
-      {vitrine ? <BanniereVitrine /> : <EnTeteRetour titre={t('confiance.profilVendeur')} />}
+      {vitrine ? <BanniereVitrine image={urlBanniere(membre.banniere)} /> : <EnTeteRetour titre={t('confiance.profilVendeur')} />}
       <ScrollView contentContainerStyle={[styles.contenu, { paddingBottom: insets.bottom + 24 }]}>
         <View style={styles.identite}>
           <ImageProfil numero={membre.avatar} taille={72} />
@@ -130,6 +132,10 @@ export default function ProfilMembre() {
             <Texte style={styles.secondaire}>{t('fiche.membreDepuis', { date: `${mois[depuis.getMonth()]} ${depuis.getFullYear()}` })}</Texte>
           </View>
         </View>
+
+        {vitrine && profil?.id === membre.id && (
+          <Bouton libelle={t('banniere.changer')} onPress={() => router.push('/banniere')} variante="contour" />
+        )}
 
         <View style={styles.stats}>
           {[

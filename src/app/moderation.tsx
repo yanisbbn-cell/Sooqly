@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { FlatList, Image, Pressable, StyleSheet, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
@@ -8,6 +8,7 @@ import { EtatChargement } from '@/components/EtatChargement';
 import { Texte } from '@/components/Texte';
 import { listerAValider, type AnnonceResume } from '@/lib/annonces';
 import { estAdmin, estModerateur, useAuth } from '@/lib/auth';
+import { bannieresAVerifier, deciderBanniere, urlBanniere, type BanniereAVerifier } from '@/lib/banniere';
 import { compteurs, signalementsATraiter, traiterSignalement, type Signalement } from '@/lib/moderation';
 import { usePreferences } from '@/lib/preferences';
 import { formaterNombre } from '@/lib/prix';
@@ -25,6 +26,7 @@ export default function Moderation() {
   const [onglet, setOnglet] = useState<Onglet>('annonces');
   const [annonces, setAnnonces] = useState<AnnonceResume[] | null>(null);
   const [signalements, setSignalements] = useState<Signalement[] | null>(null);
+  const [bannieres, setBannieres] = useState<BanniereAVerifier[]>([]);
   const [nombres, setNombres] = useState({ annonces: 0, signalements: 0 });
   const [erreur, setErreur] = useState(false);
   const [erreurAction, setErreurAction] = useState(false);
@@ -32,8 +34,9 @@ export default function Moderation() {
   const charger = useCallback(async () => {
     setErreur(false);
     try {
-      const [a, s, n] = await Promise.all([listerAValider(), signalementsATraiter(), compteurs()]);
+      const [a, s, n, bn] = await Promise.all([listerAValider(), signalementsATraiter(), compteurs(), bannieresAVerifier()]);
       setAnnonces(a);
+      setBannieres(bn);
       setSignalements(s);
       setNombres(n);
     } catch {
@@ -60,6 +63,12 @@ export default function Moderation() {
       setSignalements((l) => (l ?? []).filter((x) => x.id !== s.id));
       setNombres((n) => ({ ...n, signalements: Math.max(0, n.signalements - 1) }));
     } else setErreurAction(true);
+  };
+
+  const decider = async (b: BanniereAVerifier, accepter: boolean) => {
+    setErreurAction(false);
+    if (await deciderBanniere(b.membre_id, accepter)) setBannieres((l) => l.filter((x) => x.membre_id !== b.membre_id));
+    else setErreurAction(true);
   };
 
   const mois = t('mois', { returnObjects: true }) as unknown as string[];
@@ -95,6 +104,33 @@ export default function Moderation() {
         </Pressable>
       )}
       <Texte style={styles.note}>{t('moderation.rappel')}</Texte>
+      {onglet === 'annonces' && bannieres.length > 0 && (
+        <View style={{ gap: 8 }}>
+          <Texte poids={700} style={{ fontSize: 15 }}>
+            {t('banniere.moderation', { count: bannieres.length })}
+          </Texte>
+          {bannieres.map((b) => (
+            <View key={b.membre_id} style={styles.carte}>
+              <Texte poids={700} style={{ fontSize: 14 }}>
+                {b.nom}
+              </Texte>
+              <Image source={{ uri: urlBanniere(`bannieres/${b.fichier}`) ?? undefined }} style={styles.banniere} resizeMode="cover" />
+              <View style={styles.actions}>
+                <Pressable onPress={() => decider(b, true)} accessibilityRole="button" style={[styles.action, styles.actionPleine]}>
+                  <Texte poids={700} style={{ fontSize: 13, color: colors.sable1 }}>
+                    {t('banniere.accepter')}
+                  </Texte>
+                </Pressable>
+                <Pressable onPress={() => decider(b, false)} accessibilityRole="button" style={styles.action}>
+                  <Texte poids={700} style={{ fontSize: 13, color: colors.rouge }}>
+                    {t('banniere.refuser')}
+                  </Texte>
+                </Pressable>
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
       {erreurAction && (
         <Texte poids={600} style={{ fontSize: 12, color: colors.rouge }} accessibilityRole="alert">
           {t('moderation.erreur')}
@@ -234,6 +270,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   ongletActif: { backgroundColor: colors.brun, borderColor: colors.brun },
+  banniere: { width: '100%', aspectRatio: 3, borderRadius: 10, backgroundColor: colors.sable2 },
   carte: { padding: 14, borderRadius: 14, backgroundColor: colors.carte, gap: 6 },
   lien: { minHeight: 32, justifyContent: 'center' },
   lienTexte: { fontSize: 13, color: colors.accentFonce, textDecorationLine: 'underline' },

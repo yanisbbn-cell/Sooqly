@@ -120,6 +120,7 @@ export function TableauDeBord({ profil }: { profil: Profil }) {
               libelle={aNoter ? t('confiance.transactionsEntree', { count: aNoter }) : t('confiance.transactionsANoter')}
               onPress={() => router.push('/a-noter')}
             />
+            {profil.est_pro && <Ligne libelle={t('banniere.entree')} onPress={() => router.push('/banniere')} />}
             <Ligne libelle={t('confiance.monProfil')} onPress={() => router.push({ pathname: '/membre/[id]', params: { id: profil.id } })} />
             <Ligne libelle={t('confiance.membresBloques')} onPress={() => router.push('/bloques')} />
             <Ligne libelle={t('compte.changerImage')} onPress={() => setFeuilleImages(true)} />

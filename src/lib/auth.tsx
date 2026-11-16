@@ -21,6 +21,7 @@ export type Profil = {
   telephone_verifie: boolean;
   role: 'membre' | 'moderateur' | 'admin';
   suspendu: boolean;
+  est_pro: boolean;
 };
 
 /** Clés de traduction « compte.erreurs.* ». */
@@ -79,7 +80,7 @@ function traduireErreur(e: { message?: string; status?: number; code?: string } 
   return defaut;
 }
 
-const COLONNES = 'id, nom_affiche, wilaya_code, ville, avatar, telephone_verifie, role, suspendu';
+const COLONNES = 'id, nom_affiche, wilaya_code, ville, avatar, telephone_verifie, role, suspendu, est_pro';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [pret, setPret] = useState(false);
