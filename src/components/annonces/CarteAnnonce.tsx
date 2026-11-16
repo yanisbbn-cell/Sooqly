@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 
 import { IconeCategorie } from '@/components/IconeCategorie';
 import { Texte } from '@/components/Texte';
+import { BadgeValide } from '@/components/confiance/BadgeValide';
+import { useVendeurValide } from '@/lib/confiance';
 import { estSponsorisee, photoPrincipale, type AnnonceResume } from '@/lib/annonces';
 import { tarifCourt, type Tarif } from '@/lib/location';
 import { urlPhoto } from '@/lib/photos';
@@ -29,6 +31,7 @@ export function CarteAnnonce({ annonce: a, categorie, wilaya, taux }: Props) {
   const don = a.type === 'don';
   const lieu = a.ville || (wilaya ? (langue === 'ar' ? wilaya.nom_ar : wilaya.nom_fr) : '');
   const sponsorisee = estSponsorisee(a);
+  const valide = useVendeurValide(a.auteur?.id);
   // Location : le plus petit tarif (par nuit ou par jour, sinon semaine, mois…).
   const tarif: Tarif | null = a.type === 'location' ? (tarifCourt(a.tarifs ?? []) ?? premierTarif(a.tarifs ?? [])) : null;
 
@@ -50,6 +53,11 @@ export function CarteAnnonce({ annonce: a, categorie, wilaya, taux }: Props) {
             {a.statut === 'reserve' ? t('carte.reserve') : t(`publier.types.${a.type}`)}
           </Texte>
         </View>
+        {valide && (
+          <View style={styles.badge}>
+            <BadgeValide forme="rond" />
+          </View>
+        )}
       </View>
       <View style={styles.corps}>
         {(a.auteur?.est_pro || sponsorisee) && (
@@ -115,6 +123,7 @@ const styles = StyleSheet.create({
   mentions: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
   pro: { borderWidth: 1.5, borderColor: colors.brun, borderRadius: 4, paddingHorizontal: 5 },
   proTexte: { fontSize: 10 },
+  badge: { position: 'absolute', top: 6, end: 6 },
   sponsorise: { fontSize: 11, color: colors.brunMoyen },
   titre: { fontSize: 13, lineHeight: 18, minHeight: 36 },
   prix: { fontSize: 16 },

@@ -10,13 +10,13 @@ type Props = {
   /** Faux : bouton grisé (action impossible pour l'instant). */
   actif?: boolean;
   occupe?: boolean;
-  variante?: 'accent' | 'sombre' | 'contour';
+  variante?: 'accent' | 'sombre' | 'contour' | 'danger';
   grand?: boolean;
 };
 
-/** Bouton d'action de Sooqly. Accent = agir ; sombre = action secondaire ; contour = retour. */
+/** Bouton d'action de Sooqly. Accent = agir ; sombre = action secondaire ; contour = retour ; danger = bloquer, supprimer. */
 export function Bouton({ libelle, onPress, actif = true, occupe, variante = 'accent', grand }: Props) {
-  const fond = !actif ? colors.inactif : variante === 'sombre' ? colors.brun : variante === 'contour' ? 'transparent' : colors.accent;
+  const fond = !actif ? colors.inactif : variante === 'sombre' ? colors.brun : variante === 'contour' ? 'transparent' : variante === 'danger' ? colors.rouge : colors.accent;
   const couleur = !actif ? colors.brunMoyen : variante === 'sombre' ? colors.sable1 : variante === 'contour' ? colors.brun : colors.blanc;
   return (
     <Pressable

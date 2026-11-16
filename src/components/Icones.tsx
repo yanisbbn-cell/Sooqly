@@ -153,3 +153,32 @@ export function IconeCadenas({ couleur, taille = 16 }: P) {
     </Svg>
   );
 }
+
+/** Trois points verticaux : menu d'options (discussion). */
+export function IconeOptions({ couleur, taille = 20 }: P) {
+  return (
+    <Svg {...base(taille)} fill={couleur}>
+      <Circle cx={12} cy={5} r={2} />
+      <Circle cx={12} cy={12} r={2} />
+      <Circle cx={12} cy={19} r={2} />
+    </Svg>
+  );
+}
+
+/** Étoile de notation, pleine ou vide (maquette). */
+export function IconeEtoile({ couleur, taille = 20, pleine = true }: P & { pleine?: boolean }) {
+  return (
+    <Svg {...base(taille)} fill={pleine ? couleur : 'none'} stroke={couleur} strokeWidth={1.5} strokeLinejoin="round">
+      <Path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" />
+    </Svg>
+  );
+}
+
+/** Drapeau : signaler. */
+export function IconeDrapeau({ couleur, taille = 18 }: P) {
+  return (
+    <Svg {...base(taille)} stroke={couleur} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M5 21V4M5 4h11l-2 4 2 4H5" />
+    </Svg>
+  );
+}

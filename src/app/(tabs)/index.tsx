@@ -4,6 +4,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 import { CarteAnnonce } from '@/components/annonces/CarteAnnonce';
+import { BandeauANoter } from '@/components/confiance/BandeauANoter';
 import { FeuilleSousCategories } from '@/components/annonces/FeuilleSousCategories';
 import { couleursTuile } from '@/components/annonces/tuile';
 import { EnTete } from '@/components/EnTete';
@@ -166,6 +167,8 @@ export default function Annonces() {
           ))}
         </ScrollView>
       )}
+
+      {!recherche && !catChoisie && <BandeauANoter />}
 
       {!recherche && !catChoisie && (
         <Pressable
