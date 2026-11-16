@@ -438,5 +438,28 @@ begin
     select statut into st3 from public.listings where id = v3; assert st3 = 'expire', 'expiration : ' || st3;
   end;
 
+  -- ---------- 18. Favoris : prix d'ajout gardé, réservé à son propriétaire ----------
+  declare
+    v4 uuid; px bigint; nb6 int;
+  begin
+    perform set_config('request.jwt.claims', '', true);
+    insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code, statut, publie_le, expire_le)
+      values (a, 'vente', 'electro', 'Four test', 20000, 16, 'en_ligne', now(), now() + interval '60 days') returning id into v4;
+    perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    insert into public.favorites (membre_id, annonce_id, alerte_prix, prix_ajout_da) values (c, v4, true, 1) returning prix_ajout_da into px;
+    assert px = 20000, 'prix d''ajout : ' || px;
+    update public.favorites set prix_ajout_da = 99999, alerte_prix = false where annonce_id = v4 returning prix_ajout_da into px;
+    assert px = 20000, 'prix d''ajout modifié : ' || px;
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    update public.listings set prix_da = 18000 where id = v4;
+    select count(*) into nb6 from public.favorites; assert nb6 = 0, 'A : voit les favoris des autres';
+    reset role;
+    select count(*) into nb6 from public.listing_prices where annonce_id = v4 and nouveau_prix_da = 18000;
+    assert nb6 = 1, 'baisse de prix non historisée';
+  end;
+
   raise exception 'TESTS_OK';
 end $$;

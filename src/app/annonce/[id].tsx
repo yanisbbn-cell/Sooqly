@@ -11,7 +11,7 @@ import { Bouton } from '@/components/Bouton';
 import { Champ } from '@/components/Champ';
 import { EtatChargement } from '@/components/EtatChargement';
 import { IconeCategorie } from '@/components/IconeCategorie';
-import { IconeRetour } from '@/components/Icones';
+import { IconeFavori, IconeRetour } from '@/components/Icones';
 import { ImageProfil } from '@/components/ImageProfil';
 import { BadgeValide } from '@/components/confiance/BadgeValide';
 import { FeuilleSignalement } from '@/components/confiance/FeuilleSignalement';
@@ -19,6 +19,7 @@ import { Texte } from '@/components/Texte';
 import { estSponsorisee, lireAnnonce, refuserAnnonce, validerAnnonce, type Annonce } from '@/lib/annonces';
 import { estModerateur, useAuth } from '@/lib/auth';
 import { statsMembre, type StatsMembre } from '@/lib/confiance';
+import { ajouterFavori, lireFavori, retirerFavori } from '@/lib/favoris';
 import { compterVue } from '@/lib/mesAnnonces';
 import { usePreferences } from '@/lib/preferences';
 import { formaterEuro, formaterNombre } from '@/lib/prix';
@@ -49,6 +50,19 @@ export default function FicheAnnonce() {
   useEffect(() => {
     if (auteurId) statsMembre(auteurId).then(setStatsVendeur, () => setStatsVendeur(null));
   }, [auteurId]);
+
+  // Favori : marque-page à côté du bouton Contacter.
+  const [favori, setFavori] = useState(false);
+  useEffect(() => {
+    if (profil && id) lireFavori(profil.id, String(id)).then((f) => setFavori(!!f));
+  }, [profil, id]);
+  const basculerFavori = async () => {
+    if (!profil) return router.navigate('/compte');
+    const avant = favori;
+    setFavori(!avant);
+    const ok = avant ? await retirerFavori(profil.id, String(id)) : await ajouterFavori(profil.id, String(id));
+    if (!ok) setFavori(avant);
+  };
 
   // Statistiques « Mes annonces » : une vue par ouverture de la fiche (le serveur ignore l'auteur).
   useEffect(() => {
@@ -285,15 +299,28 @@ export default function FicheAnnonce() {
             (profil?.id === a.auteur_id ? (
               <Texte style={[styles.secondaire, { textAlign: 'center' }]}>{t('messagerie.votreAnnonce')}</Texte>
             ) : (
-              <Bouton
-                libelle={
-                  profil
-                    ? t(a.type === 'location' ? 'messagerie.contacterLoueur' : 'messagerie.contacterVendeur')
-                    : t('messagerie.connexionContact')
-                }
-                onPress={() => (profil ? router.push({ pathname: '/contacter/[id]', params: { id: a.id } }) : router.navigate('/compte'))}
-                grand
-              />
+              <View style={styles.contact}>
+                <View style={{ flex: 1 }}>
+                  <Bouton
+                    libelle={
+                      profil
+                        ? t(a.type === 'location' ? 'messagerie.contacterLoueur' : 'messagerie.contacterVendeur')
+                        : t('messagerie.connexionContact')
+                    }
+                    onPress={() => (profil ? router.push({ pathname: '/contacter/[id]', params: { id: a.id } }) : router.navigate('/compte'))}
+                    grand
+                  />
+                </View>
+                <Pressable
+                  onPress={basculerFavori}
+                  accessibilityRole="button"
+                  accessibilityLabel={favori ? t('favoris.retirer') : t('favoris.ajouter')}
+                  accessibilityState={{ selected: favori }}
+                  style={[styles.favori, favori && { backgroundColor: colors.brun }]}
+                >
+                  <IconeFavori couleur={favori ? colors.accent : colors.brun} plein={favori} />
+                </Pressable>
+              </View>
             ))}
 
           {profil && profil.id !== a.auteur_id && visibleParTous && (
@@ -435,6 +462,16 @@ const styles = StyleSheet.create({
   carte: { backgroundColor: colors.carte, borderRadius: 14, padding: 14, gap: 6 },
   ligneCarac: { flexDirection: 'row', gap: 12 },
   description: { fontSize: 15, lineHeight: 25 },
+  contact: { flexDirection: 'row', gap: 10, alignItems: 'center' },
+  favori: {
+    width: 56,
+    height: 56,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.sable4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   signaler: { alignSelf: 'center', minHeight: toucheMin, justifyContent: 'center', paddingHorizontal: 12 },
   vendeur: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, backgroundColor: colors.carte },
   permis: { gap: 8, padding: 16, borderRadius: 16, backgroundColor: colors.carte },

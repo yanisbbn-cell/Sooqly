@@ -20,9 +20,10 @@ export function IconeMessage({ couleur, taille = 22 }: P) {
   );
 }
 
-export function IconeFavori({ couleur, taille = 22 }: P) {
+/** Marque-page (favori) ; « plein » quand l'annonce est enregistrée. */
+export function IconeFavori({ couleur, taille = 22, plein = false }: P & { plein?: boolean }) {
   return (
-    <Svg {...base(taille)} stroke={couleur} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <Svg {...base(taille)} fill={plein ? couleur : 'none'} stroke={couleur} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M6 3h12v18l-6-4-6 4z" />
     </Svg>
   );

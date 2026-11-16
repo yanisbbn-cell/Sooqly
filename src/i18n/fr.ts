@@ -735,6 +735,23 @@ export const fr = {
     retourMesAnnonces: 'Retour à mes annonces',
     photosExistantes: 'Photos déjà en ligne : touchez-en une pour la retirer.',
   },
+  favoris: {
+    titre: 'Mes favoris',
+    compte_one: '{{count}} annonce enregistrée',
+    compte_other: '{{count}} annonces enregistrées',
+    vide: 'Touchez le marque-page d’une annonce pour la retrouver ici.',
+    intro: 'Activez l’alerte prix sur un favori : vous êtes prévenu dès que le vendeur baisse son prix.',
+    connexion: 'Connectez-vous pour enregistrer des annonces en favoris.',
+    connexionBouton: 'Se connecter ou créer un compte',
+    ajouter: 'Ajouter aux favoris',
+    retirer: 'Retirer des favoris',
+    alerte: 'Prévenez-moi si le prix baisse',
+    alerteActive: 'Alerte prix activée',
+    baisse: 'Prix en baisse −{{pourcent}} %',
+    indisponible: 'Cette annonce n’est plus disponible.',
+    retirerCourt: 'Retirer',
+    erreur: 'Action impossible. Vérifiez votre connexion et réessayez.',
+  },
 };
 
 type Textes<T> = { [K in keyof T]: T[K] extends string ? string : Textes<T[K]> };
