@@ -391,5 +391,113 @@ begin
     reset role;
   end;
 
+  -- ---------- 17. Mes annonces : modification, republication, vues, statistiques ----------
+  declare
+    v3 uuid; st3 text; nb5 int; exp3 timestamptz;
+  begin
+    perform set_config('request.jwt.claims', '', true);
+    insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code, statut, publie_le, expire_le)
+      values (a, 'vente', 'electro', 'Frigo test', 30000, 16, 'en_ligne', now(), now() + interval '60 days') returning id into v3;
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    update public.listings set prix_da = 28000 where id = v3 returning statut into st3;
+    assert st3 = 'en_ligne', 'prix modifié : ' || st3;
+    update public.listings set titre = 'Frigo test modifié' where id = v3 returning statut into st3;
+    assert st3 = 'verification', 'titre modifié sans nouvelle vérification : ' || st3;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    update public.listings set statut = 'expire' where id = v3;
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    update public.listings set statut = 'en_ligne' where id = v3 returning statut, expire_le into st3, exp3;
+    assert st3 = 'en_ligne' and exp3 > now() + interval '59 days', 'republication : ' || st3;
+    insert into public.listing_photos (annonce_id, fichier, ordre) values (v3, a::text || '/' || v3::text || '/x.jpg', 1);
+    select statut into st3 from public.listings where id = v3;
+    assert st3 = 'verification', 'photo ajoutée sans nouvelle vérification : ' || st3;
+    perform public.compter_vue(v3);  -- l'auteur ne compte pas (et l'annonce est en vérification)
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    update public.listings set statut = 'en_ligne' where id = v3;
+    perform set_config('request.jwt.claims', '{"role":"anon"}', true);
+    set local role anon;
+    perform public.compter_vue(v3);
+    perform public.compter_vue(v3);
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    select s.vues into nb5 from public.stats_mes_annonces() s where s.annonce_id = v3;
+    assert nb5 = 2, 'vues : ' || nb5;
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    select count(*) into nb5 from public.stats_mes_annonces(); assert nb5 = 0, 'C : voit les statistiques de A';
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    update public.listings set expire_le = now() - interval '1 minute' where id = v3;
+    perform prive.expirer_annonces();
+    select statut into st3 from public.listings where id = v3; assert st3 = 'expire', 'expiration : ' || st3;
+  end;
+
+  -- ---------- 18. Favoris : prix d'ajout gardé, réservé à son propriétaire ----------
+  declare
+    v4 uuid; px bigint; nb6 int;
+  begin
+    perform set_config('request.jwt.claims', '', true);
+    insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code, statut, publie_le, expire_le)
+      values (a, 'vente', 'electro', 'Four test', 20000, 16, 'en_ligne', now(), now() + interval '60 days') returning id into v4;
+    perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    insert into public.favorites (membre_id, annonce_id, alerte_prix, prix_ajout_da) values (c, v4, true, 1) returning prix_ajout_da into px;
+    assert px = 20000, 'prix d''ajout : ' || px;
+    update public.favorites set prix_ajout_da = 99999, alerte_prix = false where annonce_id = v4 returning prix_ajout_da into px;
+    assert px = 20000, 'prix d''ajout modifié : ' || px;
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    update public.listings set prix_da = 18000 where id = v4;
+    select count(*) into nb6 from public.favorites; assert nb6 = 0, 'A : voit les favoris des autres';
+    reset role;
+    select count(*) into nb6 from public.listing_prices where annonce_id = v4 and nouveau_prix_da = 18000;
+    assert nb6 = 1, 'baisse de prix non historisée';
+  end;
+
+  -- ---------- 19. Alertes de recherche : correspondance à la première mise en ligne ----------
+  declare
+    al1 uuid; al2 uuid; al3 uuid; v5 uuid; n1 int; n2 int; n3 int;
+  begin
+    perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    insert into public.search_alerts (membre_id, filtres, nouvelles_annonces)
+      values (c, '{"texte":"velo","mots":["velo"],"categorie":"famille","prixMax":30000,"wilaya":16,"type":"tous","annonceur":"tous","etats":[],"sousCategories":[],"criteres":{}}', 99)
+      returning id, nouvelles_annonces into al1, n1;
+    assert n1 = 0, 'compteur imposé à la création : ' || n1;
+    insert into public.search_alerts (membre_id, filtres)
+      values (c, '{"mots":["velo"],"prixMax":10000}') returning id into al2;
+    insert into public.search_alerts (membre_id, filtres)
+      values (c, '{"mots":["frigo"]}') returning id into al3;
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code, ville)
+      values (a, 'vente', 'famille', 'Vélo enfant', 25000, 16, 'Alger') returning id into v5;
+    select count(*) into n1 from public.search_alerts; assert n1 = 0, 'A : voit les alertes de C';
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', m, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    update public.listings set statut = 'en_ligne', publie_le = now(), expire_le = now() + interval '60 days' where id = v5;
+    reset role;
+    select nouvelles_annonces into n1 from public.search_alerts where id = al1;
+    select nouvelles_annonces into n2 from public.search_alerts where id = al2;
+    select nouvelles_annonces into n3 from public.search_alerts where id = al3;
+    assert n1 = 1 and n2 = 0 and n3 = 0, format('alertes : %s %s %s', n1, n2, n3);
+    perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    update public.search_alerts set nouvelles_annonces = 50 where id = al1 returning nouvelles_annonces into n1;
+    assert n1 = 1, 'compteur gonflé par le membre : ' || n1;
+    update public.search_alerts set nouvelles_annonces = 0, notifications = false where id = al1 returning nouvelles_annonces into n1;
+    assert n1 = 0, 'compteur non remis à zéro : ' || n1;
+    reset role;
+  end;
+
   raise exception 'TESTS_OK';
 end $$;

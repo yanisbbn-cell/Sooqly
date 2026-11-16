@@ -61,7 +61,7 @@ export async function mesBlocages(): Promise<MembreBloque[]> {
 // ---------- Ventes conclues et notes ----------
 
 /** Déclare la vente (ou la location) : l'annonce passe « vendue » / « louée ». Renvoie l'identifiant de la transaction. */
-export async function declarerVente(annonceId: string, vendeurId: string, acheteurId: string): Promise<{ id: string | null; deja: boolean }> {
+export async function declarerVente(annonceId: string, vendeurId: string, acheteurId: string | null): Promise<{ id: string | null; deja: boolean }> {
   const { data, error } = await supabase
     .from('transactions')
     .insert({ annonce_id: annonceId, vendeur_id: vendeurId, acheteur_id: acheteurId })

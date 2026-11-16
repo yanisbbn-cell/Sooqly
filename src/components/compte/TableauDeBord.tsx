@@ -8,9 +8,11 @@ import { IconeRetour } from '@/components/Icones';
 import { ImageProfil } from '@/components/ImageProfil';
 import { Texte } from '@/components/Texte';
 import { estModerateur, useAuth, type Profil } from '@/lib/auth';
+import { mesAlertes } from '@/lib/alertes';
 import { transactionsANoter } from '@/lib/confiance';
 import { nombreDocumentsEnAttente } from '@/lib/permis';
 import { usePreferences } from '@/lib/preferences';
+import { supabase } from '@/lib/supabase';
 import { useWilayas } from '@/lib/referentiel';
 import { colors, toucheMin } from '@/theme';
 
@@ -27,9 +29,21 @@ export function TableauDeBord({ profil }: { profil: Profil }) {
   const [demandeDeconnexion, setDemandeDeconnexion] = useState(false);
   const [documents, setDocuments] = useState(0);
   const [aNoter, setANoter] = useState(0);
+  const [enLigne, setEnLigne] = useState(0);
+  const [nouvellesAlertes, setNouvellesAlertes] = useState(0);
   useFocusEffect(
     useCallback(() => {
       nombreDocumentsEnAttente(profil.id).then(setDocuments);
+      supabase
+        .from('listings')
+        .select('id', { count: 'exact', head: true })
+        .eq('auteur_id', profil.id)
+        .eq('statut', 'en_ligne')
+        .then(({ count }) => setEnLigne(count ?? 0));
+      mesAlertes().then(
+        (l) => setNouvellesAlertes(l.filter((a) => a.notifications).reduce((n, a) => n + a.nouvelles_annonces, 0)),
+        () => setNouvellesAlertes(0),
+      );
       transactionsANoter().then((l) => setANoter(l.filter((x) => !x.note_id).length), () => setANoter(0));
     }, [profil.id]),
   );
@@ -66,15 +80,19 @@ export function TableauDeBord({ profil }: { profil: Profil }) {
         </View>
 
         <View style={styles.contenu}>
-          <View style={styles.carte}>
-            <Texte style={styles.suite}>{t('compte.suite')}</Texte>
-          </View>
-
           <Texte variante="titre" poids={700} style={styles.section} accessibilityRole="header">
             {t('compte.monCompte')}
           </Texte>
           <View style={styles.menu}>
             {estModerateur(profil) && <Ligne libelle={t('moderation.entree')} onPress={() => router.push('/moderation')} />}
+            <Ligne
+              libelle={enLigne ? t('mesAnnonces.entreeNb', { count: enLigne }) : t('mesAnnonces.entree')}
+              onPress={() => router.push('/mes-annonces')}
+            />
+            <Ligne
+              libelle={nouvellesAlertes ? t('alertes.entreeNb', { count: nouvellesAlertes }) : t('alertes.entree')}
+              onPress={() => router.push('/alertes')}
+            />
             <Ligne
               libelle={documents ? t('permis.documentsEntree', { count: documents }) : t('permis.documents')}
               onPress={() => router.push('/documents')}
@@ -178,8 +196,6 @@ const styles = StyleSheet.create({
   point: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.vertBord },
   verifieTexte: { fontSize: 13, color: colors.vertBord },
   contenu: { padding: 20, gap: 16 },
-  carte: { backgroundColor: colors.carte, borderRadius: 16, padding: 16 },
-  suite: { fontSize: 14, lineHeight: 21, color: colors.brunMoyen },
   section: { fontSize: 17 },
   menu: { backgroundColor: colors.carte, borderRadius: 16, paddingHorizontal: 16 },
   ligne: { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 12 },
