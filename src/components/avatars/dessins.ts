@@ -8,11 +8,8 @@ import { p } from './palette';
  * des plantes, des paysages et des motifs géométriques.
  */
 
-/** Dégradé (style modernisé) : de la couleur « de » à la couleur « a » ; vertical par défaut, « d » = diagonal. */
-export type Degrade = { de: string; a: string; sens?: 'v' | 'h' | 'd' };
-
 type Style = {
-  /** couleur de remplissage (ou dégradé) */ f?: string | Degrade;
+  /** couleur de remplissage */ f?: string;
   /** couleur du trait */ s?: string;
   /** épaisseur du trait */ w?: number;
   /** opacité */ o?: number;
@@ -24,7 +21,7 @@ export type Forme =
   | ({ t: 'r'; x: number; y: number; l: number; h: number; rx?: number } & Style)
   | ({ t: 'e'; cx: number; cy: number; rx: number; ry: number; rot?: [number, number, number] } & Style);
 
-export type Dessin = { fond: string | Degrade; formes: Forme[] };
+export type Dessin = { fond: string; formes: Forme[] };
 
 // ---------- Petits outils de dessin ----------
 const P = (d: string, f: string, x: Style = {}): Forme => ({ t: 'p', d, f, ...x });
