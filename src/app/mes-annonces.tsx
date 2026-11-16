@@ -451,7 +451,7 @@ const styles = StyleSheet.create({
   bilanCase: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: 10, borderRadius: 14, backgroundColor: colors.carte },
   carte: { padding: 14, borderRadius: 16, backgroundColor: colors.carte, gap: 10 },
   tete: { flexDirection: 'row', gap: 12 },
-  vignette: { width: 76, height: 76, borderRadius: 12, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  vignette: { width: 104, height: 78, borderRadius: 12, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   pastille: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
   stats: { gap: 10, padding: 12, borderRadius: 12, backgroundColor: colors.blanc },
   chiffres: { flexDirection: 'row' },

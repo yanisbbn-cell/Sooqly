@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
   vide: { alignItems: 'center', gap: 12, paddingTop: 48, paddingHorizontal: 24 },
   carte: { padding: 12, borderRadius: 16, backgroundColor: colors.carte, gap: 10 },
   ligne: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  vignette: { width: 72, height: 72, borderRadius: 12, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  vignette: { width: 104, height: 78, borderRadius: 12, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   baisse: {
     alignSelf: 'flex-start',
     paddingHorizontal: 8,

@@ -115,7 +115,8 @@ const premierTarif = (tarifs: Tarif[]) => [...tarifs].sort((x, y) => ORDRE.index
 
 const styles = StyleSheet.create({
   carte: { flex: 1, backgroundColor: colors.carte, borderRadius: 16, overflow: 'hidden' },
-  tuile: { height: 108, alignItems: 'center', justifyContent: 'center' },
+  // Proportions d'une photo de téléphone (4:3) : la photo grandit avec la carte.
+  tuile: { aspectRatio: 4 / 3, alignItems: 'center', justifyContent: 'center' },
   type: {
     position: 'absolute',
     top: 8,

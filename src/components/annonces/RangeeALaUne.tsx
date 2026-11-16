@@ -66,6 +66,6 @@ export function RangeeALaUne({ annonces, categories }: { annonces: AnnonceResume
 const styles = StyleSheet.create({
   titre: { fontSize: 20, paddingHorizontal: 20 },
   rangee: { paddingHorizontal: 20, gap: 12 },
-  carte: { width: 170, borderRadius: 14, overflow: 'hidden', backgroundColor: colors.carte, borderWidth: 1.5, borderColor: colors.sable3 },
-  image: { height: 110, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  carte: { width: 200, borderRadius: 14, overflow: 'hidden', backgroundColor: colors.carte, borderWidth: 1.5, borderColor: colors.sable3 },
+  image: { aspectRatio: 4 / 3, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
 });

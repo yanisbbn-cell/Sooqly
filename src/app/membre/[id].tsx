@@ -22,6 +22,7 @@ import { avisRecus, bloquer, debloquer, estBloque, statsMembre, type Avis, type 
 import { usePreferences } from '@/lib/preferences';
 import { formaterNombre } from '@/lib/prix';
 import { useCategories, useReglages, useWilayas } from '@/lib/referentiel';
+import { useGrille } from '@/lib/grille';
 import { supabase } from '@/lib/supabase';
 import { colors } from '@/theme';
 
@@ -44,6 +45,7 @@ export default function ProfilMembre() {
   const insets = useSafeAreaInsets();
   const { profil } = useAuth();
   const { langue } = usePreferences();
+  const grille = useGrille();
   const categories = useCategories();
   const { donnees: wilayas } = useWilayas();
   const { donnees: reglages } = useReglages();
@@ -230,7 +232,7 @@ export default function ProfilMembre() {
           ) : (
             <View style={styles.grille}>
               {affichees.map((a) => (
-                <View key={a.id} style={styles.case}>
+                <View key={a.id} style={{ width: grille.largeur }}>
                   <CarteAnnonce
                     annonce={a}
                     categorie={categories.donnees?.find((c) => c.cle === a.categorie)}
@@ -304,6 +306,5 @@ const styles = StyleSheet.create({
   barreFine: { height: 6, borderRadius: 3, backgroundColor: colors.sable2, overflow: 'hidden' },
   rempliFin: { height: 6, borderRadius: 3, backgroundColor: colors.sable4 },
   avis: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  grille: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 },
-  case: { width: '50%', padding: 6 },
+  grille: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
 });

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { CarteAnnonce } from '@/components/annonces/CarteAnnonce';
 import { BandeauANoter } from '@/components/confiance/BandeauANoter';
+import { useGrille } from '@/lib/grille';
 import { RangeeALaUne } from '@/components/annonces/RangeeALaUne';
 import { estSponsorisee } from '@/lib/annonces';
 import { BoutonAlerte } from '@/components/BoutonAlerte';
@@ -30,6 +31,7 @@ export default function Annonces() {
   const { t } = useTranslation();
   const { langue, rtl } = usePreferences();
   const { profil } = useAuth();
+  const grille = useGrille();
   const categories = useCategories();
   const { donnees: wilayas } = useWilayas();
   const { donnees: reglages } = useReglages();
@@ -258,15 +260,17 @@ export default function Annonces() {
     <View style={styles.ecran}>
       <FlatList
         data={annonces ?? []}
+        // La clé change avec le nombre de colonnes (obligatoire pour une FlatList).
+        key={`grille-${grille.colonnes}`}
         keyExtractor={(a) => a.id}
-        numColumns={2}
+        numColumns={grille.colonnes}
         ListHeaderComponent={enTete}
         columnWrapperStyle={styles.rangeeCartes}
         contentContainerStyle={{ paddingBottom: 24 }}
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={rafraichit} onRefresh={rafraichir} tintColor={colors.accent} />}
-        renderItem={({ item, index }) => (
-          <View style={[styles.cellule, index === (annonces?.length ?? 0) - 1 && index % 2 === 0 && styles.celluleSeule]}>
+        renderItem={({ item }) => (
+          <View style={[styles.cellule, { width: grille.largeur }]}>
             <CarteAnnonce
               annonce={item}
               categorie={categories.donnees?.find((c) => c.cle === item.categorie)}
@@ -463,8 +467,7 @@ const styles = StyleSheet.create({
   triActif: { backgroundColor: colors.brun, borderColor: colors.brun },
   triTexte: { fontSize: 13 },
   rangeeCartes: { paddingHorizontal: 20, gap: 12 },
-  cellule: { flex: 1, marginBottom: 12 },
-  celluleSeule: { maxWidth: '50%', paddingEnd: 6 },
+  cellule: { marginBottom: 12 },
   vide: { marginHorizontal: 20, padding: 20, borderRadius: 14, backgroundColor: colors.sable2, gap: 12 },
   effacer: {
     alignSelf: 'flex-start',
