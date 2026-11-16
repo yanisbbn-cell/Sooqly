@@ -11,7 +11,7 @@ import { Bouton } from '@/components/Bouton';
 import { Champ } from '@/components/Champ';
 import { EtatChargement } from '@/components/EtatChargement';
 import { IconeCategorie } from '@/components/IconeCategorie';
-import { IconeFavori, IconeRetour } from '@/components/Icones';
+import { IconeCoche, IconeFavori, IconeRetour } from '@/components/Icones';
 import { ImageProfil } from '@/components/ImageProfil';
 import { BadgeValide } from '@/components/confiance/BadgeValide';
 import { FeuilleSignalement } from '@/components/confiance/FeuilleSignalement';
@@ -172,6 +172,20 @@ export default function FicheAnnonce() {
                 </Texte>
               </View>
             )}
+            {a.type === 'vente' && (
+              <View style={styles.pastilleContour}>
+                <Texte poids={700} style={{ fontSize: 12 }}>
+                  {a.prix_ferme ? t('options.ferme') : t('options.negociable')}
+                </Texte>
+              </View>
+            )}
+            {a.echange_accepte && (
+              <View style={styles.pastilleContour}>
+                <Texte poids={700} style={{ fontSize: 12 }}>
+                  {t('options.echangePossible')}
+                </Texte>
+              </View>
+            )}
             {estSponsorisee(a) && (
               <Texte poids={600} style={{ fontSize: 12, color: colors.brunMoyen }}>
                 {t('carte.sponsorise')}
@@ -245,6 +259,40 @@ export default function FicheAnnonce() {
               debutInitial={debut}
               finInitiale={fin}
             />
+          )}
+
+          {(a.remise_main_propre || a.livraison_wilaya || a.envoi_algerie) && (
+            <View style={styles.remise}>
+              <Texte variante="titre" poids={700} style={{ fontSize: 16 }}>
+                {t('options.remise')}
+              </Texte>
+              {(
+                [
+                  [a.remise_main_propre, 'main'],
+                  [a.livraison_wilaya, 'wilaya'],
+                  [a.envoi_algerie, 'envoi'],
+                ] as const
+              )
+                .filter(([actif]) => actif)
+                .map(([, cle]) => (
+                  <View key={cle} style={{ flexDirection: 'row', gap: 10 }}>
+                    <View style={styles.remiseCoche}>
+                      <IconeCoche couleur={colors.blanc} taille={11} />
+                    </View>
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <Texte poids={700} style={{ fontSize: 14 }}>
+                        {t(`options.${cle}`)}
+                      </Texte>
+                      <Texte style={styles.secondaire}>{t(`options.${cle}Sous`)}</Texte>
+                    </View>
+                  </View>
+                ))}
+              {(a.livraison_wilaya || a.envoi_algerie) && (
+                <Texte poids={600} style={{ fontSize: 12, lineHeight: 18, color: colors.vert }}>
+                  {t('options.livNote')}
+                </Texte>
+              )}
+            </View>
           )}
 
           {a.auteur && (
@@ -463,6 +511,8 @@ const styles = StyleSheet.create({
   ligneCarac: { flexDirection: 'row', gap: 12 },
   description: { fontSize: 15, lineHeight: 25 },
   contact: { flexDirection: 'row', gap: 10, alignItems: 'center' },
+  remise: { gap: 10, padding: 14, borderRadius: 14, borderWidth: 1, borderColor: colors.sable2 },
+  remiseCoche: { width: 20, height: 20, borderRadius: 10, backgroundColor: colors.vert, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
   favori: {
     width: 56,
     height: 56,

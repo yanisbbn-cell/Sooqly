@@ -37,6 +37,8 @@ export function cleRecherche(f: Filtres): string {
     type: f.type,
     annonceur: f.annonceur,
     etats: [...f.etats].sort(),
+    livrable: f.livrable ? f.wilayaLivraison ?? true : false,
+    validesSeulement: f.validesSeulement,
   });
 }
 
@@ -120,6 +122,8 @@ export function decrireAlerte(
   else if (f.prixMin !== null) detail.push(t('alertes.plusDe', { min: formaterNombre(f.prixMin) }));
   if (f.type !== 'tous') detail.push(t(`publier.types.${f.type}`));
   if (f.annonceur !== 'tous') detail.push(t(`filtres.${f.annonceur}`));
+  if (f.livrable) detail.push(t('options.livrable'));
+  if (f.validesSeulement) detail.push(t('options.valides'));
   if (f.etats.length) detail.push(f.etats.map((e) => (t(`etats.${e}`, { returnObjects: true }) as unknown as string[])[0]).join(virgule));
 
   return { titre: parties.join(' · ') || t('alertes.toutes'), detail: detail.join(' · ') };

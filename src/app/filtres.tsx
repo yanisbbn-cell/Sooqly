@@ -12,10 +12,11 @@ import { IconeChevronBas, IconeRetour } from '@/components/Icones';
 import { Pastille } from '@/components/Pastille';
 import { Texte } from '@/components/Texte';
 import { ETATS } from '@/lib/annonces';
+import { useAuth } from '@/lib/auth';
 import { usePreferences } from '@/lib/preferences';
 import { formaterNombre, lirePrix } from '@/lib/prix';
 import { FILTRES_VIDES, compterAnnonces, useRecherche, type Annonceur, type Filtres, type TypeFiltre, type ValeurCritere } from '@/lib/recherche';
-import { numeroWilaya, useCategories, useWilayas, type Categorie, type Critere } from '@/lib/referentiel';
+import { numeroWilaya, useCategories, useReglages, useWilayas, type Categorie, type Critere } from '@/lib/referentiel';
 import { colors, toucheMin } from '@/theme';
 
 const TYPES: TypeFiltre[] = ['tous', 'vente', 'service', 'don'];
@@ -44,6 +45,12 @@ export default function EcranFiltres() {
   const nom = (x: { nom_fr: string; nom_ar: string }) => (langue === 'ar' ? x.nom_ar : x.nom_fr);
   const cat = categories?.find((c) => c.cle === f.categorie);
   const w = wilayas?.find((x) => x.code === f.wilaya);
+  const { profil } = useAuth();
+  const { donnees: reglages } = useReglages();
+  const nomWilaya = (code: number) => {
+    const x = wilayas?.find((y) => y.code === code);
+    return x ? nom(x) : '';
+  };
 
   // Nombre d'annonces correspondantes, recalculé à chaque changement (avec un petit délai).
   useEffect(() => {
@@ -192,6 +199,25 @@ export default function EcranFiltres() {
           </View>
         </Section>
 
+        <View style={{ gap: 10 }}>
+          <Interrupteur
+            libelle={t('options.livrable')}
+            sous={
+              profil?.wilaya_code
+                ? t('options.livrableSous', { wilaya: nomWilaya(profil.wilaya_code) })
+                : t('options.livrableSousVisiteur')
+            }
+            actif={f.livrable}
+            onPress={() => setF({ ...f, livrable: !f.livrable, wilayaLivraison: profil?.wilaya_code ?? null })}
+          />
+          <Interrupteur
+            libelle={t('options.valides')}
+            sous={t('options.validesSous', { seuil: reglages?.seuil_badge ?? 10 })}
+            actif={f.validesSeulement}
+            onPress={() => setF({ ...f, validesSeulement: !f.validesSeulement })}
+          />
+        </View>
+
         <Section titre={t('filtres.etat')}>
           <View style={styles.grille}>
             {ETATS.map((e) => {
@@ -306,6 +332,23 @@ function FiltreCritere({ critere, valeur, onChange }: { critere: Critere; valeur
   );
 }
 
+/** Interrupteur (filtres oui / non), comme dans la maquette. */
+function Interrupteur({ libelle, sous, actif, onPress }: { libelle: string; sous: string; actif: boolean; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} accessibilityRole="switch" accessibilityState={{ checked: actif }} style={styles.interrupteur}>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Texte poids={700} style={{ fontSize: 15 }}>
+          {libelle}
+        </Texte>
+        <Texte style={{ fontSize: 12, lineHeight: 17, color: colors.brunMoyen }}>{sous}</Texte>
+      </View>
+      <View style={[styles.piste, { backgroundColor: actif ? colors.accent : colors.sable2, justifyContent: actif ? 'flex-end' : 'flex-start' }]}>
+        <View style={styles.bouleInterrupteur} />
+      </View>
+    </Pressable>
+  );
+}
+
 function Section({
   titre,
   action,
@@ -361,6 +404,17 @@ function LigneSimple({ libelle, choisi, onPress }: { libelle: string; choisi: bo
 }
 
 const styles = StyleSheet.create({
+  interrupteur: {
+    minHeight: toucheMin + 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+    borderRadius: 14,
+    backgroundColor: colors.carte,
+  },
+  piste: { width: 46, height: 28, borderRadius: 14, padding: 3, flexDirection: 'row', direction: 'ltr' },
+  bouleInterrupteur: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.blanc },
   ecran: { flex: 1, backgroundColor: colors.blanc },
   entete: {
     backgroundColor: colors.brun,

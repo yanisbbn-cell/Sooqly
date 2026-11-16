@@ -17,6 +17,8 @@ import { EtapePhotos } from './EtapePhotos';
 import {
   ACTIVITES_PRO,
   ETATS,
+  OPTIONS_PAR_DEFAUT,
+  avecRemise,
   envoyerAnnonce,
   etatDemande,
   lireStatut,
@@ -25,6 +27,7 @@ import {
   type ActivitePro,
   type Annonce,
   type Etat,
+  type OptionsAnnonce,
 } from '@/lib/annonces';
 import type { Profil } from '@/lib/auth';
 import {
@@ -98,6 +101,19 @@ export function AssistantPublication({ profil, existante }: { profil: Profil; ex
   });
   const [locationEnregistree, setLocationEnregistree] = useState(false);
   const [permisExige, setPermisExige] = useState(!!ex?.permis_exige);
+  // Étape 11 : négociation, échange, remise et livraison.
+  const [options, setOptions] = useState<OptionsAnnonce>(() =>
+    ex
+      ? {
+          prixFerme: ex.prix_ferme,
+          echange: ex.echange_accepte,
+          mainPropre: ex.remise_main_propre,
+          livraisonWilaya: ex.livraison_wilaya,
+          envoiAlgerie: ex.envoi_algerie,
+        }
+      : OPTIONS_PAR_DEFAUT,
+  );
+  const changerOption = (cle: keyof OptionsAnnonce) => setOptions((o) => ({ ...o, [cle]: !o[cle] }));
   const [wilaya, setWilaya] = useState<number | null>(ex?.wilaya_code ?? profil.wilaya_code);
   const [ville, setVille] = useState(ex?.ville ?? profil.ville ?? '');
   const [feuilleWilayas, setFeuilleWilayas] = useState(false);
@@ -136,6 +152,8 @@ export function AssistantPublication({ profil, existante }: { profil: Profil; ex
   const location = !!genre && enLocation;
   const type = location ? 'location' : cleCategorie ? typePourCategorie(cleCategorie) : 'vente';
   const estDon = type === 'don';
+  const remise = !!cleCategorie && avecRemise(cleCategorie, location);
+  const aucuneRemise = remise && !options.mainPropre && !options.livraisonWilaya && !options.envoiAlgerie;
   // L'état de l'objet concerne la vente et le don, pas la location.
   const avecEtat = !!cleCategorie && etatDemande(cleCategorie) && !location;
   const etapes: CleEtape[] = ['cat', 'desc', ...(avecEtat ? (['etat'] as const) : []), 'photos', 'prix', 'recap'];
@@ -218,7 +236,9 @@ export function AssistantPublication({ profil, existante }: { profil: Profil; ex
         ? t('publier.bloque.prix')
         : problemePrix
           ? t('publier.bloque.prixIncoherent')
-          : !wilaya || !ville.trim()
+          : aucuneRemise
+            ? t('options.bloqueRemise')
+            : !wilaya || !ville.trim()
             ? t('publier.bloque.lieu')
             : '',
     recap: '',
@@ -280,6 +300,7 @@ export function AssistantPublication({ profil, existante }: { profil: Profil; ex
       permisExige,
       wilaya,
       ville,
+      options,
       tarifs: location ? tarifs : null,
       periode: location && dispo.debut && dispo.fin ? { debut: dispo.debut, fin: dispo.fin } : null,
     });
@@ -322,6 +343,7 @@ export function AssistantPublication({ profil, existante }: { profil: Profil; ex
         permisExige,
         wilaya,
         ville,
+        options,
         pro: pro && activite ? { activite, nomCommercial: nomCommercial.trim() } : null,
       });
       if (r.erreur || !r.id) {
@@ -366,6 +388,7 @@ export function AssistantPublication({ profil, existante }: { profil: Profil; ex
     setDispo({ debut: null, fin: null });
     setLocationEnregistree(false);
     setPermisExige(false);
+    setOptions(OPTIONS_PAR_DEFAUT);
     setErreurPhotos(false);
   };
 
@@ -779,6 +802,57 @@ export function AssistantPublication({ profil, existante }: { profil: Profil; ex
               </View>
             )}
 
+            {type === 'vente' && (
+              <View style={styles.bloc}>
+                <Libelle>{t('options.negociation')}</Libelle>
+                <View style={styles.rangee}>
+                  <Pastille libelle={t('options.ferme')} choisi={options.prixFerme} onPress={() => setOptions({ ...options, prixFerme: true })} largeur />
+                  <Pastille
+                    libelle={t('options.negociable')}
+                    choisi={!options.prixFerme}
+                    onPress={() => setOptions({ ...options, prixFerme: false })}
+                    largeur
+                  />
+                </View>
+                <Texte style={styles.aide}>{t('options.negoNote')}</Texte>
+                <CaseOption
+                  libelle={t('options.echange')}
+                  sous={t('options.echangeSous')}
+                  choisie={options.echange}
+                  onPress={() => changerOption('echange')}
+                />
+              </View>
+            )}
+
+            {remise && (
+              <View style={styles.bloc}>
+                <Libelle>{t('options.remise')}</Libelle>
+                <Texte style={styles.aide}>{t('options.remiseAide')}</Texte>
+                <CaseOption libelle={t('options.main')} sous={t('options.mainSous')} choisie={options.mainPropre} onPress={() => changerOption('mainPropre')} />
+                <CaseOption
+                  libelle={t('options.wilaya')}
+                  sous={t('options.wilayaSous')}
+                  choisie={options.livraisonWilaya}
+                  onPress={() => changerOption('livraisonWilaya')}
+                />
+                <CaseOption
+                  libelle={t('options.envoi')}
+                  sous={t('options.envoiSous')}
+                  choisie={options.envoiAlgerie}
+                  onPress={() => changerOption('envoiAlgerie')}
+                />
+                {(options.livraisonWilaya || options.envoiAlgerie) && <Texte style={styles.aide}>{t('options.livNote')}</Texte>}
+                {options.envoiAlgerie && (
+                  <View style={styles.encartDon}>
+                    <Texte poids={700} style={{ fontSize: 14, color: colors.vert }}>
+                      {t('options.argentTitre')}
+                    </Texte>
+                    <Texte style={{ fontSize: 13, lineHeight: 19 }}>{t('options.argentTexte')}</Texte>
+                  </View>
+                )}
+              </View>
+            )}
+
             <View style={styles.bloc}>
               <Libelle>{t('publier.wilaya')}</Libelle>
               <Pressable
@@ -907,6 +981,26 @@ export function AssistantPublication({ profil, existante }: { profil: Profil; ex
                 libelle={t('publier.recap.photos')}
                 valeur={photos.length ? t('photos.recapPhotos', { count: photos.length }) : t('photos.recapAucune')}
               />
+              {type === 'vente' && (
+                <LigneRecap
+                  libelle={t('options.negociation')}
+                  valeur={[options.prixFerme ? t('options.ferme') : t('options.negociable'), options.echange ? t('options.echangePossible') : '']
+                    .filter(Boolean)
+                    .join(' · ')}
+                />
+              )}
+              {remise && (
+                <LigneRecap
+                  libelle={t('options.recap')}
+                  valeur={[
+                    options.mainPropre ? t('options.main') : '',
+                    options.livraisonWilaya ? t('options.wilaya') : '',
+                    options.envoiAlgerie ? t('options.envoi') : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                />
+              )}
               <LigneRecap libelle={t('publier.recap.lieu')} valeur={[ville.trim(), w ? nom(w) : ''].filter(Boolean).join(langue === 'ar' ? '، ' : ', ')} />
             </View>
 
@@ -1099,6 +1193,23 @@ function LigneChoix({
           <IconeRetour couleur={colors.brunMoyen} taille={18} />
         </View>
       )}
+    </Pressable>
+  );
+}
+
+/** Case à cocher avec un titre et une explication (échange, modes de remise). */
+function CaseOption({ libelle, sous, choisie, onPress }: { libelle: string; sous: string; choisie: boolean; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} accessibilityRole="checkbox" accessibilityState={{ checked: choisie }} style={styles.caseLigne}>
+      <View style={[styles.caseCarree, choisie && { backgroundColor: colors.brun }]}>
+        {choisie && <IconeCoche couleur={colors.sable1} taille={14} />}
+      </View>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Texte poids={700} style={{ fontSize: 14 }}>
+          {libelle}
+        </Texte>
+        <Texte style={styles.aide}>{sous}</Texte>
+      </View>
     </Pressable>
   );
 }
