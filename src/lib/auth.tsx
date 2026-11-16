@@ -31,6 +31,7 @@ export type ErreurCompte =
   | 'motDePasseFaible'
   | 'reseau'
   | 'ancienMotDePasse'
+  | 'administrateur'
   | 'inconnue';
 
 type Resultat = { erreur: ErreurCompte | null };
@@ -53,6 +54,8 @@ type Auth = {
   /** Vérifie l'ancien mot de passe, puis enregistre le nouveau. */
   changerMotDePasse: (ancien: string, nouveau: string) => Promise<Resultat>;
   deconnecter: () => Promise<void>;
+  /** Vérifie le mot de passe, puis efface le compte et ses données (voir supprimer_mon_compte). */
+  supprimerCompte: (motDePasse: string) => Promise<Resultat>;
 };
 
 const Contexte = createContext<Auth | null>(null);
@@ -195,9 +198,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfil(null);
   }, []);
 
+  const supprimerCompte = useCallback<Auth['supprimerCompte']>(async (motDePasse) => {
+    const { data: s } = await supabase.auth.getSession();
+    const telephone = s.session?.user.phone;
+    if (!telephone) return { erreur: 'inconnue' };
+    const verif = await supabase.auth.signInWithPassword({ phone: `+${telephone.replace(/^\+/, '')}`, password: motDePasse });
+    if (verif.error) return { erreur: verif.error.code === 'invalid_credentials' ? 'ancienMotDePasse' : traduireErreur(verif.error, 'inconnue') };
+    const { data, error } = await supabase.rpc('supprimer_mon_compte');
+    if (error) return { erreur: traduireErreur(error, 'inconnue') };
+    if (data !== true) return { erreur: 'administrateur' };
+    // Le compte n'existe plus : on oublie la session sur cet appareil.
+    await supabase.auth.signOut({ scope: 'local' });
+    setSession(null);
+    setProfil(null);
+    return { erreur: null };
+  }, []);
+
   const valeur = useMemo(
-    () => ({ pret, profil, inscrire, connecter, changerAvatar, changerMotDePasse, deconnecter }),
-    [pret, profil, inscrire, connecter, changerAvatar, changerMotDePasse, deconnecter],
+    () => ({ pret, profil, inscrire, connecter, changerAvatar, changerMotDePasse, deconnecter, supprimerCompte }),
+    [pret, profil, inscrire, connecter, changerAvatar, changerMotDePasse, deconnecter, supprimerCompte],
   );
 
   return <Contexte.Provider value={valeur}>{children}</Contexte.Provider>;

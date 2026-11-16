@@ -173,10 +173,14 @@ begin
     values (d, 'Abou Test D', 16, 'Alger', 1, 'admin', true) returning role, telephone_verifie into t, ok;
   assert t = 'membre', 'D : a pu se créer un profil admin';
   assert not ok, 'D : a pu se déclarer « téléphone vérifié » sans SMS';
-  select count(*) into n from public.profiles where id = d and charte_acceptee_le is not null; assert n = 1, 'D : date de la charte absente';
+  begin
+    select count(*) into n from public.profiles where charte_acceptee_le is not null;
+    assert false, 'D : lit les dates de charte des autres';
+  exception when insufficient_privilege then null; end;
   update public.profiles set avatar = 7 where id = d;
   get diagnostics n = row_count; assert n = 1, 'D : ne peut pas choisir son image de profil';
   reset role;
+  select count(*) into n from public.profiles where id = d and charte_acceptee_le is not null; assert n = 1, 'D : date de la charte absente';
 
   -- ---------- 11. Annonces : prix incohérent et type imposé par la catégorie ----------
   perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
@@ -513,7 +517,7 @@ begin
       values (a, 'vente', 'ameublement', 'Table livraison test', 8000, 16, 'Alger', true, true) returning id into v7;
     select livraison_wilaya, echange_accepte into r6 from public.listings where id = v7;
     assert r6.livraison_wilaya and r6.echange_accepte, 'options d''un objet perdues';
-    select code_parrainage into codeA from public.profiles where id = a;
+    codeA := public.mon_code_parrainage();
     -- On ne choisit pas son parrain soi-même.
     begin
       update public.profiles set parrain_id = c where id = a;
@@ -636,6 +640,78 @@ begin
       update public.settings set seuil_badge = 0;
       assert false, 'seuil 0 accepté';
     exception when check_violation then null; end;
+    reset role;
+  end;
+
+  -- ---------- 23. Sécurité : colonnes privées des profils, limites, suppression de compte, exclusion ----------
+  declare
+    sup uuid := gen_random_uuid(); conv2 uuid; nb9 int; ok9 boolean; tel text;
+  begin
+    perform set_config('request.jwt.claims', '{"role":"anon"}', true);
+    set local role anon;
+    begin
+      select count(code_parrainage) into nb9 from public.profiles;
+      assert false, 'visiteur : lit les codes de parrainage';
+    exception when insufficient_privilege then null; end;
+    begin
+      perform public.mes_blocages();
+      assert false, 'visiteur : appelle mes_blocages';
+    exception when insufficient_privilege then null; end;
+    ok9 := public.code_parrainage_existe('ZZZZZZZZ'); assert not ok9, 'code inexistant accepté';
+    reset role;
+    -- Limite : pas plus de 30 messages par minute.
+    perform set_config('request.jwt.claims', '', true);
+    update public.profiles set suspendu = false, exclu = false where id in (a, b, c);
+    delete from public.blocks where membre_id = a and bloque_id = b;
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    begin
+      for nb9 in 1..31 loop
+        insert into public.messages (conversation_id, auteur_id, contenu) values (conv, a, 'Message ' || nb9);
+      end loop;
+      assert false, 'messages en rafale acceptés';
+    exception when raise_exception then null; end;
+    reset role;
+    -- Suppression de compte : le membre disparaît, la note qu'il a donnée reste (auteur anonyme).
+    perform set_config('request.jwt.claims', '', true);
+    insert into auth.users (id, instance_id, aud, role, email, phone)
+      values (sup, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', sup || '@test.invalid', '213599999999');
+    insert into public.profiles (id, nom_affiche, wilaya_code) values (sup, 'À supprimer', 16);
+    insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code, statut, publie_le, expire_le)
+      values (sup, 'vente', 'ameublement', 'Table à supprimer', 5000, 16, 'en_ligne', now(), now() + interval '60 days');
+    insert into public.conversations (annonce_id, acheteur_id, vendeur_id)
+      select l.id, a, sup from public.listings l where l.titre = 'Table à supprimer' returning id into conv2;
+    insert into public.transactions (annonce_id, acheteur_id, vendeur_id)
+      select l.id, a, sup from public.listings l where l.titre = 'Table à supprimer';
+    insert into public.ratings (transaction_id, auteur_id, cible_id, role, note, critere_1, critere_2, critere_3)
+      select t.id, sup, a, 'vendeur', 5, 5, 5, 5 from public.transactions t where t.vendeur_id = sup;
+    update public.profiles set parrain_id = sup where id = c;
+    perform set_config('request.jwt.claims', json_build_object('sub', sup, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    ok9 := public.supprimer_mon_compte(); assert ok9, 'suppression refusée';
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    select count(*) into nb9 from public.profiles where id = sup; assert nb9 = 0, 'profil non supprimé';
+    select count(*) into nb9 from public.listings where auteur_id = sup; assert nb9 = 0, 'annonces non supprimées';
+    select count(*) into nb9 from public.ratings where cible_id = a and auteur_id is null; assert nb9 = 1, 'note donnée perdue';
+    -- Exclusion : le numéro ne peut plus revenir.
+    update auth.users set phone = '213588888888' where id = b;
+    perform set_config('request.jwt.claims', json_build_object('sub', m, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    ok9 := public.moderer_membre(b, 'exclure'); assert ok9, 'exclusion refusée';
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    insert into auth.users (id, instance_id, aud, role, email, phone)
+      values (sup, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', sup || '@test2.invalid', '213588888888x');
+    update auth.users set phone = '213588888888' where id = b;
+    delete from auth.users where id = b;
+    update auth.users set phone = '213588888888' where id = sup;
+    perform set_config('request.jwt.claims', json_build_object('sub', sup, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    begin
+      insert into public.profiles (id, nom_affiche, wilaya_code, ville, charte_version) values (sup, 'Retour exclu', 16, 'Alger', 1);
+      assert false, 'numéro exclu réinscrit';
+    exception when raise_exception then null; end;
     reset role;
   end;
 

@@ -331,6 +331,11 @@ export function FormulaireCompte() {
               {t('compte.lireCharte')}
             </Texte>
           </Pressable>
+          <Pressable onPress={() => router.push('/confidentialite')} accessibilityRole="link" style={styles.lienCharte}>
+            <Texte poids={600} style={styles.lienCharteTexte}>
+              {t('confidentialite.lienInscription')}
+            </Texte>
+          </Pressable>
         </View>
       </ScrollView>
 

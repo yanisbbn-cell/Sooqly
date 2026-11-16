@@ -82,6 +82,7 @@ export const fr = {
       compteExistant: 'Ce numéro a déjà un compte. Utilisez l’onglet « Connexion ».',
       reseau: 'Connexion internet indisponible. Réessayez.',
       inconnue: 'Une erreur est survenue. Réessayez.',
+      administrateur: 'Le compte administrateur ne peut pas être supprimé : confiez d’abord ce rôle à quelqu’un d’autre.',
     },
   },
   pays: {
@@ -564,6 +565,15 @@ export const fr = {
     refuseTexte: 'Permis refusé : {{nom}} le voit dans votre discussion.',
     chargementPhoto: 'Chargement de la photo…',
   },
+  supprimerCompte: {
+    entree: 'Supprimer mon compte',
+    titre: 'Supprimer mon compte',
+    texte: 'La suppression est définitive. Seront effacés : votre profil, vos annonces et leurs photos, vos discussions et messages vocaux, vos documents, vos favoris et vos alertes.',
+    notes: 'Les notes que vous avez données à d’autres membres restent visibles, sans votre nom (« Ancien membre »), car elles font partie de leur réputation.',
+    confirmer: 'Pour confirmer, entrez votre mot de passe.',
+    bouton: 'Supprimer définitivement mon compte',
+    fait: 'Votre compte a été supprimé. Qu’Allah vous facilite.',
+  },
   motDePasse: {
     entree: 'Changer mon mot de passe',
     titre: 'Changer mon mot de passe',
@@ -612,6 +622,7 @@ export const fr = {
     s3: 'Chaque membre s’inscrit avec son numéro de téléphone. Après chaque échange, acheteur et vendeur se notent en quelques secondes. À 10 ventes notées 5 étoiles : le badge « Vendeur validé ».',
   },
   confiance: {
+    ancienMembre: 'Ancien membre',
     transactionsEntree: 'Transactions à noter ({{count}})',
     monProfil: 'Mon profil public',
     options: 'Options',
@@ -943,6 +954,59 @@ export const fr = {
     verifie: 'Professionnel',
     toutes: 'Toutes',
     voir: 'Voir la vitrine',
+  },
+  confidentialite: {
+    entree: 'Confidentialité',
+    titre: 'Politique de confidentialité',
+    maj: 'Dernière mise à jour : 16 novembre 2026',
+    intro: 'Sooqly est une place de marché pour acheter, vendre, louer et donner en Algérie. Cette page explique quelles données nous gardons, pourquoi, combien de temps, qui peut les voir, et comment exercer vos droits.',
+    sections: [
+      {
+        titre: 'Qui est responsable de vos données ?',
+        texte: 'Le responsable du traitement est Yanis Djemal, éditeur de Sooqly, résidant en Algérie. Pour toute question sur vos données : sooqlydz@gmail.com.',
+      },
+      {
+        titre: 'Les données que nous gardons',
+        texte: '• Votre compte : numéro de téléphone, nom ou kounia, wilaya, ville, image de profil (une illustration, jamais une photo), langue, mot de passe (enregistré chiffré, illisible même pour nous), code de parrainage.\n• Vos annonces : textes, prix, caractéristiques, photos, lieu, et le nombre de vues.\n• Vos échanges : messages, messages vocaux, lieux de rendez-vous proposés (avec votre position seulement si vous choisissez de la joindre).\n• Le permis de conduire, si vous l’envoyez pour une location de véhicule.\n• Vos notes, signalements, blocages, favoris et alertes de recherche.\n• Pour les notifications : l’identifiant technique de votre appareil.\n• Des informations techniques de connexion (comme l’adresse IP), gardées par nos hébergeurs pour la sécurité.',
+      },
+      {
+        titre: 'Pourquoi nous les utilisons',
+        texte: 'Uniquement pour faire fonctionner Sooqly : créer votre compte, publier et afficher les annonces, permettre les échanges entre membres, vous envoyer les notifications que vous avez choisies, faire respecter la charte (modération), lutter contre les arnaques et les faux comptes. Nous ne vendons jamais vos données et nous n’affichons aucune publicité ciblée.',
+      },
+      {
+        titre: 'Ce que les autres membres voient',
+        texte: 'Votre nom ou kounia, votre image de profil, votre wilaya et votre ville, vos annonces en ligne, vos notes et avis. Votre numéro de téléphone n’est jamais affiché : les échanges passent par la messagerie, et les numéros ou adresses e-mail écrits dans les messages sont masqués automatiquement. Un permis de conduire n’est visible que par le loueur à qui vous l’envoyez. Un signalement reste anonyme pour la personne signalée.',
+      },
+      {
+        titre: 'Photos et détecteur',
+        texte: 'Avant l’envoi, chaque photo est analysée sur votre téléphone pour repérer les êtres animés, interdits par la charte. Cette analyse ne transmet pas vos photos à un service extérieur. Chaque annonce est ensuite vérifiée par un modérateur avant sa mise en ligne.',
+      },
+      {
+        titre: 'Combien de temps',
+        texte: '• Votre compte et vos données : tant que votre compte existe.\n• Une annonce : jusqu’à ce que vous la supprimiez (une annonce expirée n’est plus visible).\n• Le permis de conduire : effacé automatiquement à la fin de la location prévue.\n• Les fichiers qui ne sont plus utilisés (photos d’annonces supprimées, vocaux de discussions supprimées) : effacés automatiquement chaque nuit.\nQuand vous supprimez votre compte, tout est effacé, sauf les notes que vous avez données à d’autres membres, qui restent sans votre nom. Si un compte a été exclu pour manquement grave, nous gardons seulement une empreinte chiffrée du numéro, pour empêcher une nouvelle inscription.',
+      },
+      {
+        titre: 'Qui héberge vos données',
+        texte: 'Sooqly s’appuie sur des prestataires techniques, qui n’utilisent vos données que pour nous rendre ce service :\n• Supabase : base de données, fichiers et comptes, hébergés dans l’Union européenne (Paris, France).\n• Expo : envoi des notifications sur votre téléphone.\n• Vercel : hébergement du site web.\n• Apple et Google : acheminement des notifications sur iPhone et Android.\nVos données sont donc conservées hors d’Algérie, chez ces prestataires.',
+      },
+      {
+        titre: 'Sécurité',
+        texte: 'Les échanges avec Sooqly sont chiffrés (HTTPS). Des règles d’accès strictes font que chacun ne voit que ses propres messages, documents et réglages. Les modérateurs n’accèdent qu’à ce qui est nécessaire pour appliquer la charte. Ne communiquez jamais votre mot de passe.',
+      },
+      {
+        titre: 'Vos droits',
+        texte: 'Vous pouvez à tout moment accéder à vos données, les corriger (Compte), supprimer vos annonces, et supprimer votre compte (Compte → Supprimer mon compte). Pour toute autre demande (copie de vos données, opposition, question), écrivez à sooqlydz@gmail.com : nous répondons dans un délai d’un mois. Vous pouvez aussi saisir l’Autorité nationale de protection des données à caractère personnel (ANPDP) en Algérie, ou l’autorité de votre pays si vous résidez dans l’Union européenne (en France : la CNIL).',
+      },
+      {
+        titre: 'Site web',
+        texte: 'Le site web garde seulement, sur votre appareil, votre session de connexion et vos préférences (langue, présentation déjà vue). Aucun cookie publicitaire ni outil de suivi.',
+      },
+      {
+        titre: 'Modifications',
+        texte: 'Si cette politique change, la date en haut de page est mise à jour et les membres sont prévenus dans l’application en cas de changement important.',
+      },
+    ],
+    lienInscription: 'Politique de confidentialité',
   },
 };
 

@@ -117,6 +117,7 @@ export function TableauDeBord({ profil }: { profil: Profil }) {
             <Ligne libelle={t('compte.changerImage')} onPress={() => setFeuilleImages(true)} />
             <Ligne libelle={t('motDePasse.entree')} onPress={() => router.push('/mot-de-passe')} />
             <Ligne libelle={t('ecrans.compte.charte')} onPress={() => router.push('/charte')} />
+            <Ligne libelle={t('confidentialite.entree')} onPress={() => router.push('/confidentialite')} />
             <Ligne libelle={t('ecrans.compte.revoir')} onPress={revoirAccueil} />
             <Ligne libelle={t('compte.langue')} onPress={changerLangue} dernier />
           </View>
@@ -158,6 +159,11 @@ export function TableauDeBord({ profil }: { profil: Profil }) {
               </View>
             </View>
           )}
+          <Pressable onPress={() => router.push('/supprimer-compte')} accessibilityRole="button" style={styles.supprimer}>
+            <Texte poids={600} style={{ fontSize: 13, color: colors.rouge, textDecorationLine: 'underline' }}>
+              {t('supprimerCompte.entree')}
+            </Texte>
+          </Pressable>
         </View>
       </ScrollView>
 
@@ -190,6 +196,7 @@ function Ligne({ libelle, onPress, dernier }: { libelle: string; onPress: () => 
 }
 
 const styles = StyleSheet.create({
+  supprimer: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: 12 },
   suspendu: { gap: 4, padding: 14, borderRadius: 14, backgroundColor: colors.rougeFond, borderWidth: 1, borderColor: colors.rouge },
   ecran: { flex: 1, backgroundColor: colors.blanc },
   entete: {

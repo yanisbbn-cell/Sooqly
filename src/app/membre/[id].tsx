@@ -200,7 +200,7 @@ export default function ProfilMembre() {
                   <ImageProfil numero={a.auteur?.avatar} taille={36} />
                   <View style={{ flex: 1, gap: 2 }}>
                     <Texte poids={700} style={{ fontSize: 14 }}>
-                      {a.auteur?.nom_affiche ?? ''}
+                      {a.auteur?.nom_affiche ?? t('confiance.ancienMembre')}
                     </Texte>
                     <Texte style={{ fontSize: 12, color: colors.brunMoyen }}>
                       {a.role === 'acheteur' ? t('confiance.deLAcheteur') : t('confiance.duVendeur')} · {d.getDate()} {mois[d.getMonth()]} {d.getFullYear()}
