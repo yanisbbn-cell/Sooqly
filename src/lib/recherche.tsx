@@ -151,7 +151,24 @@ export async function chercherAnnonces(f: Filtres, criteres: Critere[], tri: Tri
   if (tri === 'proche' && maWilaya) {
     liste = [...liste.filter((a) => a.wilaya_code === maWilaya), ...liste.filter((a) => a.wilaya_code !== maWilaya)];
   }
-  return [...liste.filter(estSponsorisee), ...liste.filter((a) => !estSponsorisee(a))];
+  return intercalerSponsorisees(liste);
+}
+
+/**
+ * Fil d'annonces : une annonce sponsorisée insérée toutes les 6 annonces (les autres restent dans « À la une »).
+ * Le badge « Vendeur validé » ne change jamais l'ordre.
+ */
+export function intercalerSponsorisees(liste: AnnonceResume[]): AnnonceResume[] {
+  const sponsorisees = liste.filter(estSponsorisee);
+  const autres = liste.filter((a) => !estSponsorisee(a));
+  const resultat: AnnonceResume[] = [];
+  let s = 0;
+  autres.forEach((a, i) => {
+    if (i > 0 && i % 6 === 0 && s < sponsorisees.length) resultat.push(sponsorisees[s++]!);
+    resultat.push(a);
+  });
+  // Peu d'annonces : les sponsorisées restantes viennent à la suite.
+  return [...resultat, ...sponsorisees.slice(s)];
 }
 
 type Recherche = {

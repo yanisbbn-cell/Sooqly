@@ -15,15 +15,17 @@ import { IconeCoche, IconeFavori, IconeRetour } from '@/components/Icones';
 import { ImageProfil } from '@/components/ImageProfil';
 import { BadgeValide } from '@/components/confiance/BadgeValide';
 import { FeuilleSignalement } from '@/components/confiance/FeuilleSignalement';
+import { BlocMiseEnAvant } from '@/components/moderation/BlocMiseEnAvant';
 import { Texte } from '@/components/Texte';
-import { estSponsorisee, lireAnnonce, refuserAnnonce, validerAnnonce, type Annonce } from '@/lib/annonces';
-import { estModerateur, useAuth } from '@/lib/auth';
+import { estSponsorisee, lireAnnonce, type Annonce } from '@/lib/annonces';
+import { modererAnnonce, type Decision } from '@/lib/moderation';
+import { estAdmin, estModerateur, useAuth } from '@/lib/auth';
 import { statsMembre, type StatsMembre } from '@/lib/confiance';
 import { ajouterFavori, lireFavori, retirerFavori } from '@/lib/favoris';
 import { compterVue } from '@/lib/mesAnnonces';
 import { usePreferences } from '@/lib/preferences';
 import { formaterEuro, formaterNombre } from '@/lib/prix';
-import { useCategories, useReglages, useWilayas } from '@/lib/referentiel';
+import { famillesDetectees, useCategories, useMotsInterdits, useReglages, useWilayas } from '@/lib/referentiel';
 import { colors, toucheMin } from '@/theme';
 
 const ORDRE_UNITES = ['nuit', 'jour', 'semaine', 'mois', '6_mois', 'an'];
@@ -384,10 +386,18 @@ export default function FicheAnnonce() {
             </Pressable>
           )}
 
-          {estModerateur(profil) && a.statut === 'verification' && (
+          {estAdmin(profil) && a.auteur?.est_pro && (
+            <BlocMiseEnAvant
+              annonce={a}
+              onFait={() => {
+                charger();
+              }}
+            />
+          )}
+
+          {estModerateur(profil) && ['verification', 'en_ligne', 'reserve'].includes(a.statut) && (
             <PanneauModeration
               annonce={a}
-              dureeJours={reglages?.duree_vie_annonce_jours ?? 60}
               onFait={(message) => {
                 setConfirmation(message);
                 charger();
@@ -408,63 +418,89 @@ export default function FicheAnnonce() {
 }
 
 /** Boutons Valider / Refuser pour un modérateur (outil provisoire jusqu'à l'étape 12). */
-function PanneauModeration({
-  annonce,
-  dureeJours,
-  onFait,
-}: {
-  annonce: Annonce;
-  dureeJours: number;
-  onFait: (message: string) => void;
-}) {
+/** Modération : valider, refuser, demander une correction (annonce en vérification) ou retirer (annonce en ligne). */
+function PanneauModeration({ annonce, onFait }: { annonce: Annonce; onFait: (message: string) => void }) {
   const { t } = useTranslation();
-  const [refus, setRefus] = useState(false);
+  const { langue } = usePreferences();
+  const { donnees: motsInterdits } = useMotsInterdits();
+  const [saisie, setSaisie] = useState<null | 'refuser' | 'correction' | 'retirer'>(null);
   const [motif, setMotif] = useState('');
   const [occupe, setOccupe] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const enVerification = annonce.statut === 'verification';
 
-  const agir = async (action: () => Promise<boolean>, succes: string) => {
+  // Détecteur de mots, comme à la publication (les pros ont droit aux mots « agence », « garage »…).
+  const familles = famillesDetectees(
+    [annonce.titre, annonce.description, ...Object.values(annonce.caracteristiques ?? {}).map(String)].join(' '),
+    !!annonce.auteur?.est_pro,
+    motsInterdits ?? [],
+  );
+
+  const agir = async (decision: Decision, succes: string) => {
     setOccupe(true);
-    const ok = await action();
+    setMessage(null);
+    const ok = await modererAnnonce(annonce.id, decision, motif);
     setOccupe(false);
     if (ok) onFait(succes);
     else setMessage(t('moderation.erreur'));
   };
+
+  const champs = {
+    refuser: { libelle: t('moderation.motifChamp'), exemple: t('moderation.motifEx'), bouton: t('moderation.confirmerRefus'), succes: t('moderation.refusee') },
+    correction: {
+      libelle: t('moderation.correctionChamp'),
+      exemple: t('moderation.correctionEx'),
+      bouton: t('moderation.confirmerCorrection'),
+      succes: t('moderation.correctionEnvoyee'),
+    },
+    retirer: { libelle: t('moderation.retirerChamp'), exemple: t('moderation.motifEx'), bouton: t('moderation.confirmerRetrait'), succes: t('moderation.retiree') },
+  } as const;
 
   return (
     <View style={styles.moderation}>
       <Texte variante="titre" poids={700} style={{ fontSize: 16 }}>
         {t('moderation.panneau')}
       </Texte>
-      <Texte style={styles.secondaire}>{t('moderation.provisoire')}</Texte>
+      <Texte poids={600} style={{ fontSize: 13, color: familles.length ? colors.rouge : colors.vert }}>
+        {familles.length
+          ? t('moderation.detecteurMots', { familles: familles.map((f) => (langue === 'ar' ? f.motif_ar : f.motif_fr)).join(' · ') })
+          : t('moderation.detecteurMotsRien')}
+      </Texte>
+      <Pressable
+        onPress={() => router.push({ pathname: '/moderation/membre/[id]', params: { id: annonce.auteur_id } })}
+        accessibilityRole="link"
+        style={{ minHeight: 32, justifyContent: 'center' }}
+      >
+        <Texte poids={700} style={{ fontSize: 13, color: colors.accentFonce, textDecorationLine: 'underline' }}>
+          {t('moderation.historique')}
+        </Texte>
+      </Pressable>
       {message && (
         <Texte poids={600} style={{ fontSize: 13, color: colors.rouge }}>
           {message}
         </Texte>
       )}
-      {!refus ? (
-        <>
-          <Bouton
-            libelle={t('moderation.valider')}
-            onPress={() => agir(() => validerAnnonce(annonce.id, dureeJours), t('moderation.validee'))}
-            occupe={occupe}
-          />
-          <Bouton libelle={t('moderation.refuser')} onPress={() => setRefus(true)} variante="contour" />
-        </>
+      {!saisie ? (
+        enVerification ? (
+          <>
+            <Bouton libelle={t('moderation.valider')} onPress={() => agir('valider', t('moderation.validee'))} occupe={occupe} />
+            <Bouton libelle={t('moderation.corriger')} onPress={() => setSaisie('correction')} variante="sombre" />
+            <Bouton libelle={t('moderation.refuser')} onPress={() => setSaisie('refuser')} variante="contour" />
+          </>
+        ) : (
+          <Bouton libelle={t('moderation.retirer')} onPress={() => setSaisie('retirer')} variante="contour" />
+        )
       ) : (
         <>
-          <Champ libelle={t('moderation.motifChamp')} placeholder={t('moderation.motifEx')} value={motif} onChangeText={setMotif} maxLength={200} />
-          <Pressable
-            onPress={() => agir(() => refuserAnnonce(annonce.id, motif), t('moderation.refusee'))}
-            accessibilityRole="button"
-            disabled={occupe}
-            style={({ pressed }) => [styles.refuser, pressed && { opacity: 0.8 }]}
-          >
-            <Texte poids={700} style={{ color: colors.blanc, fontSize: 15, textAlign: 'center' }}>
-              {t('moderation.confirmerRefus')}
-            </Texte>
-          </Pressable>
-          <Bouton libelle={t('moderation.annuler')} onPress={() => setRefus(false)} variante="contour" />
+          <Champ libelle={champs[saisie].libelle} placeholder={champs[saisie].exemple} value={motif} onChangeText={setMotif} maxLength={300} />
+          <Bouton
+            libelle={champs[saisie].bouton}
+            onPress={() => agir(saisie, champs[saisie].succes)}
+            occupe={occupe}
+            actif={saisie !== 'correction' || motif.trim().length > 0}
+            variante={saisie === 'correction' ? 'sombre' : 'danger'}
+          />
+          <Bouton libelle={t('moderation.annuler')} onPress={() => setSaisie(null)} variante="contour" />
         </>
       )}
     </View>

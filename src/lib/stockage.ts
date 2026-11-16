@@ -4,6 +4,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export const cles = {
   langue: 'sooqly.langue',
   accueilVu: 'sooqly.accueilVu',
+  /** Code de parrainage reçu par un lien d'invitation, en attendant l'inscription. */
+  parrain: 'sooqly.parrain',
 } as const;
 
 export async function lire(cle: string): Promise<string | null> {

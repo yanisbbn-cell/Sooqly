@@ -20,6 +20,7 @@ export type Profil = {
   avatar: number | null;
   telephone_verifie: boolean;
   role: 'membre' | 'moderateur' | 'admin';
+  suspendu: boolean;
 };
 
 /** Clés de traduction « compte.erreurs.* ». */
@@ -71,7 +72,7 @@ function traduireErreur(e: { message?: string; status?: number; code?: string } 
   return defaut;
 }
 
-const COLONNES = 'id, nom_affiche, wilaya_code, ville, avatar, telephone_verifie, role';
+const COLONNES = 'id, nom_affiche, wilaya_code, ville, avatar, telephone_verifie, role, suspendu';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [pret, setPret] = useState(false);
@@ -210,3 +211,6 @@ export function useAuth(): Auth {
   if (!a) throw new Error('useAuth doit être utilisé dans AuthProvider');
   return a;
 }
+
+/** Vrai seulement pour l'administrateur (réglages, mise en avant, rôles, charte). */
+export const estAdmin = (p: Profil | null) => p?.role === 'admin';

@@ -88,6 +88,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       const id = r.notification.request.content.data?.conversation_id;
       if (typeof id === 'string') router.push({ pathname: '/discussion/[id]', params: { id } });
       else if (r.notification.request.content.data?.mes_annonces) router.push('/mes-annonces');
+      else if (r.notification.request.content.data?.charte) router.push('/charte');
       else if (typeof r.notification.request.content.data?.annonce_id === 'string')
         router.push({ pathname: '/annonce/[id]', params: { id: r.notification.request.content.data.annonce_id as string } });
     });

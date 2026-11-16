@@ -3,7 +3,7 @@ import { supabase } from './supabase';
 
 /** Étape 10 : « Mes annonces » (statistiques, statuts, republication, suppression). */
 
-export type MonAnnonce = AnnonceResume & { motif_refus: string | null; expire_le: string | null };
+export type MonAnnonce = AnnonceResume & { motif_refus: string | null; expire_le: string | null; correction_demandee: boolean };
 
 export type StatsAnnonce = {
   annonce_id: string;
@@ -22,7 +22,7 @@ export async function listerMesAnnonces(auteurId: string): Promise<{ annonces: M
   const [l, s] = await Promise.all([
     supabase
       .from('listings')
-      .select(`${RESUME}, motif_refus, expire_le, cree_le`)
+      .select(`${RESUME}, motif_refus, expire_le, cree_le, correction_demandee`)
       .eq('auteur_id', auteurId)
       .order('cree_le', { ascending: false }),
     supabase.rpc('stats_mes_annonces'),

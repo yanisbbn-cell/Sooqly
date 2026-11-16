@@ -173,27 +173,13 @@ const COMPLET =
 export const estSponsorisee = (a: Pick<AnnonceResume, 'sponsorise_jusqu'>) =>
   !!a.sponsorise_jusqu && new Date(a.sponsorise_jusqu).getTime() > Date.now();
 
-/**
- * Annonces visibles par tous (en ligne ou réservées), les plus récentes d'abord.
- * Seules les annonces sponsorisées passent devant ; le badge « Vendeur validé » ne change jamais l'ordre.
- */
-export async function listerAnnonces(filtre: { categorie?: string | null; sousCategories?: number[] }) {
-  let requete = supabase.from('listings').select(RESUME).in('statut', ['en_ligne', 'reserve']);
-  if (filtre.categorie) requete = requete.eq('categorie', filtre.categorie);
-  if (filtre.sousCategories?.length) requete = requete.in('sous_categorie_id', filtre.sousCategories);
-  const { data, error } = await requete.order('publie_le', { ascending: false }).limit(200);
-  if (error) throw error;
-  const liste = data as unknown as AnnonceResume[];
-  return [...liste.filter(estSponsorisee), ...liste.filter((a) => !estSponsorisee(a))];
-}
-
 export async function lireAnnonce(id: string): Promise<Annonce | null> {
   const { data, error } = await supabase.from('listings').select(COMPLET).eq('id', id).maybeSingle();
   if (error) throw error;
   return data as unknown as Annonce | null;
 }
 
-// ---------- Modération provisoire (le vrai espace arrive à l'étape 12) ----------
+// ---------- Modération : file des annonces à valider (décisions dans lib/moderation.ts) ----------
 
 export async function listerAValider(): Promise<AnnonceResume[]> {
   const { data, error } = await supabase
@@ -203,24 +189,6 @@ export async function listerAValider(): Promise<AnnonceResume[]> {
     .order('cree_le', { ascending: true });
   if (error) throw error;
   return data as unknown as AnnonceResume[];
-}
-
-export async function validerAnnonce(id: string, dureeJours: number) {
-  const maintenant = new Date();
-  const fin = new Date(maintenant.getTime() + dureeJours * 24 * 3600 * 1000);
-  const { error } = await supabase
-    .from('listings')
-    .update({ statut: 'en_ligne', publie_le: maintenant.toISOString(), expire_le: fin.toISOString(), motif_refus: null })
-    .eq('id', id);
-  return !error;
-}
-
-export async function refuserAnnonce(id: string, motif: string) {
-  const { error } = await supabase
-    .from('listings')
-    .update({ statut: 'refuse', motif_refus: motif.trim() || null })
-    .eq('id', id);
-  return !error;
 }
 
 /** Résumés de plusieurs annonces (résultats de la recherche de location). */

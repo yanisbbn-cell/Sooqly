@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 
 import { CarteAnnonce } from '@/components/annonces/CarteAnnonce';
 import { BandeauANoter } from '@/components/confiance/BandeauANoter';
+import { RangeeALaUne } from '@/components/annonces/RangeeALaUne';
+import { estSponsorisee } from '@/lib/annonces';
 import { BoutonAlerte } from '@/components/BoutonAlerte';
 import { rechercheAlertable } from '@/lib/alertes';
 import { FeuilleSousCategories } from '@/components/annonces/FeuilleSousCategories';
@@ -217,6 +219,8 @@ export default function Annonces() {
           </View>
         </View>
       )}
+
+      <RangeeALaUne annonces={(annonces ?? []).filter(estSponsorisee)} categories={categories.donnees ?? null} />
 
       {!recherche && (
         <View style={styles.titreListe}>

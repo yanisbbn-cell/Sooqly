@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Texte } from '@/components/Texte';
 import { monParrainage } from '@/lib/parrainage';
+import { lienInvitation } from '@/lib/site';
 import { usePreferences } from '@/lib/preferences';
 import { colors, fonts, toucheMin } from '@/theme';
 
@@ -21,7 +22,7 @@ export function CarteParrainage({ membreId }: { membreId: string }) {
   );
 
   if (!donnees) return null;
-  const partager = () => Share.share({ message: t('parrainage.message', { code: donnees.code }) }).catch(() => undefined);
+  const partager = () => Share.share({ message: t('parrainage.message', { code: donnees.code, lien: lienInvitation(donnees.code) }) }).catch(() => undefined);
 
   return (
     <View style={styles.carte}>
