@@ -14,15 +14,28 @@ import { BadgeValide } from '@/components/confiance/BadgeValide';
 import { Etoiles } from '@/components/confiance/Etoiles';
 import { FeuilleConfirmation } from '@/components/confiance/FeuilleConfirmation';
 import { FeuilleSignalement } from '@/components/confiance/FeuilleSignalement';
-import { annoncesDuMembre, type AnnonceResume } from '@/lib/annonces';
+import { annoncesDuMembre, type ActivitePro, type AnnonceResume, type TypeAnnonce } from '@/lib/annonces';
+import { BanniereVitrine } from '@/components/BanniereVitrine';
+import { Pastille } from '@/components/Pastille';
 import { useAuth } from '@/lib/auth';
 import { avisRecus, bloquer, debloquer, estBloque, statsMembre, type Avis, type StatsMembre } from '@/lib/confiance';
+import { usePreferences } from '@/lib/preferences';
 import { formaterNombre } from '@/lib/prix';
 import { useCategories, useReglages, useWilayas } from '@/lib/referentiel';
 import { supabase } from '@/lib/supabase';
 import { colors } from '@/theme';
 
-type Membre = { id: string; nom_affiche: string; avatar: number | null; est_pro: boolean; nom_commercial: string | null; cree_le: string };
+type Membre = {
+  id: string;
+  nom_affiche: string;
+  avatar: number | null;
+  est_pro: boolean;
+  nom_commercial: string | null;
+  activite_pro: ActivitePro | null;
+  wilaya_code: number | null;
+  ville: string | null;
+  cree_le: string;
+};
 
 /** Profil public d'un membre : notes, avis, progression du badge « Vendeur validé », ses annonces, signaler / bloquer. */
 export default function ProfilMembre() {
@@ -30,6 +43,7 @@ export default function ProfilMembre() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { profil } = useAuth();
+  const { langue } = usePreferences();
   const categories = useCategories();
   const { donnees: wilayas } = useWilayas();
   const { donnees: reglages } = useReglages();
@@ -41,12 +55,13 @@ export default function ProfilMembre() {
   const [erreur, setErreur] = useState(false);
   const [jeBloque, setJeBloque] = useState(false);
   const [feuille, setFeuille] = useState<null | 'signaler' | 'bloquer'>(null);
+  const [typeChoisi, setTypeChoisi] = useState<TypeAnnonce | null>(null);
 
   const charger = useCallback(async () => {
     setErreur(false);
     try {
       const [m, s, a, l] = await Promise.all([
-        supabase.from('profiles').select('id, nom_affiche, avatar, est_pro, nom_commercial, cree_le').eq('id', String(id)).maybeSingle(),
+        supabase.from('profiles').select('id, nom_affiche, avatar, est_pro, nom_commercial, activite_pro, wilaya_code, ville, cree_le').eq('id', String(id)).maybeSingle(),
         statsMembre(String(id)),
         avisRecus(String(id)),
         annoncesDuMembre(String(id)),
@@ -88,9 +103,15 @@ export default function ProfilMembre() {
     { titre: t('confiance.commeAcheteur'), m: stats.comme_acheteur, cles: ['ponctualite', 'paiement', 'comportement'] as const },
   ].filter((b) => b.m.nb > 0);
 
+  const vitrine = membre.est_pro;
+  const w = wilayas?.find((x) => x.code === membre.wilaya_code);
+  const lieu = [membre.ville, w ? (langue === 'ar' ? w.nom_ar : w.nom_fr) : ''].filter(Boolean).join(langue === 'ar' ? '، ' : ', ');
+  const types = [...new Set(annonces.map((a) => a.type))];
+  const affichees = typeChoisi ? annonces.filter((a) => a.type === typeChoisi) : annonces;
+
   return (
     <View style={styles.ecran}>
-      <EnTeteRetour titre={t('confiance.profilVendeur')} />
+      {vitrine ? <BanniereVitrine /> : <EnTeteRetour titre={t('confiance.profilVendeur')} />}
       <ScrollView contentContainerStyle={[styles.contenu, { paddingBottom: insets.bottom + 24 }]}>
         <View style={styles.identite}>
           <ImageProfil numero={membre.avatar} taille={72} />
@@ -98,11 +119,12 @@ export default function ProfilMembre() {
             <Texte variante="titre" poids={700} style={{ fontSize: 22 }}>
               {nom}
             </Texte>
-            {valide ? (
-              <BadgeValide />
-            ) : (
-              <Texte style={styles.secondaire}>{membre.est_pro ? t('fiche.professionnel') : t('confiance.membre')}</Texte>
+            {vitrine && (
+              <Texte poids={600} style={styles.secondaire}>
+                {[membre.activite_pro ? t(`publier.activites.${membre.activite_pro}`) : t('vitrine.verifie'), lieu].filter(Boolean).join(' · ')}
+              </Texte>
             )}
+            {valide ? <BadgeValide /> : !vitrine && <Texte style={styles.secondaire}>{t('confiance.membre')}</Texte>}
             <Texte style={styles.secondaire}>{t('fiche.membreDepuis', { date: `${mois[depuis.getMonth()]} ${depuis.getFullYear()}` })}</Texte>
           </View>
         </View>
@@ -195,11 +217,19 @@ export default function ProfilMembre() {
           <Texte variante="titre" poids={700} style={styles.titre} accessibilityRole="header">
             {t('confiance.sesAnnonces')}
           </Texte>
-          {annonces.length === 0 ? (
+          {vitrine && types.length > 1 && (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              <Pastille libelle={t('vitrine.toutes')} choisi={!typeChoisi} onPress={() => setTypeChoisi(null)} />
+              {types.map((ty) => (
+                <Pastille key={ty} libelle={t(`publier.types.${ty}`)} choisi={typeChoisi === ty} onPress={() => setTypeChoisi(ty)} />
+              ))}
+            </View>
+          )}
+          {affichees.length === 0 ? (
             <Texte style={styles.secondaire}>{t('confiance.aucuneAnnonce')}</Texte>
           ) : (
             <View style={styles.grille}>
-              {annonces.map((a) => (
+              {affichees.map((a) => (
                 <View key={a.id} style={styles.case}>
                   <CarteAnnonce
                     annonce={a}

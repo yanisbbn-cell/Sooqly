@@ -11,7 +11,8 @@ import { EtatChargement } from '@/components/EtatChargement';
 import { ImageProfil } from '@/components/ImageProfil';
 import { Texte } from '@/components/Texte';
 import { Feuille } from '@/components/confiance/Feuille';
-import { estModerateur, useAuth } from '@/lib/auth';
+import { changerRole } from '@/lib/admin';
+import { estAdmin, estModerateur, useAuth } from '@/lib/auth';
 import { historiqueMembre, modererMembre, type ActionMembre, type Historique } from '@/lib/moderation';
 import { colors } from '@/theme';
 
@@ -106,6 +107,18 @@ export default function HistoriqueMembre() {
             )}
             {!m.exclu && <Bouton libelle={t('moderation.exclure')} onPress={() => setDemande('exclure')} variante="contour" />}
           </View>
+        )}
+
+        {estAdmin(profil) && m.id !== profil?.id && m.role !== 'admin' && !m.suspendu && (
+          <Bouton
+            libelle={m.role === 'moderateur' ? t('reglages.retirerRole') : t('reglages.nommer')}
+            onPress={async () => {
+              setErreurAction(false);
+              if (await changerRole(m.id, m.role === 'moderateur' ? 'membre' : 'moderateur')) charger();
+              else setErreurAction(true);
+            }}
+            variante="contour"
+          />
         )}
 
         <Bloc titre={t('moderation.signalementsTitre')} vide={!h.signalements.length}>

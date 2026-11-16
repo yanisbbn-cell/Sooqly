@@ -173,20 +173,6 @@ const COMPLET =
 export const estSponsorisee = (a: Pick<AnnonceResume, 'sponsorise_jusqu'>) =>
   !!a.sponsorise_jusqu && new Date(a.sponsorise_jusqu).getTime() > Date.now();
 
-/**
- * Annonces visibles par tous (en ligne ou réservées), les plus récentes d'abord.
- * Seules les annonces sponsorisées passent devant ; le badge « Vendeur validé » ne change jamais l'ordre.
- */
-export async function listerAnnonces(filtre: { categorie?: string | null; sousCategories?: number[] }) {
-  let requete = supabase.from('listings').select(RESUME).in('statut', ['en_ligne', 'reserve']);
-  if (filtre.categorie) requete = requete.eq('categorie', filtre.categorie);
-  if (filtre.sousCategories?.length) requete = requete.in('sous_categorie_id', filtre.sousCategories);
-  const { data, error } = await requete.order('publie_le', { ascending: false }).limit(200);
-  if (error) throw error;
-  const liste = data as unknown as AnnonceResume[];
-  return [...liste.filter(estSponsorisee), ...liste.filter((a) => !estSponsorisee(a))];
-}
-
 export async function lireAnnonce(id: string): Promise<Annonce | null> {
   const { data, error } = await supabase.from('listings').select(COMPLET).eq('id', id).maybeSingle();
   if (error) throw error;

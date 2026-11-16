@@ -211,3 +211,6 @@ export function useAuth(): Auth {
   if (!a) throw new Error('useAuth doit être utilisé dans AuthProvider');
   return a;
 }
+
+/** Vrai seulement pour l'administrateur (réglages, mise en avant, rôles, charte). */
+export const estAdmin = (p: Profil | null) => p?.role === 'admin';

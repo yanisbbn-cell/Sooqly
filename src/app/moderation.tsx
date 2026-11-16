@@ -7,7 +7,7 @@ import { EnTeteRetour } from '@/components/EnTeteRetour';
 import { EtatChargement } from '@/components/EtatChargement';
 import { Texte } from '@/components/Texte';
 import { listerAValider, type AnnonceResume } from '@/lib/annonces';
-import { estModerateur, useAuth } from '@/lib/auth';
+import { estAdmin, estModerateur, useAuth } from '@/lib/auth';
 import { compteurs, signalementsATraiter, traiterSignalement, type Signalement } from '@/lib/moderation';
 import { usePreferences } from '@/lib/preferences';
 import { formaterNombre } from '@/lib/prix';
@@ -87,6 +87,13 @@ export default function Moderation() {
           </Pressable>
         ))}
       </View>
+      {estAdmin(profil) && (
+        <Pressable onPress={() => router.push('/moderation/reglages')} accessibilityRole="button" style={styles.reglages}>
+          <Texte poids={700} style={{ fontSize: 14 }}>
+            {t('reglages.titre')}
+          </Texte>
+        </Pressable>
+      )}
       <Texte style={styles.note}>{t('moderation.rappel')}</Texte>
       {erreurAction && (
         <Texte poids={600} style={{ fontSize: 12, color: colors.rouge }} accessibilityRole="alert">
@@ -240,5 +247,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  reglages: { minHeight: toucheMin, borderRadius: 12, backgroundColor: colors.carte, alignItems: 'center', justifyContent: 'center' },
   actionPleine: { backgroundColor: colors.brun, borderColor: colors.brun },
 });

@@ -30,7 +30,7 @@ import {
 import { urlPhoto } from '@/lib/photos';
 import { usePreferences } from '@/lib/preferences';
 import { formaterNombre, lirePrix } from '@/lib/prix';
-import { useCategories } from '@/lib/referentiel';
+import { useCategories, useReglages } from '@/lib/referentiel';
 import { colors, fonts, toucheMin } from '@/theme';
 
 const PASTILLE: Record<StatutAnnonce, { fond: string; texte: string }> = {
@@ -52,6 +52,8 @@ export default function MesAnnonces() {
   const [stats, setStats] = useState<Map<string, StatsAnnonce>>(new Map());
   const [erreur, setErreur] = useState(false);
   const [aNoter, setANoter] = useState<TransactionANoter | null>(null);
+  const { donnees: reglages } = useReglages();
+  const tarifs = reglages?.tarifs_mise_en_avant ?? {};
 
   const charger = useCallback(async () => {
     if (!profil) return;
@@ -92,6 +94,23 @@ export default function MesAnnonces() {
         contentContainerStyle={[styles.contenu, { paddingBottom: insets.bottom + 24 }]}
         ListHeaderComponent={
           annonces ? (
+            <View style={{ gap: 12 }}>
+            {annonces.some((a) => a.auteur?.est_pro) && Object.keys(tarifs).length > 0 && (
+              <View style={styles.tarifs}>
+                <Texte poids={700} style={{ fontSize: 14 }}>
+                  {t('miseEnAvant.tarifsTitre')}
+                </Texte>
+                <Texte style={styles.note}>{t('miseEnAvant.tarifsTexte')}</Texte>
+                {Object.entries(tarifs)
+                  .sort(([x], [y]) => Number(x) - Number(y))
+                  .map(([j, prix]) => (
+                    <Texte key={j} poids={600} style={{ fontSize: 13 }}>
+                      • {t('miseEnAvant.prix', { n: j, prix: formaterNombre(prix) })}
+                    </Texte>
+                  ))}
+                <Texte style={styles.note}>{t('miseEnAvant.tarifsActivation')}</Texte>
+              </View>
+            )}
             <View style={styles.bilan}>
               {bilan.map((b) => (
                 <View key={b.l} style={styles.bilanCase}>
@@ -101,6 +120,7 @@ export default function MesAnnonces() {
                   <Texte style={{ fontSize: 11, color: colors.brunMoyen, textAlign: 'center' }}>{b.l}</Texte>
                 </View>
               ))}
+            </View>
             </View>
           ) : undefined
         }
@@ -427,6 +447,7 @@ const styles = StyleSheet.create({
   contenu: { padding: 16, gap: 14 },
   vide: { fontSize: 14, color: colors.brunMoyen, textAlign: 'center', paddingVertical: 24 },
   bilan: { flexDirection: 'row', gap: 8 },
+  tarifs: { gap: 4, padding: 12, borderRadius: 14, borderWidth: 1, borderColor: colors.sable3 },
   bilanCase: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: 10, borderRadius: 14, backgroundColor: colors.carte },
   carte: { padding: 14, borderRadius: 16, backgroundColor: colors.carte, gap: 10 },
   tete: { flexDirection: 'row', gap: 12 },

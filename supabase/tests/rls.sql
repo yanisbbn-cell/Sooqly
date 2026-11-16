@@ -599,5 +599,45 @@ begin
     reset role;
   end;
 
+  -- ---------- 22. Administrateur : mise en avant, rôles, charte, réglages ----------
+  declare
+    ad uuid := gen_random_uuid(); v10 uuid; ok10 boolean; sp timestamptz; vc int; vc2 int; rl text;
+  begin
+    perform set_config('request.jwt.claims', '', true);
+    insert into auth.users (id, instance_id, aud, role, email)
+      values (ad, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', ad || '@test.invalid');
+    insert into public.profiles (id, nom_affiche, wilaya_code, role) values (ad, 'Admin test', 16, 'admin');
+    update public.profiles set est_pro = true where id = b;
+    insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code, statut, publie_le, expire_le)
+      values (b, 'vente', 'ameublement', 'Salon pro test', 90000, 16, 'en_ligne', now(), now() + interval '60 days') returning id into v10;
+    -- Un modérateur n'est pas administrateur.
+    perform set_config('request.jwt.claims', json_build_object('sub', m, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    begin
+      perform public.sponsoriser(v10, now() + interval '7 days');
+      assert false, 'modérateur : a sponsorisé';
+    exception when insufficient_privilege then null; end;
+    update public.settings set seuil_badge = 3;
+    get diagnostics vc = row_count; assert vc = 0, 'modérateur : a modifié les réglages';
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', ad, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    ok10 := public.sponsoriser(v10, now() + interval '7 days'); assert ok10, 'sponsoriser refusé';
+    select sponsorise_jusqu into sp from public.listings where id = v10; assert sp > now(), 'sponsorisation absente';
+    ok10 := public.sponsoriser(annonce, now() + interval '7 days'); assert not ok10, 'annonce de particulier sponsorisée';
+    ok10 := public.changer_role(c, 'moderateur'); assert ok10, 'nomination refusée';
+    select role into rl from public.profiles where id = c; assert rl = 'moderateur', 'rôle : ' || rl;
+    ok10 := public.changer_role(c, 'membre'); assert ok10, 'retrait refusé';
+    select version_charte into vc from public.settings;
+    ok10 := public.publier_article_charte(1::smallint, 'Titre test', 'عنوان', '[{"fr":"a","ar":"ب"}]'::jsonb, '[]'::jsonb);
+    assert ok10, 'charte non publiée';
+    select version_charte into vc2 from public.settings; assert vc2 = vc + 1, 'version de la charte inchangée';
+    begin
+      update public.settings set seuil_badge = 0;
+      assert false, 'seuil 0 accepté';
+    exception when check_violation then null; end;
+    reset role;
+  end;
+
   raise exception 'TESTS_OK';
 end $$;

@@ -68,6 +68,9 @@ function useDonnees<T>(cle: string, charger: () => Promise<T>): Etat<T> {
 }
 
 export const useWilayas = () => useDonnees('wilayas', chargerWilayas);
+
+/** Après une modification par l'administrateur : la donnée sera relue au prochain affichage. */
+export const oublierReferentiel = (cle: 'reglages' | 'motsInterdits' | 'charte') => memoire.delete(cle);
 export const useCharte = () => useDonnees('charte', chargerCharte);
 
 /** Numéro de wilaya sur deux chiffres : 1 → « 01 ». */
@@ -113,7 +116,14 @@ export type Categorie = {
   conseil_description: TexteBilingue;
   sous_categories: SousCategorie[];
 };
-export type Reglages = { taux_dinar_euro: number; seuil_badge: number; duree_vie_annonce_jours: number };
+export type Reglages = {
+  taux_dinar_euro: number;
+  seuil_badge: number;
+  duree_vie_annonce_jours: number;
+  rappel_expiration_jours: number;
+  /** Mise en avant : nombre de jours → prix en DA (ex. { "7": 1500 }). Vide tant que l'administrateur ne l'a pas réglé. */
+  tarifs_mise_en_avant: Record<string, number>;
+};
 
 async function chargerCategories(): Promise<Categorie[]> {
   const { data, error } = await supabase
@@ -129,7 +139,7 @@ async function chargerCategories(): Promise<Categorie[]> {
 async function chargerReglages(): Promise<Reglages> {
   const { data, error } = await supabase
     .from('settings')
-    .select('taux_dinar_euro, seuil_badge, duree_vie_annonce_jours')
+    .select('taux_dinar_euro, seuil_badge, duree_vie_annonce_jours, rappel_expiration_jours, tarifs_mise_en_avant')
     .eq('id', 1)
     .single();
   if (error) throw error;

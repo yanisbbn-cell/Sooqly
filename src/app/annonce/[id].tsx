@@ -15,10 +15,11 @@ import { IconeCoche, IconeFavori, IconeRetour } from '@/components/Icones';
 import { ImageProfil } from '@/components/ImageProfil';
 import { BadgeValide } from '@/components/confiance/BadgeValide';
 import { FeuilleSignalement } from '@/components/confiance/FeuilleSignalement';
+import { BlocMiseEnAvant } from '@/components/moderation/BlocMiseEnAvant';
 import { Texte } from '@/components/Texte';
 import { estSponsorisee, lireAnnonce, type Annonce } from '@/lib/annonces';
 import { modererAnnonce, type Decision } from '@/lib/moderation';
-import { estModerateur, useAuth } from '@/lib/auth';
+import { estAdmin, estModerateur, useAuth } from '@/lib/auth';
 import { statsMembre, type StatsMembre } from '@/lib/confiance';
 import { ajouterFavori, lireFavori, retirerFavori } from '@/lib/favoris';
 import { compterVue } from '@/lib/mesAnnonces';
@@ -383,6 +384,15 @@ export default function FicheAnnonce() {
                 {signalee ? t('confiance.annonceSignalee') : t('confiance.signalerAnnonce')}
               </Texte>
             </Pressable>
+          )}
+
+          {estAdmin(profil) && a.auteur?.est_pro && (
+            <BlocMiseEnAvant
+              annonce={a}
+              onFait={() => {
+                charger();
+              }}
+            />
           )}
 
           {estModerateur(profil) && ['verification', 'en_ligne', 'reserve'].includes(a.statut) && (
