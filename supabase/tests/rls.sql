@@ -336,5 +336,60 @@ begin
     reset role;
   end;
 
+  -- ---------- 16. Confiance : vente déclarée, notes, badge, signalement, blocages ----------
+  declare
+    tx uuid; nb4 int; st2 text; j json;
+  begin
+    perform set_config('request.jwt.claims', '', true);
+    update public.listings set statut = 'en_ligne' where id = annonce;
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    begin
+      insert into public.transactions (annonce_id, acheteur_id, vendeur_id) values (annonce, c, a);
+      assert false, 'A : vente déclarée à un membre sans discussion';
+    exception when raise_exception then null; end;
+    insert into public.transactions (annonce_id, acheteur_id, vendeur_id) values (annonce, b, a) returning id into tx;
+    select statut into st2 from public.listings where id = annonce; assert st2 = 'vendu', 'annonce non passée vendue : ' || st2;
+    begin
+      insert into public.transactions (annonce_id, acheteur_id, vendeur_id) values (annonce, b, a);
+      assert false, 'A : vente déclarée deux fois';
+    exception when raise_exception then null; end;
+    insert into public.ratings (transaction_id, auteur_id, cible_id, role, note, critere_1, critere_2, critere_3)
+      values (tx, a, b, 'vendeur', 4, 4, 5, 4);
+    select count(*) into nb4 from public.mes_blocages(); assert nb4 = 1, 'A : liste des blocages : ' || nb4;
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    begin
+      insert into public.ratings (transaction_id, auteur_id, cible_id, role, note, critere_1, critere_2, critere_3)
+        values (tx, c, a, 'acheteur', 1, 1, 1, 1);
+      assert false, 'C : a noté une transaction qui ne le concerne pas';
+    exception when insufficient_privilege then null; end;
+    select count(*) into nb4 from public.transactions_a_noter(); assert nb4 = 0, 'C : voit des transactions à noter';
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', b, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    select count(*) into nb4 from public.transactions_a_noter(); assert nb4 = 1, 'B : transaction à noter absente';
+    insert into public.ratings (transaction_id, auteur_id, cible_id, role, note, critere_1, critere_2, critere_3)
+      values (tx, b, a, 'acheteur', 4, 4, 4, 4);
+    update public.ratings set note = 5, critere_1 = 5 where transaction_id = tx and auteur_id = b;
+    get diagnostics nb4 = row_count; assert nb4 = 1, 'B : note non modifiable sous 48 h';
+    insert into public.reports (auteur_id, membre_vise_id, motif) values (b, a, 'faux_profil');
+    begin
+      insert into public.reports (auteur_id, membre_vise_id, motif) values (b, a, 'autre');
+      assert false, 'B : même membre signalé deux fois';
+    exception when unique_violation then null; end;
+    select count(*) into nb4 from public.reports; assert nb4 = 0, 'B : lit les signalements';
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    update public.settings set seuil_badge = 1;
+    perform set_config('request.jwt.claims', '{"role":"anon"}', true);
+    set local role anon;
+    select count(*) into nb4 from public.vendeurs_valides(array[a, b]); assert nb4 = 1, 'badge : ' || nb4;
+    j := public.profil_membre(a);
+    assert (j->>'ventes_5')::int = 1 and (j->>'moyenne')::numeric = 5, 'profil : ' || j::text;
+    reset role;
+  end;
+
   raise exception 'TESTS_OK';
 end $$;

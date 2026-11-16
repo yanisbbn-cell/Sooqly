@@ -70,7 +70,7 @@ function mots(texte: string): string[] {
 
 function requete(f: Filtres, criteres: Critere[], options: { compter?: boolean } = {}) {
   // « !inner » : nécessaire pour filtrer sur le statut pro de l'auteur.
-  const auteur = f.annonceur === 'tous' ? 'auteur:profiles!listings_auteur_id_fkey(est_pro)' : 'auteur:profiles!listings_auteur_id_fkey!inner(est_pro)';
+  const auteur = f.annonceur === 'tous' ? 'auteur:profiles!listings_auteur_id_fkey(id, est_pro)' : 'auteur:profiles!listings_auteur_id_fkey!inner(id, est_pro)';
   let q = supabase
     .from('listings')
     .select(`${RESUME}, ${auteur}`, options.compter ? { count: 'exact', head: true } : undefined)

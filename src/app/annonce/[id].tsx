@@ -13,9 +13,12 @@ import { EtatChargement } from '@/components/EtatChargement';
 import { IconeCategorie } from '@/components/IconeCategorie';
 import { IconeRetour } from '@/components/Icones';
 import { ImageProfil } from '@/components/ImageProfil';
+import { BadgeValide } from '@/components/confiance/BadgeValide';
+import { FeuilleSignalement } from '@/components/confiance/FeuilleSignalement';
 import { Texte } from '@/components/Texte';
 import { estSponsorisee, lireAnnonce, refuserAnnonce, validerAnnonce, type Annonce } from '@/lib/annonces';
 import { estModerateur, useAuth } from '@/lib/auth';
+import { statsMembre, type StatsMembre } from '@/lib/confiance';
 import { usePreferences } from '@/lib/preferences';
 import { formaterEuro, formaterNombre } from '@/lib/prix';
 import { useCategories, useReglages, useWilayas } from '@/lib/referentiel';
@@ -37,6 +40,14 @@ export default function FicheAnnonce() {
   const [annonce, setAnnonce] = useState<Annonce | null | undefined>(undefined);
   const [erreur, setErreur] = useState(false);
   const [confirmation, setConfirmation] = useState<string | null>(null);
+  const [statsVendeur, setStatsVendeur] = useState<StatsMembre | null>(null);
+  const [signaler, setSignaler] = useState(false);
+  const [signalee, setSignalee] = useState(false);
+
+  const auteurId = annonce?.auteur_id;
+  useEffect(() => {
+    if (auteurId) statsMembre(auteurId).then(setStatsVendeur, () => setStatsVendeur(null));
+  }, [auteurId]);
 
   const charger = useCallback(async () => {
     setErreur(false);
@@ -217,19 +228,35 @@ export default function FicheAnnonce() {
           )}
 
           {a.auteur && (
-            <View style={styles.vendeur}>
+            <Pressable
+              onPress={() => router.push({ pathname: '/membre/[id]', params: { id: a.auteur_id } })}
+              accessibilityRole="button"
+              accessibilityHint={t('confiance.voirProfil')}
+              style={({ pressed }) => [styles.vendeur, pressed && { opacity: 0.85 }]}
+            >
               <ImageProfil numero={a.auteur.avatar} taille={48} />
-              <View style={{ flex: 1, gap: 2 }}>
+              <View style={{ flex: 1, gap: 3 }}>
                 <Texte poids={700} style={{ fontSize: 15 }}>
                   {a.auteur.est_pro && a.auteur.nom_commercial ? a.auteur.nom_commercial : a.auteur.nom_affiche}
                 </Texte>
+                {statsVendeur && statsVendeur.ventes_5 >= statsVendeur.seuil && <BadgeValide />}
+                {statsVendeur && (
+                  <Texte style={styles.secondaire}>
+                    {statsVendeur.nb_avis
+                      ? `${String(statsVendeur.moyenne).replace('.', ',')} ★ · ${t('confiance.ventes5Court', { count: statsVendeur.ventes_5 })}`
+                      : t('confiance.pasAvis')}
+                  </Texte>
+                )}
                 {depuis && (
                   <Texte style={styles.secondaire}>
                     {t('fiche.membreDepuis', { date: `${mois[depuis.getMonth()]} ${depuis.getFullYear()}` })}
                   </Texte>
                 )}
               </View>
-            </View>
+              <View style={rtl ? undefined : { transform: [{ scaleX: -1 }] }}>
+                <IconeRetour couleur={colors.brunMoyen} taille={18} />
+              </View>
+            </Pressable>
           )}
 
           {a.type === 'location' && a.categorie === 'vehicules' && a.permis_exige && (
@@ -263,6 +290,19 @@ export default function FicheAnnonce() {
               />
             ))}
 
+          {profil && profil.id !== a.auteur_id && visibleParTous && (
+            <Pressable
+              onPress={() => !signalee && setSignaler(true)}
+              disabled={signalee}
+              accessibilityRole="button"
+              style={styles.signaler}
+            >
+              <Texte poids={600} style={{ fontSize: 13, color: signalee ? colors.vert : colors.brunMoyen, textDecorationLine: signalee ? 'none' : 'underline' }}>
+                {signalee ? t('confiance.annonceSignalee') : t('confiance.signalerAnnonce')}
+              </Texte>
+            </Pressable>
+          )}
+
           {estModerateur(profil) && a.statut === 'verification' && (
             <PanneauModeration
               annonce={a}
@@ -276,6 +316,12 @@ export default function FicheAnnonce() {
         </View>
       </ScrollView>
       {boutonRetour}
+      <FeuilleSignalement
+        visible={signaler}
+        signalement={{ genre: 'annonce', annonceId: a.id }}
+        onFermer={() => setSignaler(false)}
+        onEnvoye={() => setSignalee(true)}
+      />
     </View>
   );
 }
@@ -383,6 +429,7 @@ const styles = StyleSheet.create({
   carte: { backgroundColor: colors.carte, borderRadius: 14, padding: 14, gap: 6 },
   ligneCarac: { flexDirection: 'row', gap: 12 },
   description: { fontSize: 15, lineHeight: 25 },
+  signaler: { alignSelf: 'center', minHeight: toucheMin, justifyContent: 'center', paddingHorizontal: 12 },
   vendeur: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, backgroundColor: colors.carte },
   permis: { gap: 8, padding: 16, borderRadius: 16, backgroundColor: colors.carte },
   moderation: { gap: 10, padding: 16, borderRadius: 16, borderWidth: 2, borderColor: colors.sable3 },

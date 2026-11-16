@@ -98,7 +98,7 @@ export type AnnonceResume = {
   statut: StatutAnnonce;
   publie_le: string | null;
   sponsorise_jusqu: string | null;
-  auteur: Pick<AuteurAnnonce, 'est_pro'> | null;
+  auteur: Pick<AuteurAnnonce, 'id' | 'est_pro'> | null;
   /** Photos visibles par la personne connectée (le public ne voit que les photos acceptées). */
   photos?: PhotoAnnonce[];
   /** Tarifs d'une location (vide pour une vente). */
@@ -130,7 +130,7 @@ export type Annonce = AnnonceResume & {
 
 // Deux liens existent entre annonces et profils (auteur, acheteur) : on précise celui de l'auteur.
 const RESUME =
-  'id, type, categorie, sous_categorie_id, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, auteur:profiles!listings_auteur_id_fkey(est_pro), photos:listing_photos(fichier, ordre, angle, decision_moderation, resultat_detecteur), tarifs:listing_rates(unite, prix_da)';
+  'id, type, categorie, sous_categorie_id, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, auteur:profiles!listings_auteur_id_fkey(id, est_pro), photos:listing_photos(fichier, ordre, angle, decision_moderation, resultat_detecteur), tarifs:listing_rates(unite, prix_da)';
 const COMPLET =
   'id, type, categorie, sous_categorie_id, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, description, caracteristiques, motif_refus, expire_le, auteur_id, permis_exige, auteur:profiles!listings_auteur_id_fkey(id, nom_affiche, avatar, est_pro, nom_commercial, cree_le), photos:listing_photos(fichier, ordre, angle, decision_moderation, resultat_detecteur), tarifs:listing_rates(unite, prix_da), disponibilites:availability(debut, fin)';
 
@@ -191,6 +191,19 @@ export async function refuserAnnonce(id: string, motif: string) {
 export async function lireAnnoncesParIds(ids: string[]): Promise<AnnonceResume[]> {
   if (!ids.length) return [];
   const { data, error } = await supabase.from('listings').select(RESUME).in('id', ids);
+  if (error) throw error;
+  return data as unknown as AnnonceResume[];
+}
+
+/** Annonces visibles d'un membre (profil public). */
+export async function annoncesDuMembre(id: string): Promise<AnnonceResume[]> {
+  const { data, error } = await supabase
+    .from('listings')
+    .select(RESUME)
+    .eq('auteur_id', id)
+    .in('statut', ['en_ligne', 'reserve'])
+    .order('publie_le', { ascending: false })
+    .limit(50);
   if (error) throw error;
   return data as unknown as AnnonceResume[];
 }

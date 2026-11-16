@@ -8,6 +8,7 @@ import { IconeRetour } from '@/components/Icones';
 import { ImageProfil } from '@/components/ImageProfil';
 import { Texte } from '@/components/Texte';
 import { estModerateur, useAuth, type Profil } from '@/lib/auth';
+import { transactionsANoter } from '@/lib/confiance';
 import { nombreDocumentsEnAttente } from '@/lib/permis';
 import { usePreferences } from '@/lib/preferences';
 import { useWilayas } from '@/lib/referentiel';
@@ -25,9 +26,11 @@ export function TableauDeBord({ profil }: { profil: Profil }) {
   const [feuilleImages, setFeuilleImages] = useState(false);
   const [demandeDeconnexion, setDemandeDeconnexion] = useState(false);
   const [documents, setDocuments] = useState(0);
+  const [aNoter, setANoter] = useState(0);
   useFocusEffect(
     useCallback(() => {
       nombreDocumentsEnAttente(profil.id).then(setDocuments);
+      transactionsANoter().then((l) => setANoter(l.filter((x) => !x.note_id).length), () => setANoter(0));
     }, [profil.id]),
   );
 
@@ -76,6 +79,12 @@ export function TableauDeBord({ profil }: { profil: Profil }) {
               libelle={documents ? t('permis.documentsEntree', { count: documents }) : t('permis.documents')}
               onPress={() => router.push('/documents')}
             />
+            <Ligne
+              libelle={aNoter ? t('confiance.transactionsEntree', { count: aNoter }) : t('confiance.transactionsANoter')}
+              onPress={() => router.push('/a-noter')}
+            />
+            <Ligne libelle={t('confiance.monProfil')} onPress={() => router.push({ pathname: '/membre/[id]', params: { id: profil.id } })} />
+            <Ligne libelle={t('confiance.membresBloques')} onPress={() => router.push('/bloques')} />
             <Ligne libelle={t('compte.changerImage')} onPress={() => setFeuilleImages(true)} />
             <Ligne libelle={t('motDePasse.entree')} onPress={() => router.push('/mot-de-passe')} />
             <Ligne libelle={t('ecrans.compte.charte')} onPress={() => router.push('/charte')} />
