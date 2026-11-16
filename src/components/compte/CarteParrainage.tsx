@@ -17,7 +17,7 @@ export function CarteParrainage({ membreId }: { membreId: string }) {
 
   useFocusEffect(
     useCallback(() => {
-      monParrainage(membreId).then(setDonnees, () => setDonnees(null));
+      monParrainage().then(setDonnees, () => setDonnees(null));
     }, [membreId]),
   );
 

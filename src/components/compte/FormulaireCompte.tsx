@@ -14,6 +14,7 @@ import { MOT_DE_PASSE_MIN, useAuth, type ErreurCompte } from '@/lib/auth';
 import { usePreferences } from '@/lib/preferences';
 import { numeroWilaya, useWilayas } from '@/lib/referentiel';
 import { PAYS, nettoyer, numeroComplet, numeroValide, type Pays } from '@/lib/telephone';
+import { Captcha } from '@/components/Captcha';
 import { codeParrainageExiste, utiliserCodeParrainage } from '@/lib/parrainage';
 import { cles, ecrire, lire } from '@/lib/stockage';
 import { colors, toucheMin } from '@/theme';
@@ -48,6 +49,8 @@ export function FormulaireCompte() {
   const [charte, setCharte] = useState(false);
   const [codeParrain, setCodeParrain] = useState('');
   const [codeInvalide, setCodeInvalide] = useState(false);
+  const [jeton, setJeton] = useState<string | null>(null);
+  const [cleCaptcha, setCleCaptcha] = useState(0);
 
   // Arrivée par un lien d'invitation : le code est déjà rempli et l'inscription ouverte.
   useEffect(() => {
@@ -70,9 +73,9 @@ export function FormulaireCompte() {
   const mdpOk = motDePasse.length >= MOT_DE_PASSE_MIN;
   const w = wilayas?.find((x) => x.code === wilaya);
 
-  const pret = inscription
-    ? nomOk && !!wilaya && ville.trim().length > 0 && telOk && mdpOk && charte
-    : telOk && motDePasse.length > 0;
+  const pret =
+    !!jeton &&
+    (inscription ? nomOk && !!wilaya && ville.trim().length > 0 && telOk && mdpOk && charte : telOk && motDePasse.length > 0);
 
   const valider = async () => {
     if (!pret || occupe) return;
@@ -87,8 +90,11 @@ export function FormulaireCompte() {
     }
     const r =
       inscription && wilaya
-        ? await auth.inscrire({ telephone: numero, nomAffiche, wilaya, ville: ville.trim(), avatar, motDePasse, langue })
-        : await auth.connecter(numero, motDePasse);
+        ? await auth.inscrire({ telephone: numero, nomAffiche, wilaya, ville: ville.trim(), avatar, motDePasse, langue, captcha: jeton })
+        : await auth.connecter(numero, motDePasse, jeton);
+    // Le jeton anti-robot ne sert qu'une fois : nouvelle vérification pour un prochain essai.
+    setJeton(null);
+    setCleCaptcha((n) => n + 1);
     if (!r.erreur && inscription && codeParrain.trim()) {
       await utiliserCodeParrainage(codeParrain);
       await ecrire(cles.parrain, '');
@@ -316,6 +322,7 @@ export function FormulaireCompte() {
             </Texte>
           )}
 
+          <Captcha key={cleCaptcha} onJeton={setJeton} />
           <Bouton
             libelle={t(inscription ? 'compte.creerCompte' : 'compte.seConnecter')}
             onPress={valider}
@@ -329,6 +336,11 @@ export function FormulaireCompte() {
           <Pressable onPress={() => router.push('/charte')} accessibilityRole="link" style={styles.lienCharte}>
             <Texte poids={600} style={styles.lienCharteTexte}>
               {t('compte.lireCharte')}
+            </Texte>
+          </Pressable>
+          <Pressable onPress={() => router.push('/confidentialite')} accessibilityRole="link" style={styles.lienCharte}>
+            <Texte poids={600} style={styles.lienCharteTexte}>
+              {t('confidentialite.lienInscription')}
             </Texte>
           </Pressable>
         </View>
