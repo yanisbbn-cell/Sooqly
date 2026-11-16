@@ -1,0 +1,20 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "preview": {
+      "distribution": "internal",
+      "channel": "preview",
+      "environment": "preview",
+      "env": { "EXPO_PUBLIC_VERSION_TEST": "1" },
+      "android": { "buildType": "apk" }
+    },
+    "production": {
+      "channel": "production",
+      "environment": "production",
+      "android": { "buildType": "app-bundle" }
+    }
+  }
+}

@@ -715,5 +715,28 @@ begin
     reset role;
   end;
 
+  -- ---------- 24. Retours des testeurs : tout le monde envoie, seul l'administrateur lit ----------
+  declare
+    nb10 int;
+  begin
+    perform set_config('request.jwt.claims', '{"role":"anon"}', true);
+    set local role anon;
+    insert into public.retours (message, ecran) values ('Bouton illisible', 'Inscription');
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    insert into public.retours (membre_id, message) values (c, 'Problème de photo');
+    begin
+      insert into public.retours (membre_id, message) values (a, 'Usurpation');
+      assert false, 'C : retour au nom de A';
+    exception when insufficient_privilege then null; end;
+    select count(*) into nb10 from public.retours; assert nb10 = 0, 'C : lit les retours';
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', m, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    select count(*) into nb10 from public.retours; assert nb10 = 0, 'modérateur : lit les retours';
+    reset role;
+  end;
+
   raise exception 'TESTS_OK';
 end $$;

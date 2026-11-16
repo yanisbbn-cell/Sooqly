@@ -81,6 +81,7 @@ export default function EcranReglages() {
     <KeyboardAvoidingView style={styles.ecran} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <EnTeteRetour titre={t('reglages.titre')} />
       <ScrollView contentContainerStyle={[styles.contenu, { paddingBottom: insets.bottom + 32 }]} keyboardShouldPersistTaps="handled">
+        <Ligne libelle={t('retour.admin')} onPress={() => router.push('/moderation/retours')} />
         <BlocValeurs reglages={d.reglages} />
         <BlocTarifs tarifs={d.reglages.tarifs_mise_en_avant ?? {}} />
         <BlocMots familles={d.familles} onChange={charger} />

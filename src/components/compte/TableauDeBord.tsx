@@ -9,6 +9,7 @@ import { ImageProfil } from '@/components/ImageProfil';
 import { Texte } from '@/components/Texte';
 import { estModerateur, useAuth, type Profil } from '@/lib/auth';
 import { mesAlertes } from '@/lib/alertes';
+import { VERSION_TEST } from '@/lib/retours';
 import { transactionsANoter } from '@/lib/confiance';
 import { nombreDocumentsEnAttente } from '@/lib/permis';
 import { usePreferences } from '@/lib/preferences';
@@ -88,6 +89,13 @@ export function TableauDeBord({ profil }: { profil: Profil }) {
               </Texte>
               <Texte style={{ fontSize: 13, lineHeight: 19 }}>{t('mesAnnonces.suspenduTexte')}</Texte>
             </View>
+          )}
+          {VERSION_TEST && (
+            <Pressable onPress={() => router.push('/retour')} accessibilityRole="button" style={styles.retourTest}>
+              <Texte poids={700} style={{ fontSize: 14, color: colors.accentFonce }}>
+                {t('retour.entree')}
+              </Texte>
+            </Pressable>
           )}
           <CarteParrainage membreId={profil.id} />
 
@@ -196,6 +204,7 @@ function Ligne({ libelle, onPress, dernier }: { libelle: string; onPress: () => 
 }
 
 const styles = StyleSheet.create({
+  retourTest: { minHeight: 48, borderRadius: 14, borderWidth: 1.5, borderColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
   supprimer: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: 12 },
   suspendu: { gap: 4, padding: 14, borderRadius: 14, backgroundColor: colors.rougeFond, borderWidth: 1, borderColor: colors.rouge },
   ecran: { flex: 1, backgroundColor: colors.blanc },

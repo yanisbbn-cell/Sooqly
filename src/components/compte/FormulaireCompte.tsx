@@ -16,6 +16,7 @@ import { numeroWilaya, useWilayas } from '@/lib/referentiel';
 import { PAYS, nettoyer, numeroComplet, numeroValide, type Pays } from '@/lib/telephone';
 import { Captcha } from '@/components/Captcha';
 import { codeParrainageExiste, utiliserCodeParrainage } from '@/lib/parrainage';
+import { VERSION_TEST } from '@/lib/retours';
 import { cles, ecrire, lire } from '@/lib/stockage';
 import { colors, toucheMin } from '@/theme';
 
@@ -338,6 +339,13 @@ export function FormulaireCompte() {
               {t('compte.lireCharte')}
             </Texte>
           </Pressable>
+          {VERSION_TEST && (
+            <Pressable onPress={() => router.push('/retour')} accessibilityRole="link" style={styles.lienCharte}>
+              <Texte poids={600} style={styles.lienCharteTexte}>
+                {t('retour.entree')}
+              </Texte>
+            </Pressable>
+          )}
           <Pressable onPress={() => router.push('/confidentialite')} accessibilityRole="link" style={styles.lienCharte}>
             <Texte poids={600} style={styles.lienCharteTexte}>
               {t('confidentialite.lienInscription')}
