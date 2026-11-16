@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,6 +15,7 @@ import { usePreferences } from '@/lib/preferences';
 import { numeroWilaya, useWilayas } from '@/lib/referentiel';
 import { PAYS, nettoyer, numeroComplet, numeroValide, type Pays } from '@/lib/telephone';
 import { codeParrainageExiste, utiliserCodeParrainage } from '@/lib/parrainage';
+import { cles, ecrire, lire } from '@/lib/stockage';
 import { colors, toucheMin } from '@/theme';
 
 import { FeuilleImagesProfil } from './FeuilleImagesProfil';
@@ -48,6 +49,15 @@ export function FormulaireCompte() {
   const [codeParrain, setCodeParrain] = useState('');
   const [codeInvalide, setCodeInvalide] = useState(false);
 
+  // Arrivée par un lien d'invitation : le code est déjà rempli et l'inscription ouverte.
+  useEffect(() => {
+    lire(cles.parrain).then((code) => {
+      if (!code) return;
+      setCodeParrain(code);
+      setMode('inscription');
+    });
+  }, []);
+
   const [feuilleImages, setFeuilleImages] = useState(false);
   const [feuilleWilayas, setFeuilleWilayas] = useState(false);
   const [occupe, setOccupe] = useState(false);
@@ -79,7 +89,10 @@ export function FormulaireCompte() {
       inscription && wilaya
         ? await auth.inscrire({ telephone: numero, nomAffiche, wilaya, ville: ville.trim(), avatar, motDePasse, langue })
         : await auth.connecter(numero, motDePasse);
-    if (!r.erreur && inscription && codeParrain.trim()) await utiliserCodeParrainage(codeParrain);
+    if (!r.erreur && inscription && codeParrain.trim()) {
+      await utiliserCodeParrainage(codeParrain);
+      await ecrire(cles.parrain, '');
+    }
     setOccupe(false);
     setErreur(r.erreur);
   };
