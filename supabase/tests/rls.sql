@@ -461,5 +461,43 @@ begin
     assert nb6 = 1, 'baisse de prix non historisée';
   end;
 
+  -- ---------- 19. Alertes de recherche : correspondance à la première mise en ligne ----------
+  declare
+    al1 uuid; al2 uuid; al3 uuid; v5 uuid; n1 int; n2 int; n3 int;
+  begin
+    perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    insert into public.search_alerts (membre_id, filtres, nouvelles_annonces)
+      values (c, '{"texte":"velo","mots":["velo"],"categorie":"famille","prixMax":30000,"wilaya":16,"type":"tous","annonceur":"tous","etats":[],"sousCategories":[],"criteres":{}}', 99)
+      returning id, nouvelles_annonces into al1, n1;
+    assert n1 = 0, 'compteur imposé à la création : ' || n1;
+    insert into public.search_alerts (membre_id, filtres)
+      values (c, '{"mots":["velo"],"prixMax":10000}') returning id into al2;
+    insert into public.search_alerts (membre_id, filtres)
+      values (c, '{"mots":["frigo"]}') returning id into al3;
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code, ville)
+      values (a, 'vente', 'famille', 'Vélo enfant', 25000, 16, 'Alger') returning id into v5;
+    select count(*) into n1 from public.search_alerts; assert n1 = 0, 'A : voit les alertes de C';
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', m, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    update public.listings set statut = 'en_ligne', publie_le = now(), expire_le = now() + interval '60 days' where id = v5;
+    reset role;
+    select nouvelles_annonces into n1 from public.search_alerts where id = al1;
+    select nouvelles_annonces into n2 from public.search_alerts where id = al2;
+    select nouvelles_annonces into n3 from public.search_alerts where id = al3;
+    assert n1 = 1 and n2 = 0 and n3 = 0, format('alertes : %s %s %s', n1, n2, n3);
+    perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    update public.search_alerts set nouvelles_annonces = 50 where id = al1 returning nouvelles_annonces into n1;
+    assert n1 = 1, 'compteur gonflé par le membre : ' || n1;
+    update public.search_alerts set nouvelles_annonces = 0, notifications = false where id = al1 returning nouvelles_annonces into n1;
+    assert n1 = 0, 'compteur non remis à zéro : ' || n1;
+    reset role;
+  end;
+
   raise exception 'TESTS_OK';
 end $$;

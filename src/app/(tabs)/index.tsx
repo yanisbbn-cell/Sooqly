@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 
 import { CarteAnnonce } from '@/components/annonces/CarteAnnonce';
 import { BandeauANoter } from '@/components/confiance/BandeauANoter';
+import { BoutonAlerte } from '@/components/BoutonAlerte';
+import { rechercheAlertable } from '@/lib/alertes';
 import { FeuilleSousCategories } from '@/components/annonces/FeuilleSousCategories';
 import { couleursTuile } from '@/components/annonces/tuile';
 import { EnTete } from '@/components/EnTete';
@@ -224,6 +226,8 @@ export default function Annonces() {
           {annonces && <Texte style={styles.nombre}>{t('accueil2.nombre', { count: annonces.length })}</Texte>}
         </View>
       )}
+
+      {rechercheAlertable(filtres) && <BoutonAlerte filtres={filtres} />}
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tris}>
         <Texte poids={700} style={styles.trierTexte}>
