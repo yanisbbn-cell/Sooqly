@@ -19,10 +19,11 @@ const DESSINS: Record<string, React.ReactNode> = {
   ),
   car: (
     <>
-      <Path d="M5 17H3v-4l2-5h14l2 5v4h-2" />
-      <Circle cx={7.5} cy={17} r={2} />
-      <Circle cx={16.5} cy={17} r={2} />
-      <Path d="M9.5 17h5M4 13h16" />
+      {/* Berline vue de profil : capot, toit, vitres, roues. */}
+      <Path d="M5 17H3.5a1 1 0 0 1-1-1v-3.2c0-.8.5-1.5 1.3-1.8L6.5 10l2.6-3.2A2 2 0 0 1 10.6 6h4.6a2 2 0 0 1 1.5.7L19.5 10l1.4.4c.9.3 1.6 1.1 1.6 2V16a1 1 0 0 1-1 1H19" />
+      <Path d="M9 17h6M6.5 10h13M12.8 6.2V10" />
+      <Circle cx={7} cy={17} r={2} />
+      <Circle cx={17} cy={17} r={2} />
     </>
   ),
   wheel: (
