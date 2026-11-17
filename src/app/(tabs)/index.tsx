@@ -15,6 +15,7 @@ import { FeuilleSousCategories } from '@/components/annonces/FeuilleSousCategori
 import { couleursTuile } from '@/components/annonces/tuile';
 import { EnTete } from '@/components/EnTete';
 import { EtatChargement } from '@/components/EtatChargement';
+import { FeuilleWilayas } from '@/components/FeuilleWilayas';
 import { IconeCategorie } from '@/components/IconeCategorie';
 import { IconeFiltres, IconeLoupe } from '@/components/Icones';
 import { Texte } from '@/components/Texte';
@@ -22,7 +23,8 @@ import type { AnnonceResume } from '@/lib/annonces';
 import { useAuth } from '@/lib/auth';
 import { usePreferences } from '@/lib/preferences';
 import { FILTRES_VIDES, chercherAnnonces, nombreFiltres, useRecherche, type Tri } from '@/lib/recherche';
-import { useCategories, useReglages, useWilayas, type Categorie } from '@/lib/referentiel';
+import { numeroWilaya, useCategories, useReglages, useWilayas, type Categorie } from '@/lib/referentiel';
+import { cles, ecrire, lire } from '@/lib/stockage';
 import { colors, fonts, toucheMin } from '@/theme';
 
 const TRIS: Tri[] = ['recent', 'prix_croissant', 'prix_decroissant', 'proche'];
@@ -43,6 +45,17 @@ export default function Annonces() {
   const [annonces, setAnnonces] = useState<AnnonceResume[] | null>(null);
   const [erreur, setErreur] = useState(false);
   const [rafraichit, setRafraichit] = useState(false);
+  // « Près de chez moi » : wilaya choisie sur cet appareil, sinon celle du profil.
+  const [wilayaChoisie, setWilayaChoisie] = useState<number | null>(null);
+  const [feuilleProche, setFeuilleProche] = useState(false);
+  useEffect(() => {
+    lire(cles.wilayaProche).then((v) => v && setWilayaChoisie(Number(v)));
+  }, []);
+  const wilayaRef = wilayaChoisie ?? profil?.wilaya_code ?? null;
+  const choisirTri = (x: Tri) => {
+    if (x === 'proche' && !wilayaRef) return setFeuilleProche(true);
+    setTri(x);
+  };
 
   useEffect(() => setBrouillon(filtres.texte), [filtres.texte]);
 
@@ -50,11 +63,11 @@ export default function Annonces() {
   const charger = useCallback(async () => {
     setErreur(false);
     try {
-      setAnnonces(await chercherAnnonces(filtres, catChoisie?.criteres ?? [], tri, profil?.wilaya_code ?? null));
+      setAnnonces(await chercherAnnonces(filtres, catChoisie?.criteres ?? [], tri, wilayaRef, wilayas));
     } catch {
       setErreur(true);
     }
-  }, [filtres, catChoisie, tri, profil?.wilaya_code]);
+  }, [filtres, catChoisie, tri, wilayaRef, wilayas]);
 
   // Recharge à chaque retour sur l'onglet (une annonce a pu être validée entre-temps).
   useFocusEffect(
@@ -89,7 +102,7 @@ export default function Annonces() {
     else setFiltres({ ...filtres, categorie: c.cle, sousCategories: [], criteres: c.cle === filtres.categorie ? filtres.criteres : {} });
   };
 
-  const tris = TRIS.filter((x) => x !== 'proche' || profil?.wilaya_code);
+  const wRef = wilayas?.find((w) => w.code === wilayaRef);
 
   const enTete = (
     <View>
@@ -220,10 +233,10 @@ export default function Annonces() {
         <Texte poids={700} style={styles.trierTexte}>
           {t('recherche.trier')}
         </Texte>
-        {tris.map((x) => (
+        {TRIS.map((x) => (
           <Pressable
             key={x}
-            onPress={() => setTri(x)}
+            onPress={() => choisirTri(x)}
             accessibilityRole="button"
             accessibilityState={{ selected: tri === x }}
             style={[styles.tri, tri === x && styles.triActif]}
@@ -234,6 +247,18 @@ export default function Annonces() {
           </Pressable>
         ))}
       </ScrollView>
+      {tri === 'proche' && wRef && (
+        <View style={styles.autour}>
+          <Texte style={{ flex: 1, fontSize: 13, color: colors.brunMoyen }}>
+            {t('recherche.autourDe', { wilaya: `${numeroWilaya(wRef.code)} · ${nom(wRef)}` })}
+          </Texte>
+          <Pressable onPress={() => setFeuilleProche(true)} accessibilityRole="button" hitSlop={10} style={styles.changer}>
+            <Texte poids={700} style={{ fontSize: 13, color: colors.accentFonce, textDecorationLine: 'underline' }}>
+              {t('recherche.changerWilaya')}
+            </Texte>
+          </Pressable>
+        </View>
+      )}
     </View>
   );
 
@@ -287,6 +312,18 @@ export default function Annonces() {
         }
       />
 
+      <FeuilleWilayas
+        visible={feuilleProche}
+        valeur={wilayaRef}
+        onFermer={() => setFeuilleProche(false)}
+        onChoisir={(code) => {
+          setWilayaChoisie(code);
+          ecrire(cles.wilayaProche, String(code));
+          setFeuilleProche(false);
+          setTri('proche');
+        }}
+      />
+
       <FeuilleSousCategories
         categorie={feuille}
         choisies={feuille && feuille.cle === filtres.categorie ? filtres.sousCategories : []}
@@ -333,6 +370,8 @@ function TuileCategorie({ libelle, icone, active, onPress }: { libelle: string; 
 }
 
 const styles = StyleSheet.create({
+  autour: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingBottom: 8 },
+  changer: { minHeight: toucheMin, justifyContent: 'center' },
   ecran: { flex: 1, backgroundColor: colors.blanc },
   bandeRecherche: { backgroundColor: colors.brun, paddingHorizontal: 20, paddingBottom: 16, gap: 8 },
   rangee: { flexDirection: 'row', alignItems: 'center', gap: 10 },

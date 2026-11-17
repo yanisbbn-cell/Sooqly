@@ -311,6 +311,8 @@ export const fr = {
   },
   mois: ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'],
   recherche: {
+    autourDe: 'Autour de : {{wilaya}}',
+    changerWilaya: 'Changer',
     champ: 'Rechercher une annonce',
     lancer: 'Lancer la recherche',
     effacer: 'Effacer la recherche',

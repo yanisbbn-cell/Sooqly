@@ -4,7 +4,8 @@ import { supabase, supabaseConfigure } from './supabase';
 
 /** Données de référence lues dans Supabase : wilayas et charte. */
 
-export type Wilaya = { code: number; nom_fr: string; nom_ar: string };
+/** latitude / longitude : chef-lieu (pour « Près de chez moi »). */
+export type Wilaya = { code: number; nom_fr: string; nom_ar: string; latitude: number | null; longitude: number | null };
 
 export type TexteBilingue = { fr: string; ar: string };
 export type Citation = { ar: string; fr: string; ref_fr: string; ref_ar: string };
@@ -22,7 +23,7 @@ export type Charte = {
 };
 
 async function chargerWilayas(): Promise<Wilaya[]> {
-  const { data, error } = await supabase.from('wilayas').select('code, nom_fr, nom_ar').order('code');
+  const { data, error } = await supabase.from('wilayas').select('code, nom_fr, nom_ar, latitude, longitude').order('code');
   if (error) throw error;
   return data;
 }

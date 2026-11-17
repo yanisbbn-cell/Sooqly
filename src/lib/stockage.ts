@@ -6,6 +6,8 @@ export const cles = {
   accueilVu: 'sooqly.accueilVu',
   /** Code de parrainage reçu par un lien d'invitation, en attendant l'inscription. */
   parrain: 'sooqly.parrain',
+  /** « Près de chez moi » : wilaya choisie sur cet appareil (sinon celle du profil). */
+  wilayaProche: 'sooqly.wilayaProche',
 } as const;
 
 export async function lire(cle: string): Promise<string | null> {

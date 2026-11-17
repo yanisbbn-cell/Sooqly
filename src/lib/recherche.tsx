@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 
 import { estSponsorisee, type AnnonceResume, type Etat } from './annonces';
-import { normaliser, type Critere } from './referentiel';
+import { normaliser, type Critere, type Wilaya } from './referentiel';
 import { supabase } from './supabase';
 
 /**
@@ -135,9 +135,16 @@ export async function compterAnnonces(f: Filtres, criteres: Critere[]): Promise<
 
 /**
  * Les annonces sponsorisées passent toujours devant, puis le tri choisi.
- * « Près de chez moi » : d'abord la wilaya du membre, puis les plus récentes.
+ * « Près de chez moi » : d'abord la wilaya de référence, puis les autres de la plus proche à la plus lointaine
+ * (distance entre chefs-lieux) ; à distance égale, les plus récentes d'abord.
  */
-export async function chercherAnnonces(f: Filtres, criteres: Critere[], tri: Tri, maWilaya: number | null): Promise<AnnonceResume[]> {
+export async function chercherAnnonces(
+  f: Filtres,
+  criteres: Critere[],
+  tri: Tri,
+  maWilaya: number | null,
+  wilayas: Wilaya[] | null = null,
+): Promise<AnnonceResume[]> {
   let q = requete(f, criteres, {}, await idsValides(f));
   q =
     tri === 'prix_croissant'
@@ -149,9 +156,29 @@ export async function chercherAnnonces(f: Filtres, criteres: Critere[], tri: Tri
   if (error) throw error;
   let liste = data as unknown as AnnonceResume[];
   if (tri === 'proche' && maWilaya) {
-    liste = [...liste.filter((a) => a.wilaya_code === maWilaya), ...liste.filter((a) => a.wilaya_code !== maWilaya)];
+    const km = distancesDepuis(maWilaya, wilayas ?? []);
+    const d = (code: number) => (code === maWilaya ? -1 : (km.get(code) ?? Infinity));
+    // Tri stable : à distance égale, l'ordre de publication (plus récentes d'abord) est gardé.
+    liste = [...liste].sort((a, b) => d(a.wilaya_code) - d(b.wilaya_code));
   }
   return intercalerSponsorisees(liste);
+}
+
+/** Distance à vol d'oiseau (km) entre le chef-lieu de « depuis » et celui de chaque wilaya. */
+export function distancesDepuis(depuis: number, wilayas: Wilaya[]): Map<number, number> {
+  const o = wilayas.find((w) => w.code === depuis);
+  const res = new Map<number, number>();
+  if (o?.latitude == null || o.longitude == null) return res;
+  const rad = (x: number) => (x * Math.PI) / 180;
+  for (const w of wilayas) {
+    if (w.latitude == null || w.longitude == null) continue;
+    const [la1, lo1, la2, lo2] = [Number(o.latitude), Number(o.longitude), Number(w.latitude), Number(w.longitude)];
+    const dLat = rad(la2 - la1);
+    const dLon = rad(lo2 - lo1);
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(la1)) * Math.cos(rad(la2)) * Math.sin(dLon / 2) ** 2;
+    res.set(w.code, 6371 * 2 * Math.asin(Math.sqrt(h)));
+  }
+  return res;
 }
 
 /**
