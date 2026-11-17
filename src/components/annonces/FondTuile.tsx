@@ -10,7 +10,7 @@ export function FondTuile({ de, a, taille, rayon, id }: { de: string; a: string;
   return (
     <Svg width={taille} height={taille} style={StyleSheet.absoluteFill} pointerEvents="none">
       <Defs>
-        <LinearGradient id={`${g}-fond`} x1="0" y1="0" x2="0.35" y2="1">
+        <LinearGradient id={`${g}-fond`} x1="0" y1="0" x2="0" y2="1">
           <Stop offset="0" stopColor={de} />
           <Stop offset="1" stopColor={a} />
         </LinearGradient>

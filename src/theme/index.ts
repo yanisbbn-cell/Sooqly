@@ -41,21 +41,21 @@ export const colors = {
 /**
  * Couleurs des catégories (tuiles de l'accueil et vignettes des annonces sans photo).
  * Palette « Beige & Terre », choisie par Yanis le 17 novembre 2026 (tons doux et chaleureux).
- * « de » → « a » : dégradé de la tuile (icône crème, le nom de la catégorie est toujours écrit dessous) ;
+ * « de » → « a » : dégradé vertical de la tuile, nettement plus foncé en bas (icône crème, le nom de la catégorie est toujours écrit dessous) ;
  * « clair » : fond des vignettes sans photo ; « trait » : icône sur ce fond (contraste d'au moins 3,5 pour 1).
  */
 export const couleursCategories: Record<string, { de: string; a: string; clair: string; trait: string }> = {
-  grid: { de: '#997D61', a: '#896F52', clair: '#EDE8E3', trait: '#896F52' }, // Tout : brun doux
-  building: { de: '#E3A783', a: '#D2895D', clair: '#FAEFE9', trait: '#BD6835' }, // Immobilier : abricot
-  car: { de: '#C09F87', a: '#A88366', clair: '#F4EEE9', trait: '#9C7659' }, // Véhicules : taupe
-  wheel: { de: '#C7BA8D', a: '#AF9E68', clair: '#F5F3EA', trait: '#8E7E4B' }, // Pièces auto : olive clair
-  fridge: { de: '#DDBA7F', a: '#CD9F57', clair: '#F9F3E8', trait: '#A67931' }, // Électroménager : miel
-  sofa: { de: '#C4997F', a: '#A97B5C', clair: '#F4EDE8', trait: '#A17355' }, // Ameublement : noisette
-  laptop: { de: '#D0BCA5', a: '#B69E7E', clair: '#F7F3EF', trait: '#977B56' }, // Informatique : lin
-  garment: { de: '#D48D70', a: '#C47856', clair: '#F7EAE5', trait: '#B76440' }, // Vêtements : terre cuite douce
-  stroller: { de: '#DFB09E', a: '#CC917A', clair: '#F9F1EE', trait: '#BB6C4E' }, // Bébé et enfants : rose poudré
-  tool: { de: '#A4A375', a: '#848354', clair: '#EFEEE6', trait: '#818052' }, // Services : sauge
-  gift: { de: '#DAAE80', a: '#C6925F', clair: '#F8F0E8', trait: '#AB733D' }, // Dons : caramel
+  grid: { de: '#997D61', a: '#64523F', clair: '#EDE8E3', trait: '#896F52' }, // Tout : brun doux
+  building: { de: '#E3A783', a: '#D3753C', clair: '#FAEFE9', trait: '#BD6835' }, // Immobilier : abricot
+  car: { de: '#C09F87', a: '#9E7253', clair: '#F4EEE9', trait: '#9C7659' }, // Véhicules : taupe
+  wheel: { de: '#C7BA8D', a: '#AA9653', clair: '#F5F3EA', trait: '#8E7E4B' }, // Pièces auto : olive clair
+  fridge: { de: '#DDBA7F', a: '#CB953A', clair: '#F9F3E8', trait: '#A67931' }, // Électroménager : miel
+  sofa: { de: '#C4997F', a: '#A26B4B', clair: '#F4EDE8', trait: '#A17355' }, // Ameublement : noisette
+  laptop: { de: '#D0BCA5', a: '#B2926C', clair: '#F7F3EF', trait: '#977B56' }, // Informatique : lin
+  garment: { de: '#D48D70', a: '#B65C37', clair: '#F7EAE5', trait: '#B76440' }, // Vêtements : terre cuite douce
+  stroller: { de: '#DFB09E', a: '#C97B5D', clair: '#F9F1EE', trait: '#BB6C4E' }, // Bébé et enfants : rose poudré
+  tool: { de: '#A4A375', a: '#75744D', clair: '#EFEEE6', trait: '#818052' }, // Services : sauge
+  gift: { de: '#DAAE80', a: '#C6833D', clair: '#F8F0E8', trait: '#AB733D' }, // Dons : caramel
 };
 
 /** Icône posée sur une tuile de catégorie. */
