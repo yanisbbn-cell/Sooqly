@@ -18,7 +18,7 @@ import { BadgeValide } from '@/components/confiance/BadgeValide';
 import { FeuilleSignalement } from '@/components/confiance/FeuilleSignalement';
 import { BlocMiseEnAvant } from '@/components/moderation/BlocMiseEnAvant';
 import { Texte } from '@/components/Texte';
-import { estSponsorisee, lireAnnonce, type Annonce } from '@/lib/annonces';
+import { estSponsorisee, lireAnnonce, marquerRevue, type Annonce } from '@/lib/annonces';
 import { mentionCours } from '@/lib/cours';
 import { vibrer } from '@/lib/vibration';
 import { modererAnnonce, type Decision } from '@/lib/moderation';
@@ -499,7 +499,23 @@ function PanneauModeration({ annonce, onFait }: { annonce: Annonce; onFait: (mes
             <Bouton libelle={t('moderation.refuser')} onPress={() => setSaisie('refuser')} variante="contour" />
           </>
         ) : (
-          <Bouton libelle={t('moderation.retirer')} onPress={() => setSaisie('retirer')} variante="contour" />
+          <>
+            {/* Publiée directement (vendeur de confiance) : la modération confirme qu'elle est conforme. */}
+            {annonce.publication_directe && !annonce.revue_le && (
+              <Bouton
+                libelle={t('moderation.conforme')}
+                onPress={async () => {
+                  setOccupe(true);
+                  const ok = await marquerRevue(annonce.id);
+                  setOccupe(false);
+                  if (ok) onFait(t('moderation.revue'));
+                  else setMessage(t('moderation.erreur'));
+                }}
+                occupe={occupe}
+              />
+            )}
+            <Bouton libelle={t('moderation.retirer')} onPress={() => setSaisie('retirer')} variante="contour" />
+          </>
         )
       ) : (
         <>

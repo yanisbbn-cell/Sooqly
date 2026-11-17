@@ -120,6 +120,10 @@ export type Categorie = {
 export type Reglages = {
   taux_dinar_euro: number;
   seuil_badge: number;
+  /** Annonces acceptées (sans aucun refus) pour publier directement. */
+  seuil_publication_directe: number;
+  /** Signalements de membres différents qui masquent une annonce. */
+  seuil_masquage_signalements: number;
   duree_vie_annonce_jours: number;
   rappel_expiration_jours: number;
   /** Mise en avant : nombre de jours → prix en DA (ex. { "7": 1500 }). Vide tant que l'administrateur ne l'a pas réglé. */
@@ -140,7 +144,7 @@ async function chargerCategories(): Promise<Categorie[]> {
 async function chargerReglages(): Promise<Reglages> {
   const { data, error } = await supabase
     .from('settings')
-    .select('taux_dinar_euro, seuil_badge, duree_vie_annonce_jours, rappel_expiration_jours, tarifs_mise_en_avant')
+    .select('taux_dinar_euro, seuil_badge, seuil_publication_directe, seuil_masquage_signalements, duree_vie_annonce_jours, rappel_expiration_jours, tarifs_mise_en_avant')
     .eq('id', 1)
     .single();
   if (error) throw error;

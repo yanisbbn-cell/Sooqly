@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { EnTeteRetour } from '@/components/EnTeteRetour';
 import { EtatChargement } from '@/components/EtatChargement';
 import { Texte } from '@/components/Texte';
-import { listerAValider, type AnnonceResume } from '@/lib/annonces';
+import { listerARevoir, listerAValider, type AnnonceResume } from '@/lib/annonces';
 import { estAdmin, estModerateur, useAuth } from '@/lib/auth';
 import { bannieresAVerifier, deciderBanniere, urlBanniere, type BanniereAVerifier } from '@/lib/banniere';
 import { compteurs, signalementsATraiter, traiterSignalement, type Signalement } from '@/lib/moderation';
@@ -15,7 +15,7 @@ import { formaterNombre } from '@/lib/prix';
 import { useCategories } from '@/lib/referentiel';
 import { colors, toucheMin } from '@/theme';
 
-type Onglet = 'annonces' | 'signalements';
+type Onglet = 'annonces' | 'arevoir' | 'signalements';
 
 /** Espace de modération : file des annonces à valider et file des signalements. */
 export default function Moderation() {
@@ -25,20 +25,28 @@ export default function Moderation() {
   const { donnees: categories } = useCategories();
   const [onglet, setOnglet] = useState<Onglet>('annonces');
   const [annonces, setAnnonces] = useState<AnnonceResume[] | null>(null);
+  const [aRevoir, setARevoir] = useState<AnnonceResume[] | null>(null);
   const [signalements, setSignalements] = useState<Signalement[] | null>(null);
   const [bannieres, setBannieres] = useState<BanniereAVerifier[]>([]);
-  const [nombres, setNombres] = useState({ annonces: 0, signalements: 0 });
+  const [nombres, setNombres] = useState({ annonces: 0, arevoir: 0, signalements: 0 });
   const [erreur, setErreur] = useState(false);
   const [erreurAction, setErreurAction] = useState(false);
 
   const charger = useCallback(async () => {
     setErreur(false);
     try {
-      const [a, s, n, bn] = await Promise.all([listerAValider(), signalementsATraiter(), compteurs(), bannieresAVerifier()]);
+      const [a, s, n, bn, r] = await Promise.all([
+        listerAValider(),
+        signalementsATraiter(),
+        compteurs(),
+        bannieresAVerifier(),
+        listerARevoir(),
+      ]);
       setAnnonces(a);
+      setARevoir(r);
       setBannieres(bn);
       setSignalements(s);
-      setNombres(n);
+      setNombres({ ...n, arevoir: r.length });
     } catch {
       setErreur(true);
     }
@@ -82,7 +90,7 @@ export default function Moderation() {
   const entete = (
     <View style={{ gap: 12 }}>
       <View style={styles.onglets} accessibilityRole="tablist">
-        {(['annonces', 'signalements'] as const).map((o) => (
+        {(['annonces', 'arevoir', 'signalements'] as const).map((o) => (
           <Pressable
             key={o}
             onPress={() => setOnglet(o)}
@@ -91,7 +99,9 @@ export default function Moderation() {
             style={[styles.onglet, onglet === o && styles.ongletActif]}
           >
             <Texte poids={700} style={{ fontSize: 14, color: onglet === o ? colors.sable1 : colors.brun }}>
-              {t(o === 'annonces' ? 'moderation.ongletAnnonces' : 'moderation.ongletSignalements', { count: nombres[o] })}
+              {t(o === 'annonces' ? 'moderation.ongletAnnonces' : o === 'arevoir' ? 'moderation.ongletARevoir' : 'moderation.ongletSignalements', {
+                count: nombres[o],
+              })}
             </Texte>
           </Pressable>
         ))}
@@ -139,17 +149,22 @@ export default function Moderation() {
     </View>
   );
 
-  if (onglet === 'annonces') {
+  if (onglet === 'annonces' || onglet === 'arevoir') {
+    const liste = onglet === 'annonces' ? annonces : aRevoir;
     return (
       <View style={styles.ecran}>
         <EnTeteRetour titre={t('moderation.espace')} />
         <FlatList
-          data={annonces ?? []}
+          data={liste ?? []}
           keyExtractor={(a) => a.id}
           contentContainerStyle={styles.contenu}
           ListHeaderComponent={entete}
           ListEmptyComponent={
-            annonces ? <Texte style={styles.note}>{t('moderation.aucune')}</Texte> : <EtatChargement erreur={erreur} reessayer={charger} />
+            liste ? (
+              <Texte style={styles.note}>{t(onglet === 'annonces' ? 'moderation.aucune' : 'moderation.aucuneARevoir')}</Texte>
+            ) : (
+              <EtatChargement erreur={erreur} reessayer={charger} />
+            )
           }
           renderItem={({ item }) => {
             const c = categories?.find((x) => x.cle === item.categorie);
@@ -181,6 +196,12 @@ export default function Moderation() {
                     {t('moderation.detecteurAlerte', { objets })}
                   </Texte>
                 )}
+                {item.masquee_signalements && (
+                  <Texte poids={700} style={{ fontSize: 12, color: colors.rouge }}>
+                    {t('moderation.masqueeSignalements')}
+                  </Texte>
+                )}
+                {onglet === 'arevoir' && <Texte style={styles.note}>{t('moderation.publieeDirectement')}</Texte>}
               </Pressable>
             );
           }}

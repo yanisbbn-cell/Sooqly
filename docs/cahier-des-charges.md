@@ -9,7 +9,7 @@ Sooqly est une marketplace mobile et web pour acheter, vendre, louer et donner d
 Principes non négociables, appliqués dans chaque fonctionnalité :
 
 - Rien de contraire à la législation islamique : pas de riba, pas de gharar, pas de biens ou services illicites, pas d’enchères.
-- Aucune photo d’être animé dans les annonces ni dans les profils : détecteur, puis modération humaine.
+- Aucune photo d’être animé dans les annonces ni dans les profils : détecteur, puis modération humaine (directe, ou après coup pour les vendeurs de confiance).
 - Prix en dinars entiers, jamais en centimes ni en « millions ». Le vendeur indique « Prix ferme » ou « Légèrement négociable » ; le marchandage à l’amiable est permis, les enchères jamais.
 - Sooqly est un intermédiaire : il n’est partie à aucun contrat, ne détient jamais l’argent des transactions (y compris en paiement à la livraison) et ne tranche aucun litige ; il renvoie vers les autorités compétentes.
 - Coordonnées privées : les échanges passent par la messagerie interne.
@@ -113,7 +113,7 @@ Navigation du bas, toujours visible sur les écrans principaux : Annonces, Messa
 - Analyse du titre et de la description pendant la saisie, en français et en arabe. Normalisation : sans accents, sans harakât, hamza ramenée à alif.
 - Mots interdits par famille (musique et instruments, tabac et chicha, alcool et non halal, crédit et intérêt, enchères et loterie, représentations d’êtres animés), modifiables par l’administrateur sans toucher au code.
 - Un particulier qui écrit « agence », « garage », « concession » ou leurs équivalents arabes est invité à passer en Professionnel.
-- Photos : détection des visages, personnes et animaux ; une photo suspecte est refusée. Toute annonce passe ensuite en modération humaine.
+- Photos : détection des visages, personnes et animaux ; une photo suspecte est refusée. Toute annonce passe ensuite en modération humaine, sauf celles des vendeurs de confiance (voir « Modération allégée »).
 - Prix incohérent pour la catégorie (fourchettes réglables) : étape suivante bloquée avec explication.
 
 **Prix**
@@ -153,6 +153,14 @@ Navigation du bas, toujours visible sur les écrans principaux : Annonces, Messa
 **Confiance et sécurité des échanges**
 
 - Signalement anonyme d’une annonce ou d’un membre, examiné sous 24 heures.
+
+**Modération allégée (décision du 17 novembre 2026 : impossible de contrôler chaque annonce à la main)**
+
+- Vendeur de confiance : au moins 5 annonces acceptées, aucun refus, aucune demande de correction, aucun retrait, jamais suspendu. Ses annonces (et ses modifications) sont publiées tout de suite si le détecteur n’a rien trouvé sur les photos ; elles apparaissent dans l’onglet « À revoir » de la modération, qui les confirme ou les retire après coup.
+- Une annonce déjà refusée, corrigée ou retirée repasse toujours par un humain. Un seul refus fait perdre la confiance.
+- Masquage automatique : une annonce signalée par 2 membres différents disparaît (retour « En vérification ») en attendant la modération.
+- Les deux seuils (5 et 2) sont des réglages de l’administrateur.
+- Prévu ensuite : contrôle par intelligence artificielle (cas douteux seulement pour les humains), puis modérateurs bénévoles.
 - Blocage : le membre bloqué ne peut plus écrire ni contacter les annonces de celui qui l’a bloqué ; il n’en est pas averti ; déblocage à tout moment.
 - Conseils anti-arnaque à l’ouverture de chaque discussion ; mise en garde automatique sur les mots d’avance de paiement.
 
@@ -195,7 +203,7 @@ Tables principales dans Supabase. Claude Code les précisera ; cette liste fixe 
 | categories | clé, noms FR/AR, sous-catégories, critères de recherche, fourchette de prix plausible |
 | banned_terms | famille, langue, terme |
 | charter_articles | numéro, titre et texte FR/AR, citations, version |
-| settings | taux DA/€, seuil du badge, tarifs de mise en avant, durée de vie des annonces (60 jours) |
+| settings | taux DA/€, seuil du badge, tarifs de mise en avant, durée de vie des annonces (60 jours), seuils de publication directe et de masquage |
 
 Règles d’accès (« RLS ») sur toutes les tables : chacun ne lit que ses messages, documents, alertes, blocages et brouillons ; les annonces en ligne sont publiques ; un membre bloqué ne peut pas créer de message vers celui qui l’a bloqué.
 

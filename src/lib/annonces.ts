@@ -130,6 +130,10 @@ export type AnnonceResume = {
   /** Cours particuliers seulement (sinon null) : public et sexe du professeur. */
   public_cours?: PublicCours | null;
   sexe_auteur?: 'h' | 'f' | null;
+  /** Modération : publiée directement (vendeur de confiance) et pas encore revue ; masquée après des signalements. */
+  publication_directe?: boolean;
+  revue_le?: string | null;
+  masquee_signalements?: boolean;
   titre: string;
   prix_da: number;
   etat: Etat | null;
@@ -177,7 +181,7 @@ export type Annonce = AnnonceResume & {
 export const RESUME =
   'id, type, categorie, sous_categorie_id, public_cours, sexe_auteur, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, livraison_wilaya, envoi_algerie, auteur:profiles!listings_auteur_id_fkey(id, est_pro), photos:listing_photos(fichier, ordre, angle, decision_moderation, resultat_detecteur), tarifs:listing_rates(unite, prix_da)';
 const COMPLET =
-  'id, type, categorie, sous_categorie_id, public_cours, sexe_auteur, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, description, caracteristiques, motif_refus, expire_le, auteur_id, permis_exige, prix_ferme, echange_accepte, remise_main_propre, livraison_wilaya, envoi_algerie, auteur:profiles!listings_auteur_id_fkey(id, nom_affiche, avatar, est_pro, nom_commercial, cree_le), photos:listing_photos(fichier, ordre, angle, decision_moderation, resultat_detecteur), tarifs:listing_rates(unite, prix_da), disponibilites:availability(debut, fin)';
+  'id, type, categorie, sous_categorie_id, public_cours, sexe_auteur, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, publication_directe, revue_le, description, caracteristiques, motif_refus, expire_le, auteur_id, permis_exige, prix_ferme, echange_accepte, remise_main_propre, livraison_wilaya, envoi_algerie, auteur:profiles!listings_auteur_id_fkey(id, nom_affiche, avatar, est_pro, nom_commercial, cree_le), photos:listing_photos(fichier, ordre, angle, decision_moderation, resultat_detecteur), tarifs:listing_rates(unite, prix_da), disponibilites:availability(debut, fin)';
 
 export const estSponsorisee = (a: Pick<AnnonceResume, 'sponsorise_jusqu'>) =>
   !!a.sponsorise_jusqu && new Date(a.sponsorise_jusqu).getTime() > Date.now();
@@ -193,11 +197,39 @@ export async function lireAnnonce(id: string): Promise<Annonce | null> {
 export async function listerAValider(): Promise<AnnonceResume[]> {
   const { data, error } = await supabase
     .from('listings')
-    .select(RESUME)
+    .select(`${RESUME}, masquee_signalements`)
     .eq('statut', 'verification')
     .order('cree_le', { ascending: true });
   if (error) throw error;
   return data as unknown as AnnonceResume[];
+}
+
+/** Annonces publiées directement (vendeurs de confiance), pas encore revues par la modération. */
+export async function listerARevoir(): Promise<AnnonceResume[]> {
+  const { data, error } = await supabase
+    .from('listings')
+    .select(RESUME)
+    .eq('publication_directe', true)
+    .is('revue_le', null)
+    .in('statut', ['en_ligne', 'reserve'])
+    .order('publie_le', { ascending: true });
+  if (error) throw error;
+  return data as unknown as AnnonceResume[];
+}
+
+/**
+ * Après l'envoi de l'annonce et de ses photos : publication directe si le vendeur est de confiance
+ * (décidé par la base). Renvoie le statut final (« en_ligne » ou « verification »).
+ */
+export async function finaliserPublication(id: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc('finaliser_publication', { p_annonce: id });
+  return error ? null : (data as string | null);
+}
+
+/** Modération : une annonce publiée directement a été revue et est conforme. */
+export async function marquerRevue(id: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('marquer_revue', { p_annonce: id });
+  return !error && data === true;
 }
 
 /** Résumés de plusieurs annonces (résultats de la recherche de location). */

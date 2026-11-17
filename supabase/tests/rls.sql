@@ -863,5 +863,99 @@ begin
     select sexe_auteur into s12 from public.listings where id = ca; assert s12 = 'h', 'annonce non mise à jour';
   end;
 
+  -- ---------- 27. Vendeur de confiance (publication directe) et masquage après signalements ----------
+  declare
+    v uuid := gen_random_uuid(); r1 uuid := gen_random_uuid(); r2 uuid := gen_random_uuid();
+    l1 uuid; l2 uuid; st text; ok13 boolean; i int;
+  begin
+    perform set_config('request.jwt.claims', '', true);
+    insert into auth.users (id, instance_id, aud, role, email)
+    select x, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', x || '@test.invalid'
+    from unnest(array[v, r1, r2]) as x;
+    insert into public.profiles (id, nom_affiche, wilaya_code, sexe) values
+      (v, 'Vendeur confiance', 16, 'h'), (r1, 'Signaleur un', 16, 'f'), (r2, 'Signaleur deux', 16, 'h');
+
+    -- Pas encore de confiance : l'annonce attend la modération.
+    perform set_config('request.jwt.claims', json_build_object('sub', v, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code)
+      values (v, 'vente', 'ameublement', 'Table basse test', 8000, 16) returning id into l1;
+    st := public.finaliser_publication(l1); assert st = 'verification', 'sans historique : ' || st;
+    begin
+      update public.listings set statut = 'en_ligne' where id = l1;
+      assert false, 'vendeur : a publié lui-même';
+    exception when raise_exception then null; end;
+    begin
+      update public.listings set publication_directe = true where id = l1;
+      assert false, 'vendeur : drapeau modifié';
+    exception when raise_exception then null; end;
+    reset role;
+
+    -- 5 annonces déjà acceptées : vendeur de confiance.
+    perform set_config('request.jwt.claims', '', true);
+    for i in 1..5 loop
+      insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code, statut, publie_le, expire_le)
+        values (v, 'vente', 'ameublement', 'Ancienne annonce ' || i, 5000, 16, 'vendu', now() - interval '30 days', now());
+    end loop;
+    perform set_config('request.jwt.claims', json_build_object('sub', v, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    insert into public.listing_photos (annonce_id, fichier, ordre, resultat_detecteur)
+      values (l1, v::text || '/' || l1::text || '/a.jpg', 1, '{"interdit": true, "objets": [], "erreur": false}');
+    st := public.finaliser_publication(l1); assert st = 'verification', 'photo suspecte publiée : ' || st;
+    delete from public.listing_photos where annonce_id = l1;
+    insert into public.listing_photos (annonce_id, fichier, ordre, resultat_detecteur)
+      values (l1, v::text || '/' || l1::text || '/b.jpg', 1, '{"interdit": false, "objets": [], "erreur": false}');
+    st := public.finaliser_publication(l1); assert st = 'en_ligne', 'confiance : ' || st;
+    select statut into st from public.listings where id = l1; assert st = 'en_ligne', 'statut : ' || st;
+    select decision_moderation into st from public.listing_photos where annonce_id = l1; assert st = 'acceptee', 'photo : ' || st;
+    reset role;
+
+    -- Deux signalements de membres différents : annonce masquée.
+    perform set_config('request.jwt.claims', json_build_object('sub', r1, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    insert into public.reports (auteur_id, annonce_id, motif) values (r1, l1, 'arnaque');
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    select statut into st from public.listings where id = l1; assert st = 'en_ligne', 'masquée après 1 signalement';
+    perform set_config('request.jwt.claims', json_build_object('sub', r2, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    insert into public.reports (auteur_id, annonce_id, motif) values (r2, l1, 'arnaque');
+    select count(*) into i from public.listings where id = l1; assert i = 0, 'annonce masquée encore visible';
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    select statut into st from public.listings where id = l1; assert st = 'verification', 'pas masquée : ' || st;
+    -- Le vendeur ne peut pas la republier lui-même.
+    perform set_config('request.jwt.claims', json_build_object('sub', v, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    st := public.finaliser_publication(l1); assert st = 'verification', 'masquée republiée : ' || st;
+    begin
+      perform public.marquer_revue(l1);
+      assert false, 'vendeur : a utilisé marquer_revue';
+    exception when insufficient_privilege then null; end;
+    reset role;
+
+    -- La modération la valide : de nouveau visible, plus marquée comme masquée.
+    perform set_config('request.jwt.claims', json_build_object('sub', m, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    ok13 := public.moderer_annonce(l1, 'valider'); assert ok13, 'validation refusée';
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    select (statut = 'en_ligne' and not masquee_signalements)::text into st from public.listings where id = l1;
+    assert st = 'true', 'après validation : ' || st;
+
+    -- Un refus fait perdre la confiance.
+    perform set_config('request.jwt.claims', json_build_object('sub', v, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    insert into public.listings (auteur_id, type, categorie, titre, prix_da, wilaya_code)
+      values (v, 'vente', 'ameublement', 'Chaise test', 3000, 16) returning id into l2;
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', m, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    ok13 := public.moderer_annonce(l2, 'refuser', 'Test'); assert ok13, 'refus impossible';
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    assert not prive.vendeur_de_confiance(v), 'confiance gardée après un refus';
+  end;
+
   raise exception 'TESTS_OK';
 end $$;

@@ -44,7 +44,7 @@ export default function EcranReglages() {
       const [r, f, a, e] = await Promise.all([
         supabase
           .from('settings')
-          .select('taux_dinar_euro, seuil_badge, duree_vie_annonce_jours, rappel_expiration_jours, tarifs_mise_en_avant')
+          .select('taux_dinar_euro, seuil_badge, seuil_publication_directe, seuil_masquage_signalements, duree_vie_annonce_jours, rappel_expiration_jours, tarifs_mise_en_avant')
           .eq('id', 1)
           .single(),
         supabase.from('banned_families').select('cle, effet, motif_fr, motif_ar, termes:banned_terms(langue, terme)').order('cle'),
@@ -121,6 +121,8 @@ function BlocValeurs({ reglages }: { reglages: Reglages }) {
   const [taux, setTaux] = useState(String(Math.round(reglages.taux_dinar_euro * 1000 * 100) / 100).replace('.', ','));
   const [seuil, setSeuil] = useState(String(reglages.seuil_badge));
   const [duree, setDuree] = useState(String(reglages.duree_vie_annonce_jours));
+  const [confiance, setConfiance] = useState(String(reglages.seuil_publication_directe));
+  const [masquage, setMasquage] = useState(String(reglages.seuil_masquage_signalements));
   const [rappel, setRappel] = useState(String(reglages.rappel_expiration_jours));
   const [message, setMessage] = useState<{ ok: boolean; texte: string } | null>(null);
   const [occupe, setOccupe] = useState(false);
@@ -132,6 +134,8 @@ function BlocValeurs({ reglages }: { reglages: Reglages }) {
       seuil_badge: parseInt(seuil, 10),
       duree_vie_annonce_jours: parseInt(duree, 10),
       rappel_expiration_jours: parseInt(rappel, 10),
+      seuil_publication_directe: parseInt(confiance, 10),
+      seuil_masquage_signalements: parseInt(masquage, 10),
     };
     if (!(tauxMille > 0) || Object.values(valeurs).some((v) => !Number.isFinite(v) || v <= 0)) {
       return setMessage({ ok: false, texte: t('reglages.invalide') });
@@ -149,6 +153,10 @@ function BlocValeurs({ reglages }: { reglages: Reglages }) {
       <Champ ltr libelle={t('reglages.seuil')} value={seuil} onChangeText={setSeuil} keyboardType="number-pad" maxLength={4} />
       <Champ ltr libelle={t('reglages.duree')} value={duree} onChangeText={setDuree} keyboardType="number-pad" maxLength={3} />
       <Champ ltr libelle={t('reglages.rappel')} value={rappel} onChangeText={setRappel} keyboardType="number-pad" maxLength={2} />
+      <Champ ltr libelle={t('reglages.confiance')} value={confiance} onChangeText={setConfiance} keyboardType="number-pad" maxLength={3} />
+      <Texte style={styles.aide}>{t('reglages.confianceAide')}</Texte>
+      <Champ ltr libelle={t('reglages.masquage')} value={masquage} onChangeText={setMasquage} keyboardType="number-pad" maxLength={2} />
+      <Texte style={styles.aide}>{t('reglages.masquageAide')}</Texte>
       <Message message={message} />
       <Bouton libelle={t('reglages.enregistrer')} onPress={enregistrer} occupe={occupe} />
     </Section>

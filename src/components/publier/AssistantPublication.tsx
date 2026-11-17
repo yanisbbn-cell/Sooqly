@@ -21,6 +21,7 @@ import {
   avecRemise,
   envoyerAnnonce,
   etatDemande,
+  finaliserPublication,
   lireStatut,
   modifierAnnonce,
   typePourCategorie,
@@ -123,6 +124,7 @@ export function AssistantPublication({ profil, existante }: { profil: Profil; ex
   const [occupe, setOccupe] = useState(false);
   const [erreur, setErreur] = useState(false);
   const [envoyee, setEnvoyee] = useState(false);
+  const [publieeDirectement, setPublieeDirectement] = useState(false);
   const [photos, setPhotos] = useState<PhotoLocale[]>(() => {
     if (!ex) return [];
     // Photos déjà en ligne : chacune dans la case de son angle (sinon la première case libre).
@@ -141,7 +143,7 @@ export function AssistantPublication({ profil, existante }: { profil: Profil; ex
         return { emplacement, uri: urlPhoto(p.fichier), base64: '', analyse: { interdit: false, objets: [] }, fichier: p.fichier };
       });
   });
-  const [resultat, setResultat] = useState<null | 'verification' | 'prix' | 'ok'>(null);
+  const [resultat, setResultat] = useState<null | 'verification' | 'prix' | 'enLigne' | 'ok'>(null);
   // Annonce déjà créée lors d'un essai précédent (si l'envoi des photos a échoué) : on ne la recrée pas.
   const [annonceCreee, setAnnonceCreee] = useState<string | null>(null);
   const [erreurPhotos, setErreurPhotos] = useState(false);
@@ -324,9 +326,19 @@ export function AssistantPublication({ profil, existante }: { profil: Profil; ex
     );
     setOccupe(false);
     if (!photosOk) return setErreurPhotos(true);
-    const statut = await lireStatut(ex.id);
+    // Vendeur de confiance : la base peut remettre l'annonce en ligne tout de suite.
+    const avant = await lireStatut(ex.id);
+    const statut = avant === 'verification' ? await finaliserPublication(ex.id) : avant;
     vibrer('succes');
-    setResultat(statut === 'verification' ? 'verification' : !location && prix !== ex.prix_da ? 'prix' : 'ok');
+    setResultat(
+      statut === 'verification'
+        ? 'verification'
+        : avant === 'verification'
+          ? 'enLigne'
+          : !location && prix !== ex.prix_da
+            ? 'prix'
+            : 'ok',
+    );
   };
 
   const envoyer = async () => {
@@ -373,11 +385,12 @@ export function AssistantPublication({ profil, existante }: { profil: Profil; ex
     }
     const photosOk = await envoyerPhotos(profil.id, id, photos, angles);
     setOccupe(false);
-    if (!photosOk) setErreurPhotos(true);
-    else {
-      vibrer('succes');
-      setEnvoyee(true);
-    }
+    if (!photosOk) return setErreurPhotos(true);
+    // Vendeur de confiance : publication directe, décidée par la base.
+    const statut = await finaliserPublication(id);
+    setPublieeDirectement(statut === 'en_ligne');
+    vibrer('succes');
+    setEnvoyee(true);
   };
 
   const recommencer = () => {
@@ -401,6 +414,7 @@ export function AssistantPublication({ profil, existante }: { profil: Profil; ex
     setPermisExige(false);
     setOptions(OPTIONS_PAR_DEFAUT);
     setErreurPhotos(false);
+    setPublieeDirectement(false);
   };
 
   // ---------- Modification enregistrée ----------
@@ -416,7 +430,15 @@ export function AssistantPublication({ profil, existante }: { profil: Profil; ex
             {t('mesAnnonces.modifieeTitre')}
           </Texte>
           {resultat !== 'ok' && (
-            <Texte style={styles.succesTexte}>{t(resultat === 'verification' ? 'mesAnnonces.modifieeVerif' : 'mesAnnonces.modifieePrix')}</Texte>
+            <Texte style={styles.succesTexte}>
+              {t(
+                resultat === 'verification'
+                  ? 'mesAnnonces.modifieeVerif'
+                  : resultat === 'enLigne'
+                    ? 'mesAnnonces.modifieeEnLigne'
+                    : 'mesAnnonces.modifieePrix',
+              )}
+            </Texte>
           )}
           <View style={{ alignSelf: 'stretch', gap: 10 }}>
             <Bouton libelle={t('mesAnnonces.retourMesAnnonces')} onPress={() => (router.canGoBack() ? router.back() : router.replace('/mes-annonces'))} />
@@ -436,9 +458,9 @@ export function AssistantPublication({ profil, existante }: { profil: Profil; ex
             <IconeCoche couleur={colors.blanc} taille={34} epaisseur={3} />
           </View>
           <Texte variante="titre" poids={700} style={styles.succesTitre} accessibilityRole="header">
-            {t('publier.envoyeTitre')}
+            {t(publieeDirectement ? 'publier.enLigneTitre' : 'publier.envoyeTitre')}
           </Texte>
-          <Texte style={styles.succesTexte}>{t('publier.envoyeTexte')}</Texte>
+          <Texte style={styles.succesTexte}>{t(publieeDirectement ? 'publier.enLigneTexte' : 'publier.envoyeTexte')}</Texte>
           <View style={{ alignSelf: 'stretch', gap: 10 }}>
             <Bouton libelle={t('publier.retourAnnonces')} onPress={() => router.navigate('/')} />
             <Bouton libelle={t('publier.nouvelle')} onPress={recommencer} variante="contour" />
