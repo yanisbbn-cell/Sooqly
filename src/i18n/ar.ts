@@ -458,7 +458,7 @@ export const ar: Traduction = {
     pasLibre: 'غير متاح طوال هذه الفترة.',
     pasDeTarifCourt: 'هذا العقار يُؤجَّر بالشهر أو أكثر: استعمل البحث عن كراء (شهر، 6 أشهر، سنة).',
     recherche: 'ابحث عن كراء',
-    rechercheSous: 'سكن أو مركبة: المجموع للمدة كلها',
+    rechercheSous: 'استأجر بذكاء، بالقرب منك.',
     voir: 'تصفح عروض الكراء',
     logement: 'سكن',
     vehicule: 'مركبة',

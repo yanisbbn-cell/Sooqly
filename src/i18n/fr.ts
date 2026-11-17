@@ -458,7 +458,7 @@ export const fr = {
     pasLibre: 'Pas disponible sur toute cette période.',
     pasDeTarifCourt: 'Ce bien se loue au mois ou plus : utilisez la recherche de location (1 mois, 6 mois, 1 an).',
     recherche: 'Rechercher une location',
-    rechercheSous: 'Logement ou véhicule : le total pour toute la période',
+    rechercheSous: 'Louez malin, près de chez vous.',
     voir: 'Voir les locations',
     logement: 'Logement',
     vehicule: 'Véhicule',
