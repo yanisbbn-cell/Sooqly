@@ -22,7 +22,7 @@ Identité visuelle :
 | Logo dans l’application | « Sooqly » en Space Grotesk gras, « ly » en couleur d’accent |
 | Icône d’écran d’accueil | « Sooq » au-dessus de « Ly » dessiné en carré ; à finaliser avec Yanis |
 | Fond | Blanc |
-| Structure | Brun #3B2D22 (en-têtes, textes), sables #F4E9D8, #E6D2B6, #C9AE8B, #9C7C5D, cartes #F6F0E6 |
+| Structure | Brun #4A3A2D (en-têtes, textes ; éclairci le 17 novembre 2026, ancien #3B2D22), sables #F4E9D8, #E6D2B6, #C9AE8B, #9C7C5D, cartes #F6F0E6 |
 | Accent = agir | Terre cuite #C4512E (choix provisoire, variantes Safran #E26B12 et Braise #D9480F), version foncée #A9421F pour les petits textes |
 | Vert = confiance | #2F7A4B : Vendeur validé, En ligne, Téléphone vérifié, conseils, alertes actives |
 | Rouge = danger | #B5453F : arnaque, blocage, suppression |
