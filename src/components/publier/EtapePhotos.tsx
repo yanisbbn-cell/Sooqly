@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, Image, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
@@ -7,7 +7,7 @@ import { Bouton } from '@/components/Bouton';
 import { IconeCoche, IconePlus } from '@/components/Icones';
 import { Texte } from '@/components/Texte';
 import { useDetecteur } from '@/lib/detecteur';
-import { conseilsPhoto, MAX_PHOTOS, preparer, prendrePhoto, type PhotoLocale, type Source } from '@/lib/photos';
+import { appareilDisponible, conseilsPhoto, MAX_PHOTOS, preparer, prendrePhoto, type PhotoLocale, type Source } from '@/lib/photos';
 import { colors, toucheMin } from '@/theme';
 
 type Props = {
@@ -177,7 +177,7 @@ export function EtapePhotos({ angles, photos, setPhotos }: Props) {
               </View>
             ))}
           </View>
-          {Platform.OS !== 'web' && <Bouton libelle={t('photos.appareil')} onPress={() => ajouter(choix, 'camera')} variante="sombre" />}
+          {appareilDisponible() && <Bouton libelle={t('photos.appareil')} onPress={() => ajouter(choix, 'camera')} variante="sombre" />}
           <Bouton libelle={t('photos.galerie')} onPress={() => ajouter(choix, 'galerie')} variante="sombre" />
           <Bouton libelle={t('photos.annuler')} onPress={() => setChoix(null)} variante="contour" />
         </View>

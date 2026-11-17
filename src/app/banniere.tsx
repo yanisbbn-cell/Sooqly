@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Image, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -19,7 +19,7 @@ import {
   urlBanniere,
 } from '@/lib/banniere';
 import { DetecteurProvider, useDetecteur } from '@/lib/detecteur';
-import { preparer, prendrePhoto, urlPhoto, type Source } from '@/lib/photos';
+import { appareilDisponible, preparer, prendrePhoto, urlPhoto, type Source } from '@/lib/photos';
 import { colors } from '@/theme';
 
 type Etat = { banniere: string | null; proposee: string | null; est_pro: boolean };
@@ -143,7 +143,7 @@ function ChoixBanniere() {
               {t('banniere.depuisTelephone')}
             </Texte>
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              {Platform.OS !== 'web' && (
+              {appareilDisponible() && (
                 <View style={{ flex: 1 }}>
                   <Bouton libelle={t('banniere.appareil')} onPress={() => depuisTelephone('camera')} occupe={occupe} variante="sombre" />
                 </View>

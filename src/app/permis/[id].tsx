@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Image, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -14,7 +14,7 @@ import { lireAnnonce, type Annonce } from '@/lib/annonces';
 import { useAuth } from '@/lib/auth';
 import { depuisTexte } from '@/lib/location';
 import { envoyerPermis } from '@/lib/permis';
-import { prendrePhoto, type Source } from '@/lib/photos';
+import { appareilDisponible, prendrePhoto, type Source } from '@/lib/photos';
 import { colors } from '@/theme';
 
 /** Envoyer son permis au loueur (location d'un véhicule qui l'exige). */
@@ -77,7 +77,7 @@ export default function EnvoyerPermis() {
             <View style={styles.bloc}>
               <Libelle>{t('permis.photo')}</Libelle>
               {uri && <Image source={{ uri }} style={styles.apercu} resizeMode="contain" accessibilityLabel={t('permis.photo')} />}
-              {Platform.OS !== 'web' && (
+              {appareilDisponible() && (
                 <Bouton libelle={uri ? t('permis.changer') : t('permis.prendre')} onPress={() => choisir('camera')} variante="sombre" />
               )}
               <Bouton libelle={t('permis.galerie')} onPress={() => choisir('galerie')} variante="contour" />

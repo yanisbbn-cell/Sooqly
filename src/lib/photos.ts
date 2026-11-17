@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { SaveFormat, manipulateAsync } from 'expo-image-manipulator';
 import { decode } from 'base64-arraybuffer';
@@ -35,12 +36,32 @@ export function conseilsPhoto(p: Pick<PhotoLocale, 'largeur' | 'hauteur'>): ('pe
 
 export type Source = 'camera' | 'galerie';
 
+/**
+ * Bouton « Prendre une photo » proposé ? Toujours dans l'application ; sur le site, seulement sur un écran tactile
+ * (téléphone, tablette) : le navigateur ouvre alors directement l'appareil photo.
+ */
+export function appareilDisponible(): boolean {
+  if (Platform.OS !== 'web') return true;
+  try {
+    return typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches;
+  } catch {
+    return false;
+  }
+}
+
 /** Ouvre l'appareil photo ou la galerie. Renvoie null si annulé ou si l'accès est refusé. */
 export async function prendrePhoto(source: Source): Promise<string | null> {
   const permission =
     source === 'camera' ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!permission.granted) return null;
-  const options: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], quality: 1, allowsEditing: false, exif: false };
+  const options: ImagePicker.ImagePickerOptions = {
+    mediaTypes: ['images'],
+    quality: 1,
+    allowsEditing: false,
+    exif: false,
+    // Appareil photo arrière (sur le site : le navigateur l'ouvre directement).
+    cameraType: ImagePicker.CameraType.back,
+  };
   const r = source === 'camera' ? await ImagePicker.launchCameraAsync(options) : await ImagePicker.launchImageLibraryAsync(options);
   if (r.canceled || !r.assets[0]) return null;
   return r.assets[0].uri;
