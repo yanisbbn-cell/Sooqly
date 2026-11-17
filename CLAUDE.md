@@ -34,7 +34,7 @@ Yanis n’est pas développeur. Il travaille uniquement depuis le navigateur d�
 
 ## Design
 
-- Fond blanc. Structure : brun #4A3A2D (en-têtes, textes ; éclairci le 17 novembre 2026, ancien #3B2D22), sables #F4E9D8, #E6D2B6, #C9AE8B, #9C7C5D, cartes #F6F0E6.
+- Fond blanc. Structure : brun #3B2D22 (en-têtes, textes), sables #F4E9D8, #E6D2B6, #C9AE8B, #9C7C5D, cartes #F6F0E6.
 - Règle des couleurs : accent (terre cuite #C4512E, petits textes #A9421F) = agir ; vert #2F7A4B = confiance (Vendeur validé, En ligne, vérifié, conseils) ; rouge #B5453F = danger (arnaque, blocage, suppression).
 - Les couleurs vivent dans un seul fichier de thème : l’accent n’est pas encore définitif.
 - Polices : Space Grotesk (titres, logo), Inter (texte), IBM Plex Sans Arabic (arabe), Amiri (Coran et hadiths).

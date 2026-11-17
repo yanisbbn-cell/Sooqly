@@ -12,7 +12,7 @@ import { Platform, type TextStyle } from 'react-native';
 export const colors = {
   // Fond et structure
   blanc: '#FFFFFF',
-  brun: '#4A3A2D', // en-têtes, textes (éclairci le 17 novembre 2026, ancien #3B2D22)
+  brun: '#3B2D22', // en-têtes, textes
   brunMoyen: '#6B5440', // textes secondaires (maquette)
   brunNuit: '#2A2018', // ombres et fonds très foncés (maquette)
   sable1: '#F4E9D8',
