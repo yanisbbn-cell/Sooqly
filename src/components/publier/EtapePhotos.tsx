@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ActivityIndicator, Image, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Image, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
@@ -7,6 +8,7 @@ import { Bouton } from '@/components/Bouton';
 import { IconeCoche, IconePlus } from '@/components/Icones';
 import { Texte } from '@/components/Texte';
 import { useDetecteur } from '@/lib/detecteur';
+import { usePreferences } from '@/lib/preferences';
 import { appareilDisponible, conseilsPhoto, MAX_PHOTOS, preparer, prendrePhoto, type PhotoLocale, type Source } from '@/lib/photos';
 import { colors, toucheMin } from '@/theme';
 
@@ -20,6 +22,8 @@ type Props = {
 export function EtapePhotos({ angles, photos, setPhotos }: Props) {
   const { t } = useTranslation();
   const detecteur = useDetecteur();
+  const { rtl } = usePreferences();
+  const insets = useSafeAreaInsets();
   const [choix, setChoix] = useState<number | null>(null);
   const [erreur, setErreur] = useState(false);
 
@@ -161,27 +165,34 @@ export function EtapePhotos({ angles, photos, setPhotos }: Props) {
         })}
       </View>
 
-      {choix !== null && (
-        <View style={styles.choix}>
-          <Texte poids={700} style={{ fontSize: 15 }}>
-            {angles[choix]}
-          </Texte>
-          {/* Les règles d'or, juste avant de prendre la photo. */}
-          <View style={styles.regles}>
-            {(t('photos.reglesOr', { returnObjects: true }) as unknown as string[]).map((r, k) => (
-              <View key={k} style={styles.regle}>
-                <View style={styles.puce}>
-                  <IconeCoche couleur={colors.blanc} taille={11} />
+      {/* Choix de la source : feuille qui monte du bas de l'écran, toujours visible (même sur tablette, où la
+          grille est longue), avec les règles d'or juste avant la photo. */}
+      <Modal visible={choix !== null} transparent animationType="slide" onRequestClose={() => setChoix(null)}>
+        <View style={[styles.racine, { direction: rtl ? 'rtl' : 'ltr' }]}>
+          <Pressable style={styles.fond} onPress={() => setChoix(null)} accessibilityLabel={t('photos.annuler')} />
+          <View style={[styles.feuille, { paddingBottom: insets.bottom + 16 }]} accessibilityViewIsModal>
+            <View style={styles.poignee} />
+            <Texte variante="titre" poids={700} style={{ fontSize: 20 }} accessibilityRole="header">
+              {choix !== null ? angles[choix] : ''}
+            </Texte>
+            <View style={styles.regles}>
+              {(t('photos.reglesOr', { returnObjects: true }) as unknown as string[]).map((r, k) => (
+                <View key={k} style={styles.regle}>
+                  <View style={styles.puce}>
+                    <IconeCoche couleur={colors.blanc} taille={11} />
+                  </View>
+                  <Texte style={styles.regleTexte}>{r}</Texte>
                 </View>
-                <Texte style={styles.regleTexte}>{r}</Texte>
-              </View>
-            ))}
+              ))}
+            </View>
+            {appareilDisponible() && (
+              <Bouton libelle={t('photos.appareil')} onPress={() => choix !== null && ajouter(choix, 'camera')} variante="sombre" />
+            )}
+            <Bouton libelle={t('photos.galerie')} onPress={() => choix !== null && ajouter(choix, 'galerie')} variante="sombre" />
+            <Bouton libelle={t('photos.annuler')} onPress={() => setChoix(null)} variante="contour" />
           </View>
-          {appareilDisponible() && <Bouton libelle={t('photos.appareil')} onPress={() => ajouter(choix, 'camera')} variante="sombre" />}
-          <Bouton libelle={t('photos.galerie')} onPress={() => ajouter(choix, 'galerie')} variante="sombre" />
-          <Bouton libelle={t('photos.annuler')} onPress={() => setChoix(null)} variante="contour" />
         </View>
-      )}
+      </Modal>
     </View>
   );
 }
@@ -221,9 +232,21 @@ const styles = StyleSheet.create({
   angle: { fontSize: 11, lineHeight: 14, textAlign: 'center' },
   conseils: { gap: 6, padding: 12, borderRadius: 12, backgroundColor: colors.sable1, borderWidth: 1, borderColor: colors.sable3 },
   conseilTexte: { fontSize: 13, lineHeight: 19 },
-  regles: { gap: 6, paddingVertical: 4 },
+  racine: { flex: 1, justifyContent: 'flex-end', alignItems: 'center' },
+  fond: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(42,32,24,0.55)' },
+  feuille: {
+    width: '100%',
+    maxWidth: 560,
+    gap: 12,
+    paddingTop: 10,
+    paddingHorizontal: 20,
+    backgroundColor: colors.blanc,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
+  poignee: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: colors.sable3, marginBottom: 4 },
+  regles: { gap: 8, padding: 14, borderRadius: 14, backgroundColor: colors.vertFond, borderWidth: 1, borderColor: colors.vertBord },
   regle: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   puce: { width: 18, height: 18, borderRadius: 9, backgroundColor: colors.vert, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
-  regleTexte: { flex: 1, fontSize: 13, lineHeight: 19 },
-  choix: { gap: 8, padding: 14, borderRadius: 14, backgroundColor: colors.carte, borderWidth: 1, borderColor: colors.sable2 },
+  regleTexte: { flex: 1, fontSize: 14, lineHeight: 20 },
 });
