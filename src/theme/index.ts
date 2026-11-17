@@ -1,3 +1,5 @@
+import { Platform, type TextStyle } from 'react-native';
+
 /**
  * Thème de Sooqly : toutes les couleurs et polices de l'application.
  * C'est le SEUL endroit où les couleurs sont définies (l'accent n'est pas encore définitif).
@@ -58,6 +60,13 @@ export const couleursCategories: Record<string, { de: string; a: string; clair: 
 
 /** Icône posée sur une tuile de catégorie. */
 export const iconeTuile = '#FFF8EE';
+
+/**
+ * Sur le site, le navigateur dessine un cadre carré autour du champ actif, par-dessus nos champs arrondis :
+ * on le retire et chaque champ montre lui-même qu'il est actif (bordure terre cuite).
+ */
+// « none » n'existe pas dans les types de React Native mais est bien compris par le site (react-native-web).
+export const sansContourWeb: TextStyle = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as unknown as TextStyle) : {};
 
 /** Noms des polices chargées dans app/_layout.tsx. */
 export const fonts = {

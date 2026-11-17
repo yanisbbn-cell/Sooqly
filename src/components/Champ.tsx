@@ -1,8 +1,8 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
 import { usePreferences } from '@/lib/preferences';
-import { colors, fonts } from '@/theme';
+import { colors, fonts, sansContourWeb } from '@/theme';
 
 import { Texte } from './Texte';
 
@@ -22,8 +22,9 @@ type Props = TextInputProps & {
 };
 
 /** Champ de saisie de Sooqly, avec son libellé. */
-export function Champ({ libelle, ltr, style, ...props }: Props) {
+export function Champ({ libelle, ltr, style, onFocus, onBlur, ...props }: Props) {
   const { rtl } = usePreferences();
+  const [actif, setActif] = useState(false);
   const droite = rtl && !ltr;
   return (
     <View style={styles.bloc}>
@@ -32,8 +33,18 @@ export function Champ({ libelle, ltr, style, ...props }: Props) {
         accessibilityLabel={libelle}
         placeholderTextColor={colors.brunMoyen}
         {...props}
+        onFocus={(e) => {
+          setActif(true);
+          onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          setActif(false);
+          onBlur?.(e);
+        }}
         style={[
+          sansContourWeb,
           styles.champ,
+          actif && { borderColor: colors.accent },
           {
             fontFamily: droite ? fonts.arabe[400] : fonts.texte[400],
             textAlign: droite ? 'right' : 'left',

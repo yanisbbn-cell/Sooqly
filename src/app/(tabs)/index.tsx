@@ -26,7 +26,7 @@ import { usePreferences } from '@/lib/preferences';
 import { FILTRES_VIDES, chercherAnnonces, nombreFiltres, useRecherche, type Tri } from '@/lib/recherche';
 import { numeroWilaya, useCategories, useReglages, useWilayas, type Categorie } from '@/lib/referentiel';
 import { cles, ecrire, lire } from '@/lib/stockage';
-import { colors, fonts, iconeTuile, toucheMin } from '@/theme';
+import { colors, fonts, iconeTuile, sansContourWeb, toucheMin } from '@/theme';
 
 const TRIS: Tri[] = ['recent', 'prix_croissant', 'prix_decroissant', 'proche'];
 
@@ -42,6 +42,7 @@ export default function Annonces() {
   const { filtres, setFiltres, tri, setTri } = useRecherche();
 
   const [brouillon, setBrouillon] = useState(filtres.texte);
+  const [champActif, setChampActif] = useState(false);
   const [feuille, setFeuille] = useState<Categorie | null>(null);
   const [annonces, setAnnonces] = useState<AnnonceResume[] | null>(null);
   const [erreur, setErreur] = useState(false);
@@ -110,9 +111,11 @@ export default function Annonces() {
       <EnTete />
       <View style={styles.bandeRecherche}>
         <View style={styles.rangee}>
-          <View style={styles.recherche}>
+          <View style={[styles.recherche, champActif && { borderColor: colors.accent }]}>
             <TextInput
               value={brouillon}
+              onFocus={() => setChampActif(true)}
+              onBlur={() => setChampActif(false)}
               onChangeText={setBrouillon}
               onSubmitEditing={lancer}
               placeholder={t('recherche.champ')}
@@ -122,6 +125,7 @@ export default function Annonces() {
               autoCorrect={false}
               maxLength={80}
               style={[
+                sansContourWeb,
                 styles.champ,
                 { fontFamily: rtl ? fonts.arabe[400] : fonts.texte[400], textAlign: rtl ? 'right' : 'left' },
               ]}
@@ -387,6 +391,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.carte,
     borderRadius: 24,
+    // Bordure visible seulement quand le champ est actif (remplace le cadre carré du navigateur).
+    borderWidth: 2,
+    borderColor: 'transparent',
     paddingStart: 16,
     paddingEnd: 6,
     gap: 4,

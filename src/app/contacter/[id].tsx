@@ -16,7 +16,7 @@ import { useAuth } from '@/lib/auth';
 import { ARNAQUE, contacter } from '@/lib/messagerie';
 import { usePreferences } from '@/lib/preferences';
 import { formaterNombre } from '@/lib/prix';
-import { colors, fonts } from '@/theme';
+import { colors, fonts, sansContourWeb } from '@/theme';
 
 /** « Contacter le vendeur » : rappel de l'annonce, messages rapides, message pré-rempli, coordonnées privées. */
 export default function Contacter() {
@@ -91,7 +91,7 @@ export default function Contacter() {
               maxLength={1000}
               textAlignVertical="top"
               accessibilityLabel={t('messagerie.votreMessage')}
-              style={[styles.zone, { fontFamily: rtl ? fonts.arabe[400] : fonts.texte[400], textAlign: rtl ? 'right' : 'left' }]}
+              style={[sansContourWeb, styles.zone, { fontFamily: rtl ? fonts.arabe[400] : fonts.texte[400], textAlign: rtl ? 'right' : 'left' }]}
             />
           </View>
 

@@ -53,7 +53,7 @@ import { useNonLus } from '@/lib/notifications';
 import { usePreferences } from '@/lib/preferences';
 import { ecrire, lire } from '@/lib/stockage';
 import { supabase } from '@/lib/supabase';
-import { colors, fonts, toucheMin } from '@/theme';
+import { colors, fonts, toucheMin, sansContourWeb } from '@/theme';
 
 type Autre = { id: string; nom: string; avatar: number | null };
 
@@ -249,7 +249,7 @@ export default function Discussion() {
       accessibilityLabel={t('messagerie.champ')}
       multiline
       maxLength={1000}
-      style={[styles.champ, { fontFamily: rtl ? fonts.arabe[400] : fonts.texte[400], textAlign: rtl ? 'right' : 'left' }]}
+      style={[sansContourWeb, styles.champ, { fontFamily: rtl ? fonts.arabe[400] : fonts.texte[400], textAlign: rtl ? 'right' : 'left' }]}
     />
   );
 

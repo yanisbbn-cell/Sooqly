@@ -54,7 +54,7 @@ import {
   type Categorie,
   type Critere,
 } from '@/lib/referentiel';
-import { colors, fonts, toucheMin } from '@/theme';
+import { colors, fonts, toucheMin, sansContourWeb } from '@/theme';
 
 type CleEtape = 'cat' | 'desc' | 'etat' | 'photos' | 'prix' | 'recap';
 
@@ -658,6 +658,7 @@ export function AssistantPublication({ profil, existante }: { profil: Profil; ex
                 maxLength={4000}
                 textAlignVertical="top"
                 style={[
+                sansContourWeb,
                   styles.zoneTexte,
                   { fontFamily: rtl ? fonts.arabe[400] : fonts.texte[400], textAlign: rtl ? 'right' : 'left' },
                 ]}

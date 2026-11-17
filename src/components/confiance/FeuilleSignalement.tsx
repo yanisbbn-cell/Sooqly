@@ -9,7 +9,7 @@ import { Texte } from '@/components/Texte';
 import { useAuth } from '@/lib/auth';
 import { MOTIFS_ANNONCE, MOTIFS_MEMBRE, signaler, type Signalement } from '@/lib/confiance';
 import { usePreferences } from '@/lib/preferences';
-import { colors, fonts, toucheMin } from '@/theme';
+import { colors, fonts, toucheMin, sansContourWeb } from '@/theme';
 
 import { Feuille } from './Feuille';
 
@@ -113,7 +113,7 @@ export function FeuilleSignalement({ visible, signalement, nom, onFermer, onBloq
         accessibilityLabel={t('confiance.precisions')}
         multiline
         maxLength={1000}
-        style={[styles.champ, { fontFamily: rtl ? fonts.arabe[400] : fonts.texte[400], textAlign: rtl ? 'right' : 'left' }]}
+        style={[sansContourWeb, styles.champ, { fontFamily: rtl ? fonts.arabe[400] : fonts.texte[400], textAlign: rtl ? 'right' : 'left' }]}
       />
       <Texte style={{ fontSize: 12, lineHeight: 18, color: colors.brunMoyen }}>{t('confiance.anonyme')}</Texte>
       {etat === 'erreur' && (

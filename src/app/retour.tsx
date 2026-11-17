@@ -10,7 +10,7 @@ import { useAuth } from '@/lib/auth';
 import { preparer, prendrePhoto } from '@/lib/photos';
 import { usePreferences } from '@/lib/preferences';
 import { envoyerRetour } from '@/lib/retours';
-import { colors, fonts } from '@/theme';
+import { colors, fonts, sansContourWeb } from '@/theme';
 
 /** Versions de test : « Signaler un problème » (texte, écran concerné, capture d'écran facultative). */
 export default function Retour() {
@@ -68,7 +68,7 @@ export default function Retour() {
               accessibilityLabel={t('retour.message')}
               multiline
               maxLength={4000}
-              style={[styles.zone, { fontFamily: rtl ? fonts.arabe[400] : fonts.texte[400], textAlign: rtl ? 'right' : 'left' }]}
+              style={[sansContourWeb, styles.zone, { fontFamily: rtl ? fonts.arabe[400] : fonts.texte[400], textAlign: rtl ? 'right' : 'left' }]}
             />
             <Champ libelle={t('retour.ecran')} placeholder={t('retour.ecranEx')} value={ecran} onChangeText={setEcran} maxLength={200} />
             {profil ? (

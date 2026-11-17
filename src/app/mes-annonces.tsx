@@ -31,7 +31,7 @@ import { urlPhoto } from '@/lib/photos';
 import { usePreferences } from '@/lib/preferences';
 import { formaterNombre, lirePrix } from '@/lib/prix';
 import { useCategories, useReglages } from '@/lib/referentiel';
-import { colors, fonts, toucheMin } from '@/theme';
+import { colors, fonts, toucheMin, sansContourWeb } from '@/theme';
 
 const PASTILLE: Record<StatutAnnonce, { fond: string; texte: string }> = {
   en_ligne: { fond: colors.vert, texte: colors.blanc },
@@ -340,7 +340,7 @@ function CarteMonAnnonce({
             onChangeText={(v) => setPrix(v.replace(/[^\d\s]/g, ''))}
             keyboardType="number-pad"
             accessibilityLabel={t('mesAnnonces.prixActuel')}
-            style={[styles.champ, { fontFamily: fonts.texte[400], textAlign: rtl ? 'right' : 'left' }]}
+            style={[sansContourWeb, styles.champ, { fontFamily: fonts.texte[400], textAlign: rtl ? 'right' : 'left' }]}
           />
           <Bouton
             libelle={t('mesAnnonces.republier')}

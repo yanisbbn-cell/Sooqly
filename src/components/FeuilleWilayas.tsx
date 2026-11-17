@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { usePreferences } from '@/lib/preferences';
 import { normaliser, numeroWilaya, useWilayas, type Wilaya } from '@/lib/referentiel';
-import { colors, fonts, toucheMin } from '@/theme';
+import { colors, fonts, toucheMin, sansContourWeb } from '@/theme';
 
 import { EtatChargement } from './EtatChargement';
 import { IconeCoche, IconeLoupe } from './Icones';
@@ -73,6 +73,7 @@ export function FeuilleWilayas({ visible, valeur, onChoisir, onFermer, onToutes 
                 autoCorrect={false}
                 returnKeyType="search"
                 style={[
+                  sansContourWeb,
                   styles.champ,
                   { fontFamily: rtl ? fonts.arabe[400] : fonts.texte[400], textAlign: rtl ? 'right' : 'left' },
                 ]}
