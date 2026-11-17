@@ -4,8 +4,6 @@
  */
 export const SITE = 'https://sooqly-two.vercel.app';
 
-/** Lien d'invitation (parrainage) : ouvre l'inscription avec le code déjà rempli. */
-export const lienInvitation = (code: string) => `${SITE}/invitation/${code}`;
 
 /**
  * Clé publique (« Site Key ») du CAPTCHA Cloudflare Turnstile, liée au site ci-dessus.

@@ -87,7 +87,7 @@ Navigation du bas, toujours visible sur les écrans principaux : Annonces, Messa
 11. **Publier (assistant en 5 étapes).** Barre de progression, conseil vert à chaque étape, jauge de qualité. (1) Particulier ou Professionnel, catégorie et sous-catégorie. (2) Titre, description, caractéristiques. (3) État (Neuf à Mauvais état). (4) Photos : jusqu’à 10, avec angles suggérés et lien vers le guide photo. (5) Prix en DA avec rappel « 1 000 DA = un billet de 1 000 DA ≈ 3,70 € », Prix ferme ou Légèrement négociable, « J’accepte un échange », Remise et livraison, unité et disponibilités en location, « Exiger le permis », wilaya ; puis récapitulatif et « Envoyer pour vérification ». Un prix incohérent (voiture à 42 DA) bloque l’étape suivante. Les dons sont gratuits.
 12. **Guide photo.** Exemple accepté et refusé, règles : l’objet seul, reflets, lumière du jour, fond neutre, plusieurs angles, logements et véhicules.
 13. **Favoris.** Annonces enregistrées, chacune avec « Prévenez-moi si le prix baisse » ; une baisse affiche l’ancien prix barré et le pourcentage.
-14. **Compte.** Connexion ou inscription. Connecté : tableau de bord façon Leboncoin (image de profil, « À faire », mes annonces en cours, mes alertes de recherche, favoris), carte « Invitez vos proches », menu (Documents reçus, Notre charte, Revoir la présentation, Langue, Déconnexion).
+14. **Compte.** Connexion ou inscription. Connecté : tableau de bord façon Leboncoin (image de profil, « À faire », mes annonces en cours, mes alertes de recherche, favoris), carte « Partagez Sooqly » (bouton de partage du lien de l’application), menu (Documents reçus, Notre charte, Revoir la présentation, Langue, Déconnexion).
 15. **Mes alertes de recherche.** Aperçu de notification, pour chaque alerte : résumé lisible, nouvelles annonces, notifications activées ou coupées, Voir les annonces, Supprimer.
 16. **Mes annonces.** Bilan (en ligne, réservées, vendues, expirées). Par annonce : vues, favoris, messages, graphique des vues sur 7 jours, conseil si beaucoup de vues et peu de messages, « Expire dans X jours ». Actions : Réservé / Remettre en vente, Vendu ou Loué (choix de l’acheteur puis notation), Modifier, Supprimer avec confirmation, Republier gratuitement une annonce expirée.
 17. **Documents reçus.** Permis envoyés par les locataires, Accepter / Refuser, visibles par le seul destinataire.
@@ -161,9 +161,9 @@ Navigation du bas, toujours visible sur les écrans principaux : Annonces, Messa
 - Agences, garages et loueurs se déclarent professionnels : activité et nom commercial, sans registre du commerce.
 - Mise en avant réservée aux pros, à prix fixe annoncé d’avance, toujours signée « Sponsorisé » : rangée « À la une », annonce insérée dans le fil, page vitrine. Jamais de bandeau défilant automatique. Activée à la main par l’administrateur en version 1.
 
-**Parrainage**
+**Partage de l’application**
 
-- Chaque membre a un code et un lien d’invitation ; le compteur affiche les personnes inscrites grâce à lui. Aucune récompense en argent.
+- Décision du 17 novembre 2026 : plus de code ni de compteur d’invitations. Le membre partage simplement le lien de l’application depuis la carte « Partagez Sooqly ». Aucune récompense en argent.
 
 **Charte**
 
@@ -175,7 +175,7 @@ Tables principales dans Supabase. Claude Code les précisera ; cette liste fixe 
 
 | Table | Contenu principal |
 | --- | --- |
-| profiles | nom affiché (nom-prénom ou kounia), sexe (privé), wilaya, ville, téléphone vérifié, image de profil (n° d’illustration), langue, statut pro, activité, nom commercial, charte acceptée (date, version), code de parrainage, parrain |
+| profiles | nom affiché (nom-prénom ou kounia), sexe (privé), wilaya, ville, téléphone vérifié, image de profil (n° d’illustration), langue, statut pro, activité, nom commercial, charte acceptée (date, version) |
 | listings | auteur, type (vente, location, service, don), catégorie, sous-catégorie, titre, description, état, caractéristiques (format libre par catégorie), prix en DA, prix ferme ou négociable, échange accepté, modes de remise (main propre, livraison wilaya, envoi), wilaya (01 à 69), ville, statut (vérification, en ligne, réservé, vendu, loué, expiré, refusé), date d’expiration, acheteur final, sponsorisé jusqu’au, permis exigé, public du cours et sexe du professeur (cours particuliers) |
 | listing_rates | annonce, unité (nuit, jour, semaine, mois, 6 mois, an), prix en DA |
 | listing_photos | annonce, fichier, ordre (1 à 10), angle, résultat du détecteur, décision de modération |

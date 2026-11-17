@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,9 +16,7 @@ import { usePreferences } from '@/lib/preferences';
 import { numeroWilaya, useWilayas } from '@/lib/referentiel';
 import { PAYS, nettoyer, numeroComplet, numeroValide, type Pays } from '@/lib/telephone';
 import { Captcha } from '@/components/Captcha';
-import { codeParrainageExiste, utiliserCodeParrainage } from '@/lib/parrainage';
 import { VERSION_TEST } from '@/lib/retours';
-import { cles, ecrire, lire } from '@/lib/stockage';
 import { colors, toucheMin } from '@/theme';
 
 import { FeuilleImagesProfil } from './FeuilleImagesProfil';
@@ -50,19 +48,9 @@ export function FormulaireCompte() {
   const [telephone, setTelephone] = useState('');
   const [motDePasse, setMotDePasse] = useState('');
   const [charte, setCharte] = useState(false);
-  const [codeParrain, setCodeParrain] = useState('');
-  const [codeInvalide, setCodeInvalide] = useState(false);
   const [jeton, setJeton] = useState<string | null>(null);
   const [cleCaptcha, setCleCaptcha] = useState(0);
 
-  // Arrivée par un lien d'invitation : le code est déjà rempli et l'inscription ouverte.
-  useEffect(() => {
-    lire(cles.parrain).then((code) => {
-      if (!code) return;
-      setCodeParrain(code);
-      setMode('inscription');
-    });
-  }, []);
 
   const [feuilleImages, setFeuilleImages] = useState(false);
   const [feuilleWilayas, setFeuilleWilayas] = useState(false);
@@ -84,13 +72,6 @@ export function FormulaireCompte() {
     if (!pret || occupe) return;
     setOccupe(true);
     setErreur(null);
-    setCodeInvalide(false);
-    // Code de parrainage (facultatif) : vérifié avant de créer le compte, pour prévenir d'une faute de frappe.
-    if (inscription && codeParrain.trim() && !(await codeParrainageExiste(codeParrain))) {
-      setOccupe(false);
-      setCodeInvalide(true);
-      return;
-    }
     const r =
       inscription && wilaya && sexe
         ? await auth.inscrire({ telephone: numero, nomAffiche, wilaya, ville: ville.trim(), avatar, sexe, motDePasse, langue, captcha: jeton })
@@ -98,10 +79,6 @@ export function FormulaireCompte() {
     // Le jeton anti-robot ne sert qu'une fois : nouvelle vérification pour un prochain essai.
     setJeton(null);
     setCleCaptcha((n) => n + 1);
-    if (!r.erreur && inscription && codeParrain.trim()) {
-      await utiliserCodeParrainage(codeParrain);
-      await ecrire(cles.parrain, '');
-    }
     setOccupe(false);
     setErreur(r.erreur);
   };
@@ -282,30 +259,6 @@ export function FormulaireCompte() {
             />
             {inscription && <Texte style={styles.aide}>{t('compte.motDePasseAide')}</Texte>}
           </View>
-
-          {inscription && (
-            <View style={styles.bloc}>
-              <Champ
-                ltr
-                libelle={t('parrainage.champ')}
-                placeholder="AB12CD34"
-                value={codeParrain}
-                onChangeText={(v) => {
-                  setCodeParrain(v.toUpperCase());
-                  setCodeInvalide(false);
-                }}
-                autoCapitalize="characters"
-                autoCorrect={false}
-                maxLength={12}
-              />
-              <Texte style={styles.aide}>{t('parrainage.champAide')}</Texte>
-              {codeInvalide && (
-                <Texte poids={600} style={{ fontSize: 13, color: colors.rouge }} accessibilityRole="alert">
-                  {t('parrainage.invalide')}
-                </Texte>
-              )}
-            </View>
-          )}
 
           {inscription && (
             <Pressable

@@ -4,8 +4,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export const cles = {
   langue: 'sooqly.langue',
   accueilVu: 'sooqly.accueilVu',
-  /** Code de parrainage reçu par un lien d'invitation, en attendant l'inscription. */
-  parrain: 'sooqly.parrain',
   /** « Près de chez moi » : wilaya choisie sur cet appareil (sinon celle du profil). */
   wilayaProche: 'sooqly.wilayaProche',
 } as const;

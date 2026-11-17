@@ -881,19 +881,12 @@ export const fr = {
     valides: 'Vendeurs validés uniquement',
     validesSous: 'Membres qui ont au moins {{seuil}} ventes notées 5 étoiles.',
   },
-  parrainage: {
-    titre: 'Invitez vos proches',
-    texte: 'Plus la communauté grandit, plus on trouve près de chez soi. Partagez votre lien d’invitation.',
+  partage: {
+    titre: 'Partagez Sooqly',
+    texte: 'Plus la communauté grandit, plus on trouve près de chez soi. Envoyez l’application à vos proches.',
     hadith: '« Celui qui indique un bien a la même récompense que celui qui le fait. » (Muslim)',
-    code: 'Votre code',
-    partager: 'Partager',
-    compte_zero: 'Personne ne vous a encore rejoint.',
-    compte_one: '{{count}} personne a rejoint Sooqly grâce à vous',
-    compte_other: '{{count}} personnes ont rejoint Sooqly grâce à vous',
-    message: 'Salam ! Je t’invite sur Sooqly, pour acheter, vendre, louer et donner près de chez toi, dans le respect de nos principes. Inscris-toi avec mon lien : {{lien}} (code : {{code}})',
-    champ: 'Code de parrainage (facultatif)',
-    champAide: 'Si un proche vous a invité, entrez son code.',
-    invalide: 'Ce code de parrainage n’existe pas. Vérifiez-le, ou laissez le champ vide.',
+    bouton: 'Partager l’application',
+    message: 'Salam ! Découvre Sooqly, pour acheter, vendre, louer et donner près de chez toi, dans le respect de nos principes : {{lien}}',
   },
   reglages: {
     titre: 'Réglages',
@@ -974,7 +967,7 @@ export const fr = {
       },
       {
         titre: 'Les données que nous gardons',
-        texte: '• Votre compte : numéro de téléphone, nom ou kounia, wilaya, ville, image de profil (une illustration, jamais une photo), langue, mot de passe (enregistré chiffré, illisible même pour nous), code de parrainage.\n• Vos annonces : textes, prix, caractéristiques, photos, lieu, et le nombre de vues.\n• Vos échanges : messages, messages vocaux, lieux de rendez-vous proposés (avec votre position seulement si vous choisissez de la joindre).\n• Le permis de conduire, si vous l’envoyez pour une location de véhicule.\n• Vos notes, signalements, blocages, favoris et alertes de recherche.\n• Pour les notifications : l’identifiant technique de votre appareil.\n• Des informations techniques de connexion (comme l’adresse IP), gardées par nos hébergeurs pour la sécurité.',
+        texte: '• Votre compte : numéro de téléphone, nom ou kounia, wilaya, ville, image de profil (une illustration, jamais une photo), langue, mot de passe (enregistré chiffré, illisible même pour nous), homme ou femme (jamais affiché, sert seulement à la règle des cours particuliers).\n• Vos annonces : textes, prix, caractéristiques, photos, lieu, et le nombre de vues.\n• Vos échanges : messages, messages vocaux, lieux de rendez-vous proposés (avec votre position seulement si vous choisissez de la joindre).\n• Le permis de conduire, si vous l’envoyez pour une location de véhicule.\n• Vos notes, signalements, blocages, favoris et alertes de recherche.\n• Pour les notifications : l’identifiant technique de votre appareil.\n• Des informations techniques de connexion (comme l’adresse IP), gardées par nos hébergeurs pour la sécurité.',
       },
       {
         titre: 'Pourquoi nous les utilisons',
