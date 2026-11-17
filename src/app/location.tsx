@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { VignetteSansPhoto } from '@/components/annonces/VignetteSansPhoto';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,7 +12,6 @@ import { Champ, Libelle, styleChamp } from '@/components/Champ';
 import { EnTeteRetour } from '@/components/EnTeteRetour';
 import { EtatChargement } from '@/components/EtatChargement';
 import { FeuilleWilayas } from '@/components/FeuilleWilayas';
-import { IconeCategorie } from '@/components/IconeCategorie';
 import { IconeChevronBas } from '@/components/Icones';
 import { Pastille } from '@/components/Pastille';
 import { Texte } from '@/components/Texte';
@@ -186,7 +186,7 @@ export default function RechercheLocation() {
                   {photo ? (
                     <Image source={{ uri: urlPhoto(photo) }} style={StyleSheet.absoluteFill} resizeMode="cover" />
                   ) : (
-                    <IconeCategorie icone={categorie?.icone ?? 'grid'} couleur={tuile.trait} taille={34} />
+                    <VignetteSansPhoto icone={categorie?.icone ?? 'grid'} tailleIcone={34} />
                   )}
                 </View>
                 <View style={{ flex: 1, gap: 3, padding: 12 }}>

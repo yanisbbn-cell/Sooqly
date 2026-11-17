@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { VignetteSansPhoto } from '@/components/annonces/VignetteSansPhoto';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,8 +11,8 @@ import { couleursTuile } from '@/components/annonces/tuile';
 import { Bouton } from '@/components/Bouton';
 import { Champ } from '@/components/Champ';
 import { EtatChargement } from '@/components/EtatChargement';
-import { IconeCategorie } from '@/components/IconeCategorie';
-import { IconeCoche, IconeFavori, IconeRetour } from '@/components/Icones';
+import { CoeurFavori } from '@/components/CoeurFavori';
+import { IconeCoche, IconeRetour } from '@/components/Icones';
 import { ImageProfil } from '@/components/ImageProfil';
 import { BadgeValide } from '@/components/confiance/BadgeValide';
 import { FeuilleSignalement } from '@/components/confiance/FeuilleSignalement';
@@ -19,6 +20,7 @@ import { BlocMiseEnAvant } from '@/components/moderation/BlocMiseEnAvant';
 import { Texte } from '@/components/Texte';
 import { estSponsorisee, lireAnnonce, type Annonce } from '@/lib/annonces';
 import { mentionCours } from '@/lib/cours';
+import { vibrer } from '@/lib/vibration';
 import { modererAnnonce, type Decision } from '@/lib/moderation';
 import { estAdmin, estModerateur, useAuth } from '@/lib/auth';
 import { statsMembre, type StatsMembre } from '@/lib/confiance';
@@ -63,6 +65,7 @@ export default function FicheAnnonce() {
     if (!profil) return router.navigate('/compte');
     const avant = favori;
     setFavori(!avant);
+    vibrer();
     const ok = avant ? await retirerFavori(profil.id, String(id)) : await ajouterFavori(profil.id, String(id));
     if (!ok) setFavori(avant);
   };
@@ -133,7 +136,7 @@ export default function FicheAnnonce() {
           <Galerie photos={a.photos} hauteur={300 + insets.top} moderation={estModerateur(profil)} />
         ) : (
           <View style={[styles.tuile, { backgroundColor: tuile.fond, paddingTop: insets.top }]}>
-            <IconeCategorie icone={categorie?.icone ?? 'grid'} couleur={tuile.trait} taille={72} />
+            <VignetteSansPhoto icone={categorie?.icone ?? 'grid'} tailleIcone={72} />
           </View>
         )}
 
@@ -376,7 +379,7 @@ export default function FicheAnnonce() {
                   accessibilityState={{ selected: favori }}
                   style={[styles.favori, favori && { backgroundColor: colors.brun }]}
                 >
-                  <IconeFavori couleur={favori ? colors.accent : colors.brun} plein={favori} />
+                  <CoeurFavori couleur={favori ? colors.accent : colors.brun} plein={favori} />
                 </Pressable>
               </View>
             ))}

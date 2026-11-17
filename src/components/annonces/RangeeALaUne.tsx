@@ -1,8 +1,8 @@
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { VignetteSansPhoto } from './VignetteSansPhoto';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
-import { IconeCategorie } from '@/components/IconeCategorie';
 import { Texte } from '@/components/Texte';
 import { photoPrincipale, type AnnonceResume } from '@/lib/annonces';
 import { tarifCourt } from '@/lib/location';
@@ -40,7 +40,7 @@ export function RangeeALaUne({ annonces, categories }: { annonces: AnnonceResume
                 {photo ? (
                   <Image source={{ uri: urlPhoto(photo) }} style={StyleSheet.absoluteFill} resizeMode="cover" />
                 ) : (
-                  <IconeCategorie icone={c?.icone ?? 'grid'} couleur={tuile.trait} taille={32} />
+                  <VignetteSansPhoto icone={c?.icone ?? 'grid'} tailleIcone={32} />
                 )}
               </View>
               <View style={{ padding: 10, gap: 2 }}>

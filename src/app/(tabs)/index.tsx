@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 
 import { CarteAnnonce } from '@/components/annonces/CarteAnnonce';
+import { GrilleFantome } from '@/components/annonces/CarteFantome';
 import { BandeauANoter } from '@/components/confiance/BandeauANoter';
 import { useGrille } from '@/lib/grille';
 import { BandeauLocation } from '@/components/annonces/BandeauLocation';
@@ -280,19 +282,27 @@ export default function Annonces() {
         contentContainerStyle={{ paddingBottom: 24 }}
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={rafraichit} onRefresh={rafraichir} tintColor={colors.accent} />}
-        renderItem={({ item }) => (
-          <View style={[styles.cellule, { width: grille.largeur }]}>
+        renderItem={({ item, index }) => (
+          // Les cartes apparaissent en glissant légèrement, l'une après l'autre (les premières seulement).
+          <Animated.View
+            entering={FadeInDown.duration(320).delay(Math.min(index, 8) * 45)}
+            style={[styles.cellule, { width: grille.largeur }]}
+          >
             <CarteAnnonce
               annonce={item}
               categorie={categories.donnees?.find((c) => c.cle === item.categorie)}
               wilaya={wilayas?.find((w) => w.code === item.wilaya_code)}
               taux={reglages?.taux_dinar_euro ?? 0.0037}
             />
-          </View>
+          </Animated.View>
         )}
         ListEmptyComponent={
           !annonces ? (
-            <EtatChargement erreur={erreur} reessayer={charger} />
+            erreur ? (
+              <EtatChargement erreur reessayer={charger} />
+            ) : (
+              <GrilleFantome colonnes={grille.colonnes} largeur={grille.largeur} />
+            )
           ) : (
             <View style={styles.vide}>
               <Texte style={{ fontSize: 14, lineHeight: 21 }}>
@@ -356,7 +366,7 @@ function TuileCategorie({ libelle, icone, active, onPress }: { libelle: string; 
       accessibilityRole="button"
       accessibilityLabel={libelle}
       accessibilityState={{ selected: active }}
-      style={({ pressed }) => [styles.tuile, pressed && { opacity: 0.8 }]}
+      style={({ pressed }) => [styles.tuile, pressed && { transform: [{ scale: 0.94 }] }]}
     >
       {/* Anneau d'accent autour de la catégorie choisie. */}
       <View style={[styles.anneau, active && { borderColor: colors.accent }]}>

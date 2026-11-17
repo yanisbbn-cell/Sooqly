@@ -41,6 +41,7 @@ import {
   type Tarif,
   type Unite,
 } from '@/lib/location';
+import { vibrer } from '@/lib/vibration';
 import { enregistrerPhotosModifiees, envoyerPhotos, MAX_PHOTOS, urlPhoto, type PhotoLocale } from '@/lib/photos';
 import { usePreferences } from '@/lib/preferences';
 import { formaterEuro, formaterNombre, fourchette, lirePrix } from '@/lib/prix';
@@ -324,6 +325,7 @@ export function AssistantPublication({ profil, existante }: { profil: Profil; ex
     setOccupe(false);
     if (!photosOk) return setErreurPhotos(true);
     const statut = await lireStatut(ex.id);
+    vibrer('succes');
     setResultat(statut === 'verification' ? 'verification' : !location && prix !== ex.prix_da ? 'prix' : 'ok');
   };
 
@@ -372,7 +374,10 @@ export function AssistantPublication({ profil, existante }: { profil: Profil; ex
     const photosOk = await envoyerPhotos(profil.id, id, photos, angles);
     setOccupe(false);
     if (!photosOk) setErreurPhotos(true);
-    else setEnvoyee(true);
+    else {
+      vibrer('succes');
+      setEnvoyee(true);
+    }
   };
 
   const recommencer = () => {

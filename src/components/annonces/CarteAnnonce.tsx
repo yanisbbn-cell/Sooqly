@@ -1,8 +1,8 @@
 import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { VignetteSansPhoto } from './VignetteSansPhoto';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
-import { IconeCategorie } from '@/components/IconeCategorie';
 import { Texte } from '@/components/Texte';
 import { mentionCours } from '@/lib/cours';
 import { BadgeValide } from '@/components/confiance/BadgeValide';
@@ -41,13 +41,13 @@ export function CarteAnnonce({ annonce: a, categorie, wilaya, taux }: Props) {
       onPress={() => router.push({ pathname: '/annonce/[id]', params: { id: a.id } })}
       accessibilityRole="button"
       accessibilityLabel={`${a.titre}, ${don ? t('carte.gratuit') : `${formaterNombre(a.prix_da)} ${t('da')}`}`}
-      style={({ pressed }) => [styles.carte, pressed && { opacity: 0.85 }]}
+      style={({ pressed }) => [styles.carte, pressed && { opacity: 0.92, transform: [{ scale: 0.98 }] }]}
     >
       <View style={[styles.tuile, { backgroundColor: tuile.fond }]}>
         {photoPrincipale(a) ? (
           <Image source={{ uri: urlPhoto(photoPrincipale(a)!) }} style={StyleSheet.absoluteFill} resizeMode="cover" accessibilityIgnoresInvertColors />
         ) : (
-          <IconeCategorie icone={categorie?.icone ?? 'grid'} couleur={tuile.trait} taille={40} />
+          <VignetteSansPhoto icone={categorie?.icone ?? 'grid'} tailleIcone={40} />
         )}
         <View style={styles.type}>
           <Texte poids={600} style={styles.typeTexte}>

@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { VignetteSansPhoto } from '@/components/annonces/VignetteSansPhoto';
 import { FlatList, Image, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,7 +8,6 @@ import { useTranslation } from 'react-i18next';
 import { Bouton } from '@/components/Bouton';
 import { EnTeteRetour } from '@/components/EnTeteRetour';
 import { EtatChargement } from '@/components/EtatChargement';
-import { IconeCategorie } from '@/components/IconeCategorie';
 import { ImageProfil } from '@/components/ImageProfil';
 import { Texte } from '@/components/Texte';
 import { couleursTuile } from '@/components/annonces/tuile';
@@ -227,7 +227,7 @@ function CarteMonAnnonce({
           {photo ? (
             <Image source={{ uri: urlPhoto(photo) }} style={StyleSheet.absoluteFill} resizeMode="cover" />
           ) : (
-            <IconeCategorie icone={categorie?.icone ?? 'grid'} couleur={tuile.trait} taille={28} />
+            <VignetteSansPhoto icone={categorie?.icone ?? 'grid'} tailleIcone={28} />
           )}
         </View>
         <View style={{ flex: 1, gap: 4 }}>

@@ -29,7 +29,8 @@ export function Bouton({ libelle, onPress, actif = true, occupe, variante = 'acc
         grand && styles.grand,
         { backgroundColor: fond },
         variante === 'contour' && actif && styles.contour,
-        pressed && { opacity: 0.8 },
+        // Le bouton s'enfonce légèrement sous le doigt.
+        pressed && { opacity: 0.9, transform: [{ scale: 0.97 }] },
       ]}
     >
       {occupe ? (
