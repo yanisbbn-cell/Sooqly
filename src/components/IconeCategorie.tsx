@@ -52,12 +52,14 @@ const DESSINS: Record<string, React.ReactNode> = {
     </>
   ),
   garment: <Path d="M9 3l3 2 3-2 5 3-2 4-2-1v12H8V9l-2 1-2-4z" />,
+  // Poussette (capote, nacelle, poignée, roues) : un objet, jamais un enfant dessiné.
   stroller: (
     <>
-      <Path d="M3 8h11l-1.5 6H5z" />
-      <Path d="M14 8V4h3" />
-      <Circle cx={6} cy={18} r={2} />
-      <Circle cx={12} cy={18} r={2} />
+      <Path d="M4 11a7 7 0 0 1 7-7v7" />
+      <Path d="M4 11h14a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z" />
+      <Path d="M18 11l2-6h1.5" />
+      <Circle cx={8} cy={19} r={2} />
+      <Circle cx={15} cy={19} r={2} />
     </>
   ),
   tool: <Path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z" />,

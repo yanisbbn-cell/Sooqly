@@ -97,7 +97,7 @@ Navigation du bas, toujours visible sur les écrans principaux : Annonces, Messa
 
 ## 5. Règles métier
 
-**Catégories.** Immobilier, Véhicules, Pièces auto, Électroménager, Ameublement, Informatique & téléphonie, Vêtements, Famille, Services, Dons. Chacune a ses sous-catégories (liste de la maquette) et ses critères de recherche. État de l’objet sur 5 niveaux : Neuf, Très bon état, Bon état, État correct, Mauvais état. Critère des services « Proposé par » : Une personne, Une équipe.
+**Catégories.** Immobilier, Véhicules, Pièces auto, Électroménager, Ameublement, Informatique & téléphonie, Vêtements, Bébé et enfants (ancien nom « Famille », renommée le 17 novembre 2026 ; icône : une poussette, jamais un enfant dessiné), Services, Dons. Chacune a ses sous-catégories (liste de la maquette) et ses critères de recherche. État de l’objet sur 5 niveaux : Neuf, Très bon état, Bon état, État correct, Mauvais état. Critère des services « Proposé par » : Une personne, Une équipe.
 
 **Cours particuliers (décision du 17 novembre 2026)**
 
