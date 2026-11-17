@@ -77,3 +77,15 @@ export async function compteurs(): Promise<{ annonces: number; signalements: num
 
 /** Texte du motif d'un signalement (codes de l'étape 9 ; anciens textes libres affichés tels quels). */
 export const MOTIFS_CONNUS = ['charte', 'photo', 'arnaque', 'doublon', 'categorie', 'autre', 'propos', 'faux_profil'] as const;
+
+/** Sexe d'un membre (privé) : lecture et correction réservées à la modération. */
+export async function sexeMembre(id: string): Promise<'h' | 'f' | null> {
+  const { data, error } = await supabase.rpc('sexe_membre', { p_membre: id });
+  if (error) throw error;
+  return (data as 'h' | 'f' | null) ?? null;
+}
+
+export async function changerSexeMembre(id: string, sexe: 'h' | 'f'): Promise<boolean> {
+  const { data, error } = await supabase.rpc('changer_sexe_membre', { p_membre: id, p_sexe: sexe });
+  return !error && data === true;
+}

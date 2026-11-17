@@ -8,9 +8,10 @@ import { BoutonLangue } from '@/components/BoutonLangue';
 import { Champ, Libelle, styleChamp } from '@/components/Champ';
 import { FeuilleWilayas } from '@/components/FeuilleWilayas';
 import { IconeChevronBas, IconeCoche } from '@/components/Icones';
+import { ChoixSexe } from '@/components/compte/ChoixSexe';
 import { ImageProfil } from '@/components/ImageProfil';
 import { Texte } from '@/components/Texte';
-import { MOT_DE_PASSE_MIN, useAuth, type ErreurCompte } from '@/lib/auth';
+import { MOT_DE_PASSE_MIN, useAuth, type ErreurCompte, type Sexe } from '@/lib/auth';
 import { usePreferences } from '@/lib/preferences';
 import { numeroWilaya, useWilayas } from '@/lib/referentiel';
 import { PAYS, nettoyer, numeroComplet, numeroValide, type Pays } from '@/lib/telephone';
@@ -41,6 +42,7 @@ export function FormulaireCompte() {
   const [nom, setNom] = useState('');
   const [kounia, setKounia] = useState('');
   const [avatar, setAvatar] = useState<number | null>(null);
+  const [sexe, setSexe] = useState<Sexe | null>(null);
   const [wilaya, setWilaya] = useState<number | null>(null);
   const [ville, setVille] = useState('');
   const [pays, setPays] = useState<Pays>(PAYS[0]!);
@@ -76,7 +78,7 @@ export function FormulaireCompte() {
 
   const pret =
     !!jeton &&
-    (inscription ? nomOk && !!wilaya && ville.trim().length > 0 && telOk && mdpOk && charte : telOk && motDePasse.length > 0);
+    (inscription ? nomOk && !!sexe && !!wilaya && ville.trim().length > 0 && telOk && mdpOk && charte : telOk && motDePasse.length > 0);
 
   const valider = async () => {
     if (!pret || occupe) return;
@@ -90,8 +92,8 @@ export function FormulaireCompte() {
       return;
     }
     const r =
-      inscription && wilaya
-        ? await auth.inscrire({ telephone: numero, nomAffiche, wilaya, ville: ville.trim(), avatar, motDePasse, langue, captcha: jeton })
+      inscription && wilaya && sexe
+        ? await auth.inscrire({ telephone: numero, nomAffiche, wilaya, ville: ville.trim(), avatar, sexe, motDePasse, langue, captcha: jeton })
         : await auth.connecter(numero, motDePasse, jeton);
     // Le jeton anti-robot ne sert qu'une fois : nouvelle vérification pour un prochain essai.
     setJeton(null);
@@ -157,6 +159,8 @@ export function FormulaireCompte() {
                   <IconeChevronBas couleur={colors.brunMoyen} />
                 </View>
               </Pressable>
+
+              <ChoixSexe valeur={sexe} onChoisir={setSexe} />
 
               <View style={styles.bloc}>
                 <Libelle>{t('compte.apparaitre')}</Libelle>

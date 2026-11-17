@@ -22,7 +22,13 @@ export type Profil = {
   role: 'membre' | 'moderateur' | 'admin';
   suspendu: boolean;
   est_pro: boolean;
+  /** Homme ou femme : PRIVÉ (lu par mon_sexe, jamais visible des autres) ; sert à la règle des cours particuliers. */
+  sexe: Sexe | null;
+  /** Vrai si le sexe n'a pas pu être lu (réseau) : on ne pose alors pas la question. */
+  sexeInconnu?: boolean;
 };
+
+export type Sexe = 'h' | 'f';
 
 /** Clés de traduction « compte.erreurs.* ». */
 export type ErreurCompte =
@@ -48,6 +54,7 @@ type Auth = {
     wilaya: number;
     ville: string;
     avatar: number | null;
+    sexe: Sexe;
     motDePasse: string;
     langue: 'fr' | 'ar';
     /** Jeton du CAPTCHA Cloudflare Turnstile (à usage unique). */
@@ -55,6 +62,8 @@ type Auth = {
   }) => Promise<Resultat>;
   connecter: (numero: string, motDePasse: string, captcha: string | null) => Promise<Resultat>;
   changerAvatar: (numero: number) => Promise<Resultat>;
+  /** Pour les membres inscrits avant la règle : une seule fois (ensuite, seule la modération corrige). */
+  definirSexe: (sexe: Sexe) => Promise<Resultat>;
   /** Vérifie l'ancien mot de passe, puis enregistre le nouveau. */
   changerMotDePasse: (ancien: string, nouveau: string, captcha: string | null) => Promise<Resultat>;
   deconnecter: () => Promise<void>;
@@ -92,8 +101,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfil(null);
       return;
     }
-    const { data } = await supabase.from('profiles').select(COLONNES).eq('id', s.user.id).maybeSingle();
-    setProfil((data as Profil | null) ?? null);
+    const [{ data }, { data: sexe, error: erreurSexe }] = await Promise.all([
+      supabase.from('profiles').select(COLONNES).eq('id', s.user.id).maybeSingle(),
+      supabase.rpc('mon_sexe'),
+    ]);
+    setProfil(data ? ({ ...data, sexe: (sexe as Sexe | null) ?? null, sexeInconnu: !!erreurSexe } as Profil) : null);
   }, []);
 
   useEffect(() => {
@@ -122,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [chargerProfil]);
 
   const inscrire = useCallback<Auth['inscrire']>(
-    async ({ telephone, nomAffiche, wilaya, ville, avatar, motDePasse, langue, captcha }) => {
+    async ({ telephone, nomAffiche, wilaya, ville, avatar, sexe, motDePasse, langue, captcha }) => {
       // 1. Le compte (numéro + mot de passe). Si une tentative précédente s'est arrêtée après cette étape
       //    (coupure de réseau), on reprend avec la session déjà ouverte pour ce même numéro.
       let { data: s } = await supabase.auth.getSession();
@@ -148,13 +160,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           wilaya_code: wilaya,
           ville,
           avatar,
+          sexe,
           langue,
           charte_version: 1,
         })
         .select(COLONNES)
         .single();
       if (error) return { erreur: traduireErreur(error, 'inconnue') };
-      setProfil(data as Profil);
+      setProfil({ ...(data as Omit<Profil, 'sexe'>), sexe });
       return { erreur: null };
     },
     [],
@@ -180,7 +193,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!profil) return { erreur: 'inconnue' };
       const { data, error } = await supabase.from('profiles').update({ avatar: numero }).eq('id', profil.id).select(COLONNES).single();
       if (error) return { erreur: traduireErreur(error, 'inconnue') };
-      setProfil(data as Profil);
+      setProfil({ ...profil, ...(data as Omit<Profil, 'sexe'>) });
+      return { erreur: null };
+    },
+    [profil],
+  );
+
+  const definirSexe = useCallback<Auth['definirSexe']>(
+    async (sexe) => {
+      if (!profil) return { erreur: 'inconnue' };
+      const { data, error } = await supabase.rpc('definir_mon_sexe', { p_sexe: sexe });
+      if (error || data !== true) return { erreur: traduireErreur(error, 'inconnue') };
+      setProfil({ ...profil, sexe });
       return { erreur: null };
     },
     [profil],
@@ -232,8 +256,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const valeur = useMemo(
-    () => ({ pret, profil, inscrire, connecter, changerAvatar, changerMotDePasse, deconnecter, supprimerCompte }),
-    [pret, profil, inscrire, connecter, changerAvatar, changerMotDePasse, deconnecter, supprimerCompte],
+    () => ({ pret, profil, inscrire, connecter, changerAvatar, definirSexe, changerMotDePasse, deconnecter, supprimerCompte }),
+    [pret, profil, inscrire, connecter, changerAvatar, definirSexe, changerMotDePasse, deconnecter, supprimerCompte],
   );
 
   return <Contexte.Provider value={valeur}>{children}</Contexte.Provider>;

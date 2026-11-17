@@ -13,7 +13,7 @@ import { Texte } from '@/components/Texte';
 import { Feuille } from '@/components/confiance/Feuille';
 import { changerRole } from '@/lib/admin';
 import { estAdmin, estModerateur, useAuth } from '@/lib/auth';
-import { historiqueMembre, modererMembre, type ActionMembre, type Historique } from '@/lib/moderation';
+import { changerSexeMembre, historiqueMembre, modererMembre, sexeMembre, type ActionMembre, type Historique } from '@/lib/moderation';
 import { colors } from '@/theme';
 
 /** Modération : historique d'un membre (signalements, refus, décisions) et suspension / exclusion. */
@@ -28,11 +28,14 @@ export default function HistoriqueMembre() {
   const [motif, setMotif] = useState('');
   const [occupe, setOccupe] = useState(false);
   const [erreurAction, setErreurAction] = useState(false);
+  const [sexe, setSexe] = useState<'h' | 'f' | null>(null);
 
   const charger = useCallback(async () => {
     setErreur(false);
     try {
-      setH(await historiqueMembre(String(id)));
+      const [hist, sx] = await Promise.all([historiqueMembre(String(id)), sexeMembre(String(id))]);
+      setH(hist);
+      setSexe(sx);
     } catch {
       setErreur(true);
     }
@@ -108,6 +111,24 @@ export default function HistoriqueMembre() {
             {!m.exclu && <Bouton libelle={t('moderation.exclure')} onPress={() => setDemande('exclure')} variante="contour" />}
           </View>
         )}
+
+        {/* Homme ou femme (privé) : correction en cas d'erreur signalée par le membre (règle des cours particuliers). */}
+        <View style={styles.sexe}>
+          <Texte style={[styles.note, { flex: 1 }]}>
+            {t('sexe.moderation', { valeur: sexe ? t(sexe === 'h' ? 'sexe.homme' : 'sexe.femme') : t('sexe.nonIndique') })}
+          </Texte>
+          {sexe && (
+            <Bouton
+              libelle={t(sexe === 'h' ? 'sexe.corrigerFemme' : 'sexe.corrigerHomme')}
+              onPress={async () => {
+                setErreurAction(false);
+                if (await changerSexeMembre(m.id, sexe === 'h' ? 'f' : 'h')) charger();
+                else setErreurAction(true);
+              }}
+              variante="contour"
+            />
+          )}
+        </View>
 
         {estAdmin(profil) && m.id !== profil?.id && m.role !== 'admin' && !m.suspendu && (
           <Bouton
@@ -200,6 +221,7 @@ function Bloc({ titre, vide, children }: { titre: string; vide: boolean; childre
 }
 
 const styles = StyleSheet.create({
+  sexe: { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
   ecran: { flex: 1, backgroundColor: colors.blanc },
   contenu: { padding: 16, gap: 18 },
   identite: { flexDirection: 'row', alignItems: 'center', gap: 14 },

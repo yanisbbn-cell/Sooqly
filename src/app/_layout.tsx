@@ -16,6 +16,7 @@ import { Amiri_400Regular, Amiri_700Bold } from '@expo-google-fonts/amiri';
 
 import '@/i18n';
 import { AccueilPremierLancement } from '@/components/AccueilPremierLancement';
+import { DemandeSexe } from '@/components/compte/DemandeSexe';
 import { AuthProvider } from '@/lib/auth';
 import { PreferencesProvider, usePreferences } from '@/lib/preferences';
 import { NotificationsProvider } from '@/lib/notifications';
@@ -39,6 +40,7 @@ function Contenu({ policesPretes }: { policesPretes: boolean }) {
     <View style={[styles.racine, { direction: rtl ? 'rtl' : 'ltr' }]}>
       <StatusBar style="light" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.blanc } }} />
+      {!accueilVisible && <DemandeSexe />}
       {accueilVisible && (
         <AccueilPremierLancement
           onFermer={fermerAccueil}

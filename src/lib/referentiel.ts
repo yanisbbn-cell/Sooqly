@@ -102,7 +102,7 @@ export type Critere = {
   /** Demandé seulement pour une location (capacité d'un logement, type de véhicule). */
   location?: boolean;
 };
-export type SousCategorie = { id: number; nom_fr: string; nom_ar: string; ordre: number };
+export type SousCategorie = { id: number; nom_fr: string; nom_ar: string; ordre: number; reservee_meme_sexe: boolean };
 export type Categorie = {
   cle: string;
   ordre: number;
@@ -129,7 +129,7 @@ async function chargerCategories(): Promise<Categorie[]> {
   const { data, error } = await supabase
     .from('categories')
     .select(
-      'cle, ordre, nom_fr, nom_ar, nom_court_fr, icone, criteres, fourchettes_prix, titre_exemple, conseil_description, sous_categories:subcategories(id, nom_fr, nom_ar, ordre)',
+      'cle, ordre, nom_fr, nom_ar, nom_court_fr, icone, criteres, fourchettes_prix, titre_exemple, conseil_description, sous_categories:subcategories(id, nom_fr, nom_ar, ordre, reservee_meme_sexe)',
     )
     .order('ordre');
   if (error) throw error;

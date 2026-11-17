@@ -18,6 +18,7 @@ import { FeuilleSignalement } from '@/components/confiance/FeuilleSignalement';
 import { BlocMiseEnAvant } from '@/components/moderation/BlocMiseEnAvant';
 import { Texte } from '@/components/Texte';
 import { estSponsorisee, lireAnnonce, type Annonce } from '@/lib/annonces';
+import { mentionCours } from '@/lib/cours';
 import { modererAnnonce, type Decision } from '@/lib/moderation';
 import { estAdmin, estModerateur, useAuth } from '@/lib/auth';
 import { statsMembre, type StatsMembre } from '@/lib/confiance';
@@ -185,6 +186,13 @@ export default function FicheAnnonce() {
               <View style={styles.pastilleContour}>
                 <Texte poids={700} style={{ fontSize: 12 }}>
                   {t('options.echangePossible')}
+                </Texte>
+              </View>
+            )}
+            {mentionCours(a, t) && (
+              <View style={styles.pastilleContour}>
+                <Texte poids={700} style={{ fontSize: 12 }}>
+                  {mentionCours(a, t)}
                 </Texte>
               </View>
             )}

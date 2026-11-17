@@ -36,7 +36,12 @@ export type NouvelleAnnonce = {
   permisExige?: boolean;
   /** Étape 11 : prix ferme ou légèrement négociable, échange, modes de remise (objets seulement). */
   options: OptionsAnnonce;
+  /** Cours particuliers : public choisi par le professeur (règle du même sexe appliquée par la base). */
+  publicCours?: PublicCours | null;
 };
+
+/** « enfants » : primaire et collège, ouvert à tous les parents ; « adultes » : lycée et adultes, même sexe seulement. */
+export type PublicCours = 'enfants' | 'adultes';
 
 export type OptionsAnnonce = {
   prixFerme: boolean;
@@ -98,6 +103,7 @@ export async function envoyerAnnonce(a: NouvelleAnnonce): Promise<{ id: string |
       wilaya_code: a.wilaya,
       ville: a.ville.trim(),
       permis_exige: !!a.location && a.categorie === 'vehicules' && !!a.permisExige,
+      public_cours: a.publicCours ?? null,
       ...colonnesOptions(a.options),
     })
     .select('id')
@@ -121,6 +127,9 @@ export type AnnonceResume = {
   type: TypeAnnonce;
   categorie: string;
   sous_categorie_id: number | null;
+  /** Cours particuliers seulement (sinon null) : public et sexe du professeur. */
+  public_cours?: PublicCours | null;
+  sexe_auteur?: 'h' | 'f' | null;
   titre: string;
   prix_da: number;
   etat: Etat | null;
@@ -166,9 +175,9 @@ export type Annonce = AnnonceResume & {
 
 // Deux liens existent entre annonces et profils (auteur, acheteur) : on précise celui de l'auteur.
 export const RESUME =
-  'id, type, categorie, sous_categorie_id, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, livraison_wilaya, envoi_algerie, auteur:profiles!listings_auteur_id_fkey(id, est_pro), photos:listing_photos(fichier, ordre, angle, decision_moderation, resultat_detecteur), tarifs:listing_rates(unite, prix_da)';
+  'id, type, categorie, sous_categorie_id, public_cours, sexe_auteur, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, livraison_wilaya, envoi_algerie, auteur:profiles!listings_auteur_id_fkey(id, est_pro), photos:listing_photos(fichier, ordre, angle, decision_moderation, resultat_detecteur), tarifs:listing_rates(unite, prix_da)';
 const COMPLET =
-  'id, type, categorie, sous_categorie_id, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, description, caracteristiques, motif_refus, expire_le, auteur_id, permis_exige, prix_ferme, echange_accepte, remise_main_propre, livraison_wilaya, envoi_algerie, auteur:profiles!listings_auteur_id_fkey(id, nom_affiche, avatar, est_pro, nom_commercial, cree_le), photos:listing_photos(fichier, ordre, angle, decision_moderation, resultat_detecteur), tarifs:listing_rates(unite, prix_da), disponibilites:availability(debut, fin)';
+  'id, type, categorie, sous_categorie_id, public_cours, sexe_auteur, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, description, caracteristiques, motif_refus, expire_le, auteur_id, permis_exige, prix_ferme, echange_accepte, remise_main_propre, livraison_wilaya, envoi_algerie, auteur:profiles!listings_auteur_id_fkey(id, nom_affiche, avatar, est_pro, nom_commercial, cree_le), photos:listing_photos(fichier, ordre, angle, decision_moderation, resultat_detecteur), tarifs:listing_rates(unite, prix_da), disponibilites:availability(debut, fin)';
 
 export const estSponsorisee = (a: Pick<AnnonceResume, 'sponsorise_jusqu'>) =>
   !!a.sponsorise_jusqu && new Date(a.sponsorise_jusqu).getTime() > Date.now();
@@ -244,6 +253,7 @@ export async function modifierAnnonce(id: string, m: ModificationAnnonce): Promi
       wilaya_code: m.wilaya,
       ville: m.ville.trim(),
       permis_exige: !!m.location && m.categorie === 'vehicules' && !!m.permisExige,
+      public_cours: m.publicCours ?? null,
       ...colonnesOptions(m.options),
     })
     .eq('id', id);

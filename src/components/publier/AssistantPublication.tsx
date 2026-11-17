@@ -28,6 +28,7 @@ import {
   type Annonce,
   type Etat,
   type OptionsAnnonce,
+  type PublicCours,
 } from '@/lib/annonces';
 import type { Profil } from '@/lib/auth';
 import {
@@ -82,6 +83,7 @@ export function AssistantPublication({ profil, existante }: { profil: Profil; ex
   const [nomCommercial, setNomCommercial] = useState('');
   const [cleCategorie, setCleCategorie] = useState<string | null>(ex?.categorie ?? null);
   const [sousCategorie, setSousCategorie] = useState<number | null>(ex?.sous_categorie_id ?? null);
+  const [publicCours, setPublicCours] = useState<PublicCours | null>(ex?.public_cours ?? null);
   const [listeOuverte, setListeOuverte] = useState(!ex);
   const [ouverte, setOuverte] = useState<string | null>(null);
   const [titre, setTitre] = useState(ex?.titre ?? '');
@@ -205,7 +207,9 @@ export function AssistantPublication({ profil, existante }: { profil: Profil; ex
       ? t('publier.bloque.categorie')
       : categorie?.sous_categories.length && !sousCategorie
         ? t('publier.bloque.sousCategorie')
-        : pro && !modification && (!activite || nomCommercial.trim().length < 2)
+        : sous?.reservee_meme_sexe && !publicCours
+          ? t('cours.bloque')
+          : pro && !modification && (!activite || nomCommercial.trim().length < 2)
           ? t('publier.bloque.nomCommercial')
           : '',
     desc: titre.trim().length < 3 ? t('publier.bloque.titre') : detectees.length
@@ -291,6 +295,7 @@ export function AssistantPublication({ profil, existante }: { profil: Profil; ex
     const r = await modifierAnnonce(ex.id, {
       categorie: cleCategorie,
       sousCategorieId: sousCategorie,
+      publicCours: sous?.reservee_meme_sexe ? publicCours : null,
       titre,
       description,
       etat,
@@ -334,6 +339,7 @@ export function AssistantPublication({ profil, existante }: { profil: Profil; ex
         auteurId: profil.id,
         categorie: cleCategorie,
         sousCategorieId: sousCategorie,
+        publicCours: sous?.reservee_meme_sexe ? publicCours : null,
         titre,
         description,
         etat,
@@ -584,6 +590,23 @@ export function AssistantPublication({ profil, existante }: { profil: Profil; ex
                   <Pastille libelle={t('location.vente')} choisi={!enLocation} onPress={() => setEnLocation(false)} largeur />
                   <Pastille libelle={t('location.location')} choisi={enLocation} onPress={() => setEnLocation(true)} largeur />
                 </View>
+              </View>
+            )}
+
+            {sous?.reservee_meme_sexe && (
+              <View style={styles.bloc}>
+                <Libelle>{t('cours.public')}</Libelle>
+                <View style={styles.rangee}>
+                  <Pastille libelle={t('cours.enfants')} choisi={publicCours === 'enfants'} onPress={() => setPublicCours('enfants')} largeur />
+                  <Pastille libelle={t('cours.adultes')} choisi={publicCours === 'adultes'} onPress={() => setPublicCours('adultes')} largeur />
+                </View>
+                {publicCours && (
+                  <Texte style={styles.encart}>
+                    {publicCours === 'enfants'
+                      ? t('cours.infoEnfants')
+                      : t(profil.sexe === 'f' ? 'cours.infoAdultesFemme' : 'cours.infoAdultesHomme')}
+                  </Texte>
+                )}
               </View>
             )}
 

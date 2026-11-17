@@ -67,7 +67,7 @@ export function nombreFiltres(f: Filtres): number {
 }
 
 const RESUME =
-  'id, type, categorie, sous_categorie_id, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, livraison_wilaya, envoi_algerie, photos:listing_photos(fichier, ordre, angle, decision_moderation, resultat_detecteur), tarifs:listing_rates(unite, prix_da)';
+  'id, type, categorie, sous_categorie_id, public_cours, sexe_auteur, titre, prix_da, etat, ville, wilaya_code, statut, publie_le, sponsorise_jusqu, livraison_wilaya, envoi_algerie, photos:listing_photos(fichier, ordre, angle, decision_moderation, resultat_detecteur), tarifs:listing_rates(unite, prix_da)';
 
 /** Mots de la recherche, normalisés ; on ne garde que lettres et chiffres (pas de caractères spéciaux). */
 export function mots(texte: string): string[] {

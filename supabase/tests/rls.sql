@@ -169,8 +169,12 @@ begin
     insert into public.profiles (id, nom_affiche, wilaya_code, ville, charte_version) values (d, 'Abou Test D', 16, '  ', 1);
     assert false, 'D : profil créé sans ville';
   exception when raise_exception then null; end;
-  insert into public.profiles (id, nom_affiche, wilaya_code, ville, charte_version, role, telephone_verifie)
-    values (d, 'Abou Test D', 16, 'Alger', 1, 'admin', true) returning role, telephone_verifie into t, ok;
+  begin
+    insert into public.profiles (id, nom_affiche, wilaya_code, ville, charte_version) values (d, 'Abou Test D', 16, 'Alger', 1);
+    assert false, 'D : profil créé sans indiquer homme ou femme';
+  exception when raise_exception then null; end;
+  insert into public.profiles (id, nom_affiche, wilaya_code, ville, charte_version, role, telephone_verifie, sexe)
+    values (d, 'Abou Test D', 16, 'Alger', 1, 'admin', true, 'f') returning role, telephone_verifie into t, ok;
   assert t = 'membre', 'D : a pu se créer un profil admin';
   assert not ok, 'D : a pu se déclarer « téléphone vérifié » sans SMS';
   begin
@@ -769,6 +773,94 @@ begin
       assert false, 'membre : lit les bannières à vérifier';
     exception when insufficient_privilege then null; end;
     reset role;
+  end;
+
+  -- ---------- 26. Cours particuliers : entre personnes du même sexe ----------
+  declare
+    prof uuid := gen_random_uuid(); el uuid := gen_random_uuid(); ele uuid := gen_random_uuid(); nv uuid := gen_random_uuid();
+    sc bigint; ca uuid; ce uuid; n12 int; ok12 boolean; s12 text;
+  begin
+    perform set_config('request.jwt.claims', '', true);
+    select id into sc from public.subcategories where reservee_meme_sexe limit 1;
+    assert sc is not null, 'aucune sous-catégorie réservée';
+    insert into auth.users (id, instance_id, aud, role, email)
+    select x, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', x || '@test.invalid'
+    from unnest(array[prof, el, ele, nv]) as x;
+    insert into public.profiles (id, nom_affiche, wilaya_code, sexe) values
+      (prof, 'Professeure test', 16, 'f'), (el, 'Élève femme', 16, 'f'), (ele, 'Élève homme', 16, 'h'), (nv, 'Sans réponse', 16, null);
+
+    -- La professeure publie : le public du cours est obligatoire.
+    perform set_config('request.jwt.claims', json_build_object('sub', prof, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    begin
+      insert into public.listings (auteur_id, categorie, sous_categorie_id, titre, prix_da, wilaya_code)
+        values (prof, 'services', sc, 'Cours de physique', 2000, 16);
+      assert false, 'cours publié sans public';
+    exception when raise_exception then null; end;
+    insert into public.listings (auteur_id, categorie, sous_categorie_id, titre, prix_da, wilaya_code, public_cours, sexe_auteur)
+      values (prof, 'services', sc, 'Cours de physique', 2000, 16, 'adultes', 'h') returning id into ca;
+    insert into public.listings (auteur_id, categorie, sous_categorie_id, titre, prix_da, wilaya_code, public_cours)
+      values (prof, 'services', sc, 'Soutien primaire', 1500, 16, 'enfants') returning id into ce;
+    select sexe_auteur into s12 from public.listings where id = ca; assert s12 = 'f', 'sexe du professeur falsifiable : ' || coalesce(s12, 'vide');
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    update public.listings set statut = 'en_ligne', publie_le = now(), expire_le = now() + interval '60 days' where id in (ca, ce);
+
+    -- Visiteur : seulement le cours pour enfants.
+    perform set_config('request.jwt.claims', '{"role":"anon"}', true);
+    set local role anon;
+    select count(*) into n12 from public.listings where id in (ca, ce); assert n12 = 1, 'visiteur : ' || n12 || ' cours visibles';
+    reset role;
+
+    -- Un homme : ne voit pas le cours adultes et ne peut pas contacter.
+    perform set_config('request.jwt.claims', json_build_object('sub', ele, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    select count(*) into n12 from public.listings where id = ca; assert n12 = 0, 'homme : voit le cours adultes d''une femme';
+    select count(*) into n12 from public.listings where id = ce; assert n12 = 1, 'homme (parent) : ne voit pas le cours enfants';
+    begin
+      insert into public.conversations (annonce_id, acheteur_id, vendeur_id) values (ca, ele, prof);
+      assert false, 'homme : a contacté pour un cours adultes';
+    exception when insufficient_privilege then null; end;
+    insert into public.conversations (annonce_id, acheteur_id, vendeur_id) values (ce, ele, prof);
+    s12 := public.mon_sexe(); assert s12 = 'h', 'mon_sexe : ' || coalesce(s12, 'vide');
+    begin
+      select count(*) into n12 from public.profiles where sexe = 'f';
+      assert false, 'homme : lit le sexe des autres membres';
+    exception when insufficient_privilege then null; end;
+    begin
+      update public.profiles set sexe = 'f' where id = ele;
+      assert false, 'homme : a changé son sexe lui-même';
+    exception when raise_exception then null; end;
+    ok12 := public.definir_mon_sexe('f'); assert not ok12, 'sexe redéfini alors qu''il était indiqué';
+    reset role;
+
+    -- Une femme : voit les deux et peut contacter.
+    perform set_config('request.jwt.claims', json_build_object('sub', el, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    select count(*) into n12 from public.listings where id in (ca, ce); assert n12 = 2, 'femme : ' || n12 || ' cours visibles';
+    insert into public.conversations (annonce_id, acheteur_id, vendeur_id) values (ca, el, prof);
+    reset role;
+
+    -- Un membre qui n'a pas encore répondu : ne voit pas le cours adultes, répond une seule fois.
+    perform set_config('request.jwt.claims', json_build_object('sub', nv, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    select count(*) into n12 from public.listings where id = ca; assert n12 = 0, 'sans réponse : voit le cours adultes';
+    ok12 := public.definir_mon_sexe('f'); assert ok12, 'définition du sexe refusée';
+    select count(*) into n12 from public.listings where id = ca; assert n12 = 1, 'après réponse : cours invisible';
+    begin
+      perform public.changer_sexe_membre(nv, 'h');
+      assert false, 'membre : a utilisé la correction de la modération';
+    exception when insufficient_privilege then null; end;
+    reset role;
+
+    -- La modération corrige : les annonces suivent.
+    perform set_config('request.jwt.claims', json_build_object('sub', m, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    ok12 := public.changer_sexe_membre(prof, 'h'); assert ok12, 'correction refusée';
+    s12 := public.sexe_membre(prof); assert s12 = 'h', 'lecture modération : ' || coalesce(s12, 'vide');
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    select sexe_auteur into s12 from public.listings where id = ca; assert s12 = 'h', 'annonce non mise à jour';
   end;
 
   raise exception 'TESTS_OK';

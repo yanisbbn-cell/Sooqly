@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { IconeCategorie } from '@/components/IconeCategorie';
 import { Texte } from '@/components/Texte';
+import { mentionCours } from '@/lib/cours';
 import { BadgeValide } from '@/components/confiance/BadgeValide';
 import { useVendeurValide } from '@/lib/confiance';
 import { estSponsorisee, photoPrincipale, type AnnonceResume } from '@/lib/annonces';
@@ -98,6 +99,11 @@ export function CarteAnnonce({ annonce: a, categorie, wilaya, taux }: Props) {
             {lieu}
           </Texte>
         ) : null}
+        {mentionCours(a, t) && (
+          <Texte poids={600} style={styles.etat} numberOfLines={2}>
+            {mentionCours(a, t)}
+          </Texte>
+        )}
         {(a.envoi_algerie || a.livraison_wilaya) && (
           <Texte poids={600} style={styles.livraison} numberOfLines={1}>
             {a.envoi_algerie

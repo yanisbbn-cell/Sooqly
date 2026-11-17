@@ -13,6 +13,7 @@ Principes non négociables, appliqués dans chaque fonctionnalité :
 - Prix en dinars entiers, jamais en centimes ni en « millions ». Le vendeur indique « Prix ferme » ou « Légèrement négociable » ; le marchandage à l’amiable est permis, les enchères jamais.
 - Sooqly est un intermédiaire : il n’est partie à aucun contrat, ne détient jamais l’argent des transactions (y compris en paiement à la livraison) et ne tranche aucun litige ; il renvoie vers les autorités compétentes.
 - Coordonnées privées : les échanges passent par la messagerie interne.
+- Cours particuliers entre personnes du même sexe (décision du 17 novembre 2026, voir « Règles métier »).
 
 Identité visuelle :
 
@@ -63,8 +64,9 @@ Inscription, en un seul écran :
 1. Nom et prénom, ou kounia (au choix).
 2. Wilaya, choisie dans la liste des 69 avec un champ de recherche, puis ville.
 3. Numéro de téléphone mobile : obligatoire pour créer le compte. Pays acceptés : Algérie (+213), France (+33), Belgique (+32), Espagne (+34), Allemagne (+49), Italie (+39). Décision du 15 novembre 2026 : pas de vérification par SMS pour l’instant (les SMS sont payants) ; elle pourra être activée plus tard sans refaire l’inscription.
-4. Mot de passe.
-5. Case obligatoire « J’ai lu la charte et je m’engage à la respecter, et à craindre Allah dans mes transactions ».
+4. Homme ou femme (obligatoire, privé : jamais affiché ; sert seulement à la règle des cours particuliers ; modifiable uniquement par la modération). Les membres inscrits avant cette règle répondent une fois, à leur prochaine ouverture de l’application.
+5. Mot de passe.
+6. Case obligatoire « J’ai lu la charte et je m’engage à la respecter, et à craindre Allah dans mes transactions ».
 
 Image de profil : choisie parmi 40 illustrations sans visage (20 « Hommes », 20 « Femmes »), jamais une photo. Le membre reste connecté sur son appareil jusqu’à ce qu’il se déconnecte lui-même ; la déconnexion demande une confirmation. Une option « Se déconnecter de tous mes appareils » est prévue dans les réglages.
 
@@ -96,6 +98,15 @@ Navigation du bas, toujours visible sur les écrans principaux : Annonces, Messa
 ## 5. Règles métier
 
 **Catégories.** Immobilier, Véhicules, Pièces auto, Électroménager, Ameublement, Informatique & téléphonie, Vêtements, Famille, Services, Dons. Chacune a ses sous-catégories (liste de la maquette) et ses critères de recherche. État de l’objet sur 5 niveaux : Neuf, Très bon état, Bon état, État correct, Mauvais état. Critère des services « Proposé par » : Une personne, Une équipe.
+
+**Cours particuliers (décision du 17 novembre 2026)**
+
+- Concerne la sous-catégorie « Cours et soutien scolaire » (d’autres sous-catégories pourront être ajoutées par réglage).
+- À la publication, le professeur choisit le public : « Enfants (primaire, collège) » ou « Lycée et adultes ».
+- Enfants : annonce visible par tous, tous les parents (pères comme mères) peuvent contacter.
+- Lycée et adultes : annonce visible et contactable uniquement par les membres du même sexe que le professeur. Les visiteurs sans compte et les membres qui n’ont pas encore indiqué homme ou femme ne la voient pas.
+- L’annonce affiche « Cours donnés par un homme / une femme · Enfants / Pour les hommes / Pour les femmes ».
+- Règle appliquée par la base (liste, fiche, photos, contact, alertes de recherche), pas seulement par l’écran.
 
 **Détecteur de conformité (à la publication)**
 
@@ -164,8 +175,8 @@ Tables principales dans Supabase. Claude Code les précisera ; cette liste fixe 
 
 | Table | Contenu principal |
 | --- | --- |
-| profiles | nom affiché (nom-prénom ou kounia), wilaya, ville, téléphone vérifié, image de profil (n° d’illustration), langue, statut pro, activité, nom commercial, charte acceptée (date, version), code de parrainage, parrain |
-| listings | auteur, type (vente, location, service, don), catégorie, sous-catégorie, titre, description, état, caractéristiques (format libre par catégorie), prix en DA, prix ferme ou négociable, échange accepté, modes de remise (main propre, livraison wilaya, envoi), wilaya (01 à 69), ville, statut (vérification, en ligne, réservé, vendu, loué, expiré, refusé), date d’expiration, acheteur final, sponsorisé jusqu’au, permis exigé |
+| profiles | nom affiché (nom-prénom ou kounia), sexe (privé), wilaya, ville, téléphone vérifié, image de profil (n° d’illustration), langue, statut pro, activité, nom commercial, charte acceptée (date, version), code de parrainage, parrain |
+| listings | auteur, type (vente, location, service, don), catégorie, sous-catégorie, titre, description, état, caractéristiques (format libre par catégorie), prix en DA, prix ferme ou négociable, échange accepté, modes de remise (main propre, livraison wilaya, envoi), wilaya (01 à 69), ville, statut (vérification, en ligne, réservé, vendu, loué, expiré, refusé), date d’expiration, acheteur final, sponsorisé jusqu’au, permis exigé, public du cours et sexe du professeur (cours particuliers) |
 | listing_rates | annonce, unité (nuit, jour, semaine, mois, 6 mois, an), prix en DA |
 | listing_photos | annonce, fichier, ordre (1 à 10), angle, résultat du détecteur, décision de modération |
 | listing_prices | annonce, ancien prix, nouveau prix, date (déclenche les alertes de prix) |
