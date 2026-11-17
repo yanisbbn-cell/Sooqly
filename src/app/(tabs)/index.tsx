@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { CarteAnnonce } from '@/components/annonces/CarteAnnonce';
 import { BandeauANoter } from '@/components/confiance/BandeauANoter';
 import { useGrille } from '@/lib/grille';
+import { BandeauLocation } from '@/components/annonces/BandeauLocation';
 import { RangeeALaUne } from '@/components/annonces/RangeeALaUne';
 import { estSponsorisee } from '@/lib/annonces';
 import { BoutonAlerte } from '@/components/BoutonAlerte';
@@ -176,27 +177,7 @@ export default function Annonces() {
 
       {!recherche && !catChoisie && <BandeauANoter />}
 
-      {!recherche && !catChoisie && (
-        <Pressable
-          onPress={() => router.push('/location')}
-          accessibilityRole="button"
-          style={({ pressed }) => [styles.entreeLocation, pressed && { opacity: 0.85 }]}
-        >
-          <View style={styles.entreeIcones}>
-            <IconeCategorie icone="building" couleur={colors.sable1} taille={22} />
-            <IconeCategorie icone="car" couleur={colors.sable1} taille={22} />
-          </View>
-          <View style={{ flex: 1, gap: 2 }}>
-            <Texte poids={700} style={{ fontSize: 15 }}>
-              {t('location.recherche')}
-            </Texte>
-            <Texte style={{ fontSize: 12, color: colors.brunMoyen }}>{t('location.rechercheSous')}</Texte>
-          </View>
-          <Texte poids={700} style={{ fontSize: 20, color: colors.accentFonce }}>
-            {rtl ? '‹' : '›'}
-          </Texte>
-        </Pressable>
-      )}
+      {!recherche && !catChoisie && <BandeauLocation />}
 
       {catChoisie && (
         <View style={styles.filRangee}>
@@ -353,19 +334,6 @@ function TuileCategorie({ libelle, icone, active, onPress }: { libelle: string; 
 
 const styles = StyleSheet.create({
   ecran: { flex: 1, backgroundColor: colors.blanc },
-  entreeLocation: {
-    marginHorizontal: 20,
-    marginTop: 10,
-    padding: 12,
-    borderRadius: 16,
-    backgroundColor: colors.carte,
-    borderWidth: 1,
-    borderColor: colors.sable2,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  entreeIcones: { flexDirection: 'row', gap: 4, padding: 10, borderRadius: 12, backgroundColor: colors.brun },
   bandeRecherche: { backgroundColor: colors.brun, paddingHorizontal: 20, paddingBottom: 16, gap: 8 },
   rangee: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   recherche: {
