@@ -177,7 +177,7 @@ function BanniereUnique({
         <Texte
           variante="titre"
           poids={700}
-          style={{ fontSize: large ? 22 : 18, color: colors.accentFonce }}
+          style={{ fontSize: large ? 22 : 18 }}
         >
           {a.type === "don"
             ? t("carte.gratuit")
