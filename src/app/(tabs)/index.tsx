@@ -425,7 +425,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tuiles: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 6, gap: 4 },
-  tuile: { width: 80, alignItems: 'center', gap: 6 },
+  // Largeur souple : la tuile s'élargit pour qu'un mot long (« Électroménager ») ne soit jamais coupé en deux.
+  tuile: { minWidth: 80, maxWidth: 124, paddingHorizontal: 4, alignItems: 'center', gap: 6 },
   tuileIcone: { width: 60, height: 60, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   tuileTexte: { fontSize: 11, lineHeight: 14, textAlign: 'center' },
   filRangee: { paddingHorizontal: 20, paddingTop: 8 },
