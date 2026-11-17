@@ -38,7 +38,7 @@ export function BandeauLocation() {
   );
 }
 
-/** Immeuble aux fenêtres éclairées et voiture garée devant (aucun être animé). */
+/** Immeuble aux fenêtres éclairées et 4×4 garé devant (aucun être animé). */
 function IllustrationLocation({ largeur }: { largeur: number }) {
   const allumees = new Set(['0-1', '1-0', '1-2', '2-1', '3-0', '3-2', '4-1']);
   const fenetres = [];
@@ -79,18 +79,25 @@ function IllustrationLocation({ largeur }: { largeur: number }) {
       <Rect x={68} y={88} width={14} height={14} rx={2} fill={colors.sable4} />
       {/* sol */}
       <Rect x={0} y={101} width={150} height={3} rx={1.5} fill={colors.sable4} opacity={0.6} />
-      {/* voiture */}
+      {/* 4×4 moderne, sans marque */}
+      <Rect x={104} y={66} width={30} height={2.2} rx={1.1} fill={colors.brunNuit} />
       <Path
-        d="M84 98c0-6 4-8.5 10-9.5l9-7c3.5-2.5 9-3 14.5-3 6 0 10 1 13 3.5l7 6c5 .8 8 3 8 7.5v2.5H84Z"
+        d="M82 97V86c0-2 1.5-3.5 3.5-4L96 80l6-9c1-1.5 2.5-2 4.5-2H133c2 0 3.5.8 4.5 2.5L143 80c3 .5 5 2.5 5 5.5V97Z"
         fill={colors.accent}
       />
-      <Path d="M101 88.5l6-5c2.5-1.8 6-2.2 10-2.2 4.5 0 7.5.7 9.5 2.2l5.5 5Z" fill={colors.brun} opacity={0.85} />
-      <Rect x={116.5} y={81} width={2} height={8} fill={colors.accent} />
-      <Rect x={140} y={92} width={4} height={2.5} rx={1.2} fill="#F2C77A" />
-      <Circle cx={96} cy={100} r={6.5} fill={colors.brunNuit} />
-      <Circle cx={96} cy={100} r={2.6} fill={colors.sable3} />
-      <Circle cx={133} cy={100} r={6.5} fill={colors.brunNuit} />
-      <Circle cx={133} cy={100} r={2.6} fill={colors.sable3} />
+      <Path d="M104 79l3.5-6.5H120V79Z" fill={colors.brun} opacity={0.9} />
+      <Path d="M122.5 79v-6.5H133c1 0 1.8.4 2.2 1.2L138.5 79Z" fill={colors.brun} opacity={0.9} />
+      <Rect x={82} y={92} width={66} height={5} rx={1.5} fill={colors.brunNuit} opacity={0.45} />
+      <Rect x={142.5} y={83} width={5.5} height={2.6} rx={1.3} fill="#F2C77A" />
+      <Rect x={82} y={84} width={2.6} height={4.5} rx={1} fill={colors.accentFonce} />
+      <Rect x={113} y={82.5} width={5} height={1.4} rx={0.7} fill={colors.brunNuit} opacity={0.5} />
+      <Rect x={127} y={82.5} width={5} height={1.4} rx={0.7} fill={colors.brunNuit} opacity={0.5} />
+      <Circle cx={97} cy={98} r={9} fill={colors.brun} />
+      <Circle cx={134} cy={98} r={9} fill={colors.brun} />
+      <Circle cx={97} cy={98} r={7.2} fill={colors.brunNuit} />
+      <Circle cx={97} cy={98} r={3.2} fill={colors.sable3} />
+      <Circle cx={134} cy={98} r={7.2} fill={colors.brunNuit} />
+      <Circle cx={134} cy={98} r={3.2} fill={colors.sable3} />
     </Svg>
   );
 }
