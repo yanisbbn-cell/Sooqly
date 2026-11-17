@@ -454,7 +454,8 @@ const styles = StyleSheet.create({
     borderColor: colors.sable3,
     justifyContent: 'center',
   },
-  tuiles: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 6, gap: 4 },
+  // Rangée centrée quand elle tient sur la largeur ; sinon elle défile normalement.
+  tuiles: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 6, gap: 4 },
   // Largeur souple : la tuile s'élargit pour qu'un mot long (« Électroménager ») ne soit jamais coupé en deux.
   tuile: { minWidth: 80, maxWidth: 124, paddingHorizontal: 4, alignItems: 'center', gap: 6 },
   anneau: { padding: 2, borderRadius: 22, borderWidth: 2.5, borderColor: 'transparent' },

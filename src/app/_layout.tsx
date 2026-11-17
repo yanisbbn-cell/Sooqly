@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Stack, router } from 'expo-router';
+import { Stack, router, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaInsetsContext, SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SpaceGrotesk_600SemiBold, SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk';
 import { Inter_400Regular, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
 import {
@@ -16,6 +16,8 @@ import { Amiri_400Regular, Amiri_700Bold } from '@expo-google-fonts/amiri';
 
 import '@/i18n';
 import { AccueilPremierLancement } from '@/components/AccueilPremierLancement';
+import { BarreLogo } from '@/components/BarreLogo';
+import { InsetsEcran } from '@/lib/insets';
 import { DemandeSexe } from '@/components/compte/DemandeSexe';
 import { AuthProvider } from '@/lib/auth';
 import { PreferencesProvider, usePreferences } from '@/lib/preferences';
@@ -28,6 +30,9 @@ SplashScreen.preventAutoHideAsync();
 function Contenu({ policesPretes }: { policesPretes: boolean }) {
   const { pret, rtl, accueilVisible, fermerAccueil } = usePreferences();
   const toutEstPret = pret && policesPretes;
+  const insets = useSafeAreaInsets();
+  // Le logo Sooqly reste en haut de chaque écran (l'accueil a déjà le sien, en grand).
+  const barre = usePathname() !== '/';
 
   useEffect(() => {
     if (toutEstPret) SplashScreen.hideAsync();
@@ -39,7 +44,13 @@ function Contenu({ policesPretes }: { policesPretes: boolean }) {
     // « direction » retourne toute la mise en page en arabe (droite à gauche).
     <View style={[styles.racine, { direction: rtl ? 'rtl' : 'ltr' }]}>
       <StatusBar style="light" />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.blanc } }} />
+      {barre && <BarreLogo />}
+      {/* Sous la barre, les écrans n'ont plus à laisser la place de la barre d'état (marge haute 0). */}
+      <InsetsEcran.Provider value={insets}>
+        <SafeAreaInsetsContext.Provider value={barre ? { ...insets, top: 0 } : insets}>
+          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.blanc } }} />
+        </SafeAreaInsetsContext.Provider>
+      </InsetsEcran.Provider>
       {!accueilVisible && <DemandeSexe />}
       {accueilVisible && (
         <AccueilPremierLancement

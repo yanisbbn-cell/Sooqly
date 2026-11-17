@@ -1,9 +1,9 @@
 import { useState } from 'react';
+import { useInsetsEcran } from '@/lib/insets';
 import { FlatList, Image, Modal, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { GestureDetector, GestureHandlerRootView, usePanGesture, usePinchGesture, useSimultaneousGestures, useTapGesture } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { IconeFermer } from '@/components/Icones';
@@ -29,7 +29,7 @@ const ZOOM_DOUBLE = 2.5;
 export function Visionneuse({ photos, depart, visible, onFermer }: Props) {
   const { t } = useTranslation();
   const { rtl } = usePreferences();
-  const insets = useSafeAreaInsets();
+  const insets = useInsetsEcran();
   const { width, height } = useWindowDimensions();
   const [index, setIndex] = useState(depart);
   const [zoome, setZoome] = useState(false);
