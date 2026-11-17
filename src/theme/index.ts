@@ -36,6 +36,29 @@ export const colors = {
   rougeFond: '#FBE3D6', // fond des alertes (maquette)
 } as const;
 
+/**
+ * Couleurs des catégories (tuiles de l'accueil et vignettes des annonces sans photo).
+ * Tons de terre et de pierre, choisis pour ne pas se confondre avec l'accent (agir), le vert (confiance)
+ * ni le rouge (danger). « de » → « a » : dégradé de la tuile ; « clair » : fond des vignettes sans photo.
+ * Icône crème sur la tuile : contraste d'au moins 3 pour 1 avec « de ».
+ */
+export const couleursCategories: Record<string, { de: string; a: string; clair: string }> = {
+  grid: { de: '#6A5241', a: '#3B2D22', clair: '#E4E0DD' }, // Tout
+  building: { de: '#B07A55', a: '#7E5034', clair: '#F1E7E0' }, // Immobilier : argile
+  car: { de: '#5F7C93', a: '#3B5266', clair: '#E2E7EC' }, // Véhicules : bleu ardoise
+  wheel: { de: '#6E655C', a: '#433C35', clair: '#E5E3E2' }, // Pièces auto : graphite
+  fridge: { de: '#AD7F35', a: '#86601F', clair: '#F0E8DB' }, // Électroménager : ocre
+  sofa: { de: '#9C7352', a: '#6E4D33', clair: '#EDE6E0' }, // Ameublement : noyer
+  laptop: { de: '#56628E', a: '#343D63', clair: '#E1E3EB' }, // Informatique : indigo nuit
+  garment: { de: '#B07A72', a: '#80524C', clair: '#F1E7E6' }, // Vêtements : vieux rose
+  stroller: { de: '#8E7CA6', a: '#5F5079', clair: '#EBE7EF' }, // Bébé et enfants : lavande
+  tool: { de: '#85834F', a: '#5A5832', clair: '#E9E9DF' }, // Services : olive
+  gift: { de: '#9B5A6B', a: '#6A3746', clair: '#EDE1E4' }, // Dons : prune
+};
+
+/** Icône posée sur une tuile de catégorie. */
+export const iconeTuile = '#FFF8EE';
+
 /** Noms des polices chargées dans app/_layout.tsx. */
 export const fonts = {
   titre: {

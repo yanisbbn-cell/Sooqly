@@ -13,6 +13,7 @@ import { BoutonAlerte } from '@/components/BoutonAlerte';
 import { rechercheAlertable } from '@/lib/alertes';
 import { FeuilleSousCategories } from '@/components/annonces/FeuilleSousCategories';
 import { couleursTuile } from '@/components/annonces/tuile';
+import { FondTuile } from '@/components/annonces/FondTuile';
 import { EnTete } from '@/components/EnTete';
 import { EtatChargement } from '@/components/EtatChargement';
 import { FeuilleWilayas } from '@/components/FeuilleWilayas';
@@ -25,7 +26,7 @@ import { usePreferences } from '@/lib/preferences';
 import { FILTRES_VIDES, chercherAnnonces, nombreFiltres, useRecherche, type Tri } from '@/lib/recherche';
 import { numeroWilaya, useCategories, useReglages, useWilayas, type Categorie } from '@/lib/referentiel';
 import { cles, ecrire, lire } from '@/lib/stockage';
-import { colors, fonts, toucheMin } from '@/theme';
+import { colors, fonts, iconeTuile, toucheMin } from '@/theme';
 
 const TRIS: Tri[] = ['recent', 'prix_croissant', 'prix_decroissant', 'proche'];
 
@@ -353,14 +354,18 @@ function TuileCategorie({ libelle, icone, active, onPress }: { libelle: string; 
       accessibilityState={{ selected: active }}
       style={({ pressed }) => [styles.tuile, pressed && { opacity: 0.8 }]}
     >
-      <View
-        style={[
-          styles.tuileIcone,
-          { backgroundColor: active ? colors.brun : tuile.fond },
-          active && { borderColor: colors.accent, borderWidth: 2 },
-        ]}
-      >
-        <IconeCategorie icone={icone} couleur={active ? colors.sable1 : tuile.trait} taille={28} />
+      {/* Anneau d'accent autour de la catégorie choisie. */}
+      <View style={[styles.anneau, active && { borderColor: colors.accent }]}>
+        <View style={styles.tuileIcone}>
+          <FondTuile de={tuile.de} a={tuile.a} taille={60} rayon={18} id={icone} />
+          {/* Ombre portée de l'icône (léger relief), puis l'icône. */}
+          <View style={styles.ombreIcone}>
+            <IconeCategorie icone={icone} couleur={colors.brunNuit} taille={28} />
+          </View>
+          <View style={{ zIndex: 1 }}>
+            <IconeCategorie icone={icone} couleur={iconeTuile} taille={28} />
+          </View>
+        </View>
       </View>
       <Texte poids={active ? 700 : 400} style={styles.tuileTexte} numberOfLines={2}>
         {libelle}
@@ -434,7 +439,16 @@ const styles = StyleSheet.create({
   tuiles: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 6, gap: 4 },
   // Largeur souple : la tuile s'élargit pour qu'un mot long (« Électroménager ») ne soit jamais coupé en deux.
   tuile: { minWidth: 80, maxWidth: 124, paddingHorizontal: 4, alignItems: 'center', gap: 6 },
-  tuileIcone: { width: 60, height: 60, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  anneau: { padding: 2, borderRadius: 22, borderWidth: 2.5, borderColor: 'transparent' },
+  tuileIcone: {
+    width: 60,
+    height: 60,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0px 4px 10px rgba(59, 45, 34, 0.28)',
+  },
+  ombreIcone: { position: 'absolute', top: 17, left: 16, opacity: 0.35 },
   tuileTexte: { fontSize: 11, lineHeight: 14, textAlign: 'center' },
   filRangee: { paddingHorizontal: 20, paddingTop: 8 },
   fil: {
