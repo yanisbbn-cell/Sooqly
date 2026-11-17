@@ -21,7 +21,7 @@ export default function Confidentialite() {
         <Texte style={styles.texte}>{t('confidentialite.intro')}</Texte>
         {sections.map((s) => (
           <View key={s.titre} style={{ gap: 6 }}>
-            <Texte variante="titre" poids={700} style={{ fontSize: 17 }} accessibilityRole="header">
+            <Texte variante="titre" poids={700} style={{ fontSize: 18 }} accessibilityRole="header">
               {s.titre}
             </Texte>
             <Texte style={styles.texte}>{s.texte}</Texte>

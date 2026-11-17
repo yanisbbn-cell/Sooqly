@@ -260,7 +260,7 @@ function CarteMonAnnonce({
               { v: s.messages, l: t('mesAnnonces.message', { count: s.messages }) },
             ].map((c) => (
               <View key={c.l} style={{ flex: 1, alignItems: 'center' }}>
-                <Texte variante="titre" poids={700} style={{ fontSize: 17 }}>
+                <Texte variante="titre" poids={700} style={{ fontSize: 18 }}>
                   {formaterNombre(c.v)}
                 </Texte>
                 <Texte style={{ fontSize: 11, color: colors.brunMoyen }}>{c.l}</Texte>

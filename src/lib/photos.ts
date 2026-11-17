@@ -19,7 +19,19 @@ export type PhotoLocale = {
   analyse: Analyse | null;
   /** Photo déjà enregistrée (modification d'une annonce) : son chemin dans le seau. */
   fichier?: string;
+  /** Taille d'origine (pixels), pour les conseils : photo petite ou prise en hauteur. */
+  largeur?: number;
+  hauteur?: number;
 };
+
+/** Conseils sur une photo : trop petite (risque de flou) ou en hauteur (coupée en haut et en bas sur les cartes). */
+export function conseilsPhoto(p: Pick<PhotoLocale, 'largeur' | 'hauteur'>): ('petite' | 'verticale')[] {
+  if (!p.largeur || !p.hauteur) return [];
+  const c: ('petite' | 'verticale')[] = [];
+  if (Math.min(p.largeur, p.hauteur) < 600) c.push('petite');
+  if (p.hauteur > p.largeur * 1.15) c.push('verticale');
+  return c;
+}
 
 export type Source = 'camera' | 'galerie';
 
@@ -34,11 +46,16 @@ export async function prendrePhoto(source: Source): Promise<string | null> {
   return r.assets[0].uri;
 }
 
-/** Version allégée pour l'envoi (1280 px) et petite version pour le détecteur (400 px). */
-export async function preparer(uri: string): Promise<{ uri: string; base64: string; petite: string }> {
-  const grande = await manipulateAsync(uri, [{ resize: { width: 1280 } }], { compress: 0.7, format: SaveFormat.JPEG, base64: true });
+/**
+ * Version allégée pour l'envoi (1280 px de large au plus, jamais agrandie) et petite version pour le détecteur (400 px).
+ * Renvoie aussi la taille d'origine.
+ */
+export async function preparer(uri: string): Promise<{ uri: string; base64: string; petite: string; largeur: number; hauteur: number }> {
+  const origine = await manipulateAsync(uri, []);
+  const reduire = origine.width > 1280 ? [{ resize: { width: 1280 } }] : [];
+  const grande = await manipulateAsync(uri, reduire, { compress: 0.7, format: SaveFormat.JPEG, base64: true });
   const petite = await manipulateAsync(uri, [{ resize: { width: 400 } }], { compress: 0.8, format: SaveFormat.JPEG, base64: true });
-  return { uri: grande.uri, base64: grande.base64 ?? '', petite: petite.base64 ?? '' };
+  return { uri: grande.uri, base64: grande.base64 ?? '', petite: petite.base64 ?? '', largeur: origine.width, hauteur: origine.height };
 }
 
 export const urlPhoto = (chemin: string) => supabase.storage.from(SEAU).getPublicUrl(chemin).data.publicUrl;

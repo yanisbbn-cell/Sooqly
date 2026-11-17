@@ -279,7 +279,7 @@ function BlocMots({ familles, onChange }: { familles: FamilleInterdite[]; onChan
 function Section({ titre, aide, children }: { titre: string; aide?: string; children: ReactNode }) {
   return (
     <View style={styles.section}>
-      <Texte variante="titre" poids={700} style={{ fontSize: 17 }} accessibilityRole="header">
+      <Texte variante="titre" poids={700} style={{ fontSize: 18 }} accessibilityRole="header">
         {titre}
       </Texte>
       {aide ? <Texte style={styles.aide}>{aide}</Texte> : null}

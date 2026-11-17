@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
   badgeBlocValide: { backgroundColor: colors.vertFond, borderColor: colors.vertBord },
   barre: { height: 8, borderRadius: 4, backgroundColor: colors.sable2, overflow: 'hidden' },
   rempli: { height: 8, borderRadius: 4, backgroundColor: colors.vert },
-  titre: { fontSize: 17 },
+  titre: { fontSize: 18 },
   carte: { padding: 14, borderRadius: 14, backgroundColor: colors.carte, gap: 10 },
   ligne: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   barreFine: { height: 6, borderRadius: 3, backgroundColor: colors.sable2, overflow: 'hidden' },

@@ -84,7 +84,7 @@ export default function HistoriqueMembre() {
         >
           <ImageProfil numero={m.avatar} taille={56} />
           <View style={{ flex: 1, gap: 3 }}>
-            <Texte variante="titre" poids={700} style={{ fontSize: 19 }}>
+            <Texte variante="titre" poids={700} style={{ fontSize: 20 }}>
               {m.nom_affiche}
             </Texte>
             <Texte style={styles.note}>{t('moderation.stats', { annonces: h.annonces, date: date(m.cree_le) })}</Texte>

@@ -913,7 +913,7 @@ export function AssistantPublication({ profil, existante }: { profil: Profil; ex
                 <Texte variante="titre" poids={700} style={styles.section}>
                   {t('publier.qualite')}
                 </Texte>
-                <Texte variante="titre" poids={700} style={{ fontSize: 17, writingDirection: 'ltr' }}>
+                <Texte variante="titre" poids={700} style={{ fontSize: 18, writingDirection: 'ltr' }}>
                   {nbOk} / {points.length}
                 </Texte>
               </View>

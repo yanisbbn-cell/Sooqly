@@ -1,4 +1,4 @@
-import { Text, type TextProps } from 'react-native';
+import { StyleSheet, Text, type TextProps, type TextStyle } from 'react-native';
 
 import { usePreferences } from '@/lib/preferences';
 import { colors, fonts } from '@/theme';
@@ -24,11 +24,20 @@ export function Texte({ variante = 'texte', poids = 400, style, ...props }: Prop
     fontFamily = fonts.texte[poids];
   }
 
+  // Finitions des titres (latin) : lettres un peu resserrées sur les grandes tailles, chiffres de même largeur
+  // (les prix s'alignent et ne « dansent » pas). Un style explicite reste prioritaire.
+  let finition: TextStyle | null = null;
+  if (variante === 'titre' && !rtl) {
+    const taille = StyleSheet.flatten(style)?.fontSize ?? 14;
+    finition = { fontVariant: ['tabular-nums'], letterSpacing: taille >= 20 ? -0.4 : taille >= 16 ? -0.2 : 0 };
+  }
+
   return (
     <Text
       {...props}
       style={[
         { fontFamily, color: colors.brun, textAlign: rtl ? 'right' : 'left', writingDirection: rtl ? 'rtl' : 'ltr' },
+        finition,
         style,
       ]}
     />

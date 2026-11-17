@@ -68,6 +68,13 @@ export const iconeTuile = '#FFF8EE';
 // « none » n'existe pas dans les types de React Native mais est bien compris par le site (react-native-web).
 export const sansContourWeb: TextStyle = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as unknown as TextStyle) : {};
 
+/**
+ * Échelle des tailles de texte (px) : toute taille utilisée dans les écrans en fait partie.
+ * 11 mentions · 12 aides · 13 petits textes · 14 texte courant · 15 boutons · 16 titres de cartes
+ * 18 titres de blocs · 20 titres de sections · 22 · 24 titres d'écrans · 28 et 30 grands titres et prix de la fiche.
+ */
+export const tailles = [11, 12, 13, 14, 15, 16, 18, 20, 22, 24, 28, 30] as const;
+
 /** Noms des polices chargées dans app/_layout.tsx. */
 export const fonts = {
   titre: {

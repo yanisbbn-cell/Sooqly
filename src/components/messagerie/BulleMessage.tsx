@@ -39,5 +39,5 @@ const styles = StyleSheet.create({
   bulle: { maxWidth: '82%', borderRadius: 16, paddingHorizontal: 12, paddingTop: 8, paddingBottom: 6, gap: 2 },
   moi: { alignSelf: 'flex-end', backgroundColor: colors.brun, borderBottomEndRadius: 4 },
   autre: { alignSelf: 'flex-start', backgroundColor: colors.carte, borderBottomStartRadius: 4 },
-  heure: { fontSize: 10, alignSelf: 'flex-end', writingDirection: 'ltr' },
+  heure: { fontSize: 11, alignSelf: 'flex-end', writingDirection: 'ltr' },
 });

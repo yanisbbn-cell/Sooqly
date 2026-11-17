@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   corps: { paddingHorizontal: 12, paddingTop: 10, paddingBottom: 12, gap: 3 },
   mentions: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
   pro: { borderWidth: 1.5, borderColor: colors.brun, borderRadius: 4, paddingHorizontal: 5 },
-  proTexte: { fontSize: 10 },
+  proTexte: { fontSize: 11 },
   badge: { position: 'absolute', top: 6, end: 6 },
   livraison: { fontSize: 11, color: colors.vert },
   sponsorise: { fontSize: 11, color: colors.brunMoyen },

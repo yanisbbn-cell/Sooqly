@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   enteteTexte: { flex: 1, gap: 6 },
-  titre: { fontSize: 26, color: colors.sable1 },
+  titre: { fontSize: 24, color: colors.sable1 },
   sousTitre: { fontSize: 14, lineHeight: 21, color: colors.sable3 },
   contenu: { padding: 20, gap: 16 },
   onglets: { flexDirection: 'row', backgroundColor: colors.sable2, borderRadius: 12, padding: 4, gap: 4 },

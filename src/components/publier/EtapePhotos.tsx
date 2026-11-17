@@ -4,10 +4,10 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 import { Bouton } from '@/components/Bouton';
-import { IconePlus } from '@/components/Icones';
+import { IconeCoche, IconePlus } from '@/components/Icones';
 import { Texte } from '@/components/Texte';
 import { useDetecteur } from '@/lib/detecteur';
-import { MAX_PHOTOS, preparer, prendrePhoto, type PhotoLocale, type Source } from '@/lib/photos';
+import { conseilsPhoto, MAX_PHOTOS, preparer, prendrePhoto, type PhotoLocale, type Source } from '@/lib/photos';
 import { colors, toucheMin } from '@/theme';
 
 type Props = {
@@ -26,6 +26,10 @@ export function EtapePhotos({ angles, photos, setPhotos }: Props) {
   const principale = photos[0]?.emplacement;
   const n = photos.length;
   const refusee = photos.some((p) => p.analyse?.interdit);
+  // Conseils (jamais bloquants) : photo petite ou prise en hauteur, avec l'angle concerné.
+  const conseils = [...photos]
+    .sort((x, y) => x.emplacement - y.emplacement)
+    .flatMap((p) => conseilsPhoto(p).map((c) => ({ c, angle: angles[p.emplacement] ?? '' })));
 
   const ajouter = async (emplacement: number, source: Source) => {
     setChoix(null);
@@ -34,7 +38,7 @@ export function EtapePhotos({ angles, photos, setPhotos }: Props) {
       const uri = await prendrePhoto(source);
       if (!uri) return;
       const prete = await preparer(uri);
-      setPhotos((liste) => [...liste.filter((p) => p.emplacement !== emplacement), { emplacement, uri: prete.uri, base64: prete.base64, analyse: null }]);
+      setPhotos((liste) => [...liste.filter((p) => p.emplacement !== emplacement), { emplacement, uri: prete.uri, base64: prete.base64, analyse: null, largeur: prete.largeur, hauteur: prete.hauteur }]);
       const analyse = await detecteur.analyser(prete.petite);
       setPhotos((liste) => liste.map((p) => (p.emplacement === emplacement && p.uri === prete.uri ? { ...p, analyse } : p)));
     } catch {
@@ -95,6 +99,15 @@ export function EtapePhotos({ angles, photos, setPhotos }: Props) {
           {t('photos.erreurPhoto')}
         </Texte>
       )}
+      {conseils.length > 0 && (
+        <View style={styles.conseils}>
+          {conseils.map(({ c, angle }, k) => (
+            <Texte key={k} style={styles.conseilTexte}>
+              {t(c === 'petite' ? 'photos.conseilPetite' : 'photos.conseilVerticale', { angle })}
+            </Texte>
+          ))}
+        </View>
+      )}
 
       <View style={styles.grille}>
         {angles.slice(0, MAX_PHOTOS).map((angle, i) => {
@@ -150,9 +163,20 @@ export function EtapePhotos({ angles, photos, setPhotos }: Props) {
 
       {choix !== null && (
         <View style={styles.choix}>
-          <Texte poids={700} style={{ fontSize: 14 }}>
+          <Texte poids={700} style={{ fontSize: 15 }}>
             {angles[choix]}
           </Texte>
+          {/* Les règles d'or, juste avant de prendre la photo. */}
+          <View style={styles.regles}>
+            {(t('photos.reglesOr', { returnObjects: true }) as unknown as string[]).map((r, k) => (
+              <View key={k} style={styles.regle}>
+                <View style={styles.puce}>
+                  <IconeCoche couleur={colors.blanc} taille={11} />
+                </View>
+                <Texte style={styles.regleTexte}>{r}</Texte>
+              </View>
+            ))}
+          </View>
           {Platform.OS !== 'web' && <Bouton libelle={t('photos.appareil')} onPress={() => ajouter(choix, 'camera')} variante="sombre" />}
           <Bouton libelle={t('photos.galerie')} onPress={() => ajouter(choix, 'galerie')} variante="sombre" />
           <Bouton libelle={t('photos.annuler')} onPress={() => setChoix(null)} variante="contour" />
@@ -180,8 +204,9 @@ const styles = StyleSheet.create({
   alerteTexte: { fontSize: 13, lineHeight: 19, color: colors.rouge },
   grille: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 },
   case: { width: '33.33%', padding: 5, gap: 4 },
+  // Format des cartes (4:3) : le vendeur voit sa photo cadrée comme dans la liste des annonces.
   vignette: {
-    aspectRatio: 1,
+    aspectRatio: 4 / 3,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -192,7 +217,13 @@ const styles = StyleSheet.create({
   vignettePleine: { backgroundColor: colors.sable2, borderWidth: 2, borderColor: colors.brun },
   voile: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(42,32,24,0.45)', alignItems: 'center', justifyContent: 'center' },
   marque: { position: 'absolute', bottom: 0, start: 0, end: 0, backgroundColor: colors.brun, paddingVertical: 2 },
-  marqueTexte: { fontSize: 10, color: colors.blanc, textAlign: 'center' },
+  marqueTexte: { fontSize: 11, color: colors.blanc, textAlign: 'center' },
   angle: { fontSize: 11, lineHeight: 14, textAlign: 'center' },
+  conseils: { gap: 6, padding: 12, borderRadius: 12, backgroundColor: colors.sable1, borderWidth: 1, borderColor: colors.sable3 },
+  conseilTexte: { fontSize: 13, lineHeight: 19 },
+  regles: { gap: 6, paddingVertical: 4 },
+  regle: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  puce: { width: 18, height: 18, borderRadius: 9, backgroundColor: colors.vert, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
+  regleTexte: { flex: 1, fontSize: 13, lineHeight: 19 },
   choix: { gap: 8, padding: 14, borderRadius: 14, backgroundColor: colors.carte, borderWidth: 1, borderColor: colors.sable2 },
 });

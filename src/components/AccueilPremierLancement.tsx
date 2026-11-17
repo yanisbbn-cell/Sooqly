@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  boutonPrincipalTexte: { color: colors.blanc, fontSize: 19, textAlign: 'center' },
+  boutonPrincipalTexte: { color: colors.blanc, fontSize: 18, textAlign: 'center' },
   boutonSecondaire: {
     height: 48,
     borderRadius: 14,

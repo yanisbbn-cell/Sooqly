@@ -359,6 +359,14 @@ export const fr = {
     voir_other: 'Voir {{count}} annonces',
   },
   photos: {
+    reglesOr: [
+      'Lumière du jour, près d’une fenêtre, sans flash',
+      'Fond uni et rangé, l’objet entier et centré',
+      'Téléphone à l’horizontale : la photo remplit la carte',
+      'Aucune personne ni animal, même en reflet',
+    ],
+    conseilPetite: '« {{angle}} » : photo de petite taille, elle risque d’être floue. Si possible, reprenez-la.',
+    conseilVerticale: '« {{angle}} » : photo en hauteur, le haut et le bas seront coupés sur les cartes. Si possible, reprenez-la à l’horizontale.',
     titre: 'Photos de l’article',
     guideCarte: 'Comment prendre vos photos',
     guideCarteSous: 'Guide rapide en 1 minute',

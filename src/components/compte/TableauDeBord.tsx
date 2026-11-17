@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
   point: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.vertBord },
   verifieTexte: { fontSize: 13, color: colors.vertBord },
   contenu: { padding: 20, gap: 16 },
-  section: { fontSize: 17 },
+  section: { fontSize: 18 },
   menu: { backgroundColor: colors.carte, borderRadius: 16, paddingHorizontal: 16 },
   ligne: { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 12 },
   ligneBord: { borderBottomWidth: 1, borderBottomColor: colors.sable2 },

@@ -541,7 +541,7 @@ const styles = StyleSheet.create({
   pastilleClaire: { backgroundColor: colors.sable2, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
   pastilleContour: { borderWidth: 1.5, borderColor: colors.brun, borderRadius: 8, paddingHorizontal: 9, paddingVertical: 3 },
   fil: { fontSize: 12, color: colors.brunMoyen },
-  titre: { fontSize: 23, lineHeight: 30 },
+  titre: { fontSize: 24, lineHeight: 31 },
   prix: { fontSize: 30 },
   secondaire: { fontSize: 13, color: colors.brunMoyen },
   encadre: {
