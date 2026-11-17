@@ -40,22 +40,22 @@ export const colors = {
 
 /**
  * Couleurs des catégories (tuiles de l'accueil et vignettes des annonces sans photo).
- * Tons de terre et de pierre, choisis pour ne pas se confondre avec l'accent (agir), le vert (confiance)
- * ni le rouge (danger). « de » → « a » : dégradé de la tuile ; « clair » : fond des vignettes sans photo.
- * Icône crème sur la tuile : contraste d'au moins 3 pour 1 avec « de ».
+ * Palette « Beige & Terre », choisie par Yanis le 17 novembre 2026 (tons doux et chaleureux).
+ * « de » → « a » : dégradé de la tuile (icône crème, le nom de la catégorie est toujours écrit dessous) ;
+ * « clair » : fond des vignettes sans photo ; « trait » : icône sur ce fond (contraste d'au moins 3,5 pour 1).
  */
-export const couleursCategories: Record<string, { de: string; a: string; clair: string }> = {
-  grid: { de: '#6A5241', a: '#3B2D22', clair: '#E4E0DD' }, // Tout
-  building: { de: '#B07A55', a: '#7E5034', clair: '#F1E7E0' }, // Immobilier : argile
-  car: { de: '#5F7C93', a: '#3B5266', clair: '#E2E7EC' }, // Véhicules : bleu ardoise
-  wheel: { de: '#6E655C', a: '#433C35', clair: '#E5E3E2' }, // Pièces auto : graphite
-  fridge: { de: '#AD7F35', a: '#86601F', clair: '#F0E8DB' }, // Électroménager : ocre
-  sofa: { de: '#9C7352', a: '#6E4D33', clair: '#EDE6E0' }, // Ameublement : noyer
-  laptop: { de: '#56628E', a: '#343D63', clair: '#E1E3EB' }, // Informatique : indigo nuit
-  garment: { de: '#B07A72', a: '#80524C', clair: '#F1E7E6' }, // Vêtements : vieux rose
-  stroller: { de: '#8E7CA6', a: '#5F5079', clair: '#EBE7EF' }, // Bébé et enfants : lavande
-  tool: { de: '#85834F', a: '#5A5832', clair: '#E9E9DF' }, // Services : olive
-  gift: { de: '#9B5A6B', a: '#6A3746', clair: '#EDE1E4' }, // Dons : prune
+export const couleursCategories: Record<string, { de: string; a: string; clair: string; trait: string }> = {
+  grid: { de: '#997D61', a: '#896F52', clair: '#EDE8E3', trait: '#896F52' }, // Tout : brun doux
+  building: { de: '#E3A783', a: '#D2895D', clair: '#FAEFE9', trait: '#BD6835' }, // Immobilier : abricot
+  car: { de: '#C09F87', a: '#A88366', clair: '#F4EEE9', trait: '#9C7659' }, // Véhicules : taupe
+  wheel: { de: '#C7BA8D', a: '#AF9E68', clair: '#F5F3EA', trait: '#8E7E4B' }, // Pièces auto : olive clair
+  fridge: { de: '#DDBA7F', a: '#CD9F57', clair: '#F9F3E8', trait: '#A67931' }, // Électroménager : miel
+  sofa: { de: '#C4997F', a: '#A97B5C', clair: '#F4EDE8', trait: '#A17355' }, // Ameublement : noisette
+  laptop: { de: '#D0BCA5', a: '#B69E7E', clair: '#F7F3EF', trait: '#977B56' }, // Informatique : lin
+  garment: { de: '#D48D70', a: '#C47856', clair: '#F7EAE5', trait: '#B76440' }, // Vêtements : terre cuite douce
+  stroller: { de: '#DFB09E', a: '#CC917A', clair: '#F9F1EE', trait: '#BB6C4E' }, // Bébé et enfants : rose poudré
+  tool: { de: '#A4A375', a: '#848354', clair: '#EFEEE6', trait: '#818052' }, // Services : sauge
+  gift: { de: '#DAAE80', a: '#C6925F', clair: '#F8F0E8', trait: '#AB733D' }, // Dons : caramel
 };
 
 /** Icône posée sur une tuile de catégorie. */

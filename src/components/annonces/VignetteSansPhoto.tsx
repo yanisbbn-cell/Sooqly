@@ -33,7 +33,7 @@ export function VignetteSansPhoto({ icone, tailleIcone = 40 }: { icone: string; 
         <Rect x="0" y="0" width="100%" height="100%" fill={`url(#${motif})`} />
       </Svg>
       <View style={[styles.halo, { width: halo, height: halo, borderRadius: halo / 2, backgroundColor: c.fond }]}>
-        <IconeCategorie icone={icone} couleur={c.a} taille={tailleIcone} />
+        <IconeCategorie icone={icone} couleur={c.trait} taille={tailleIcone} />
       </View>
     </View>
   );
