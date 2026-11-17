@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { EtatVide } from '@/components/EtatVide';
 import { ActivityIndicator, FlatList, Image, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -47,7 +48,7 @@ export default function Documents() {
             <Texte style={{ fontSize: 12, lineHeight: 18, flex: 1 }}>{t('permis.documentsNote')}</Texte>
           </View>
         }
-        ListEmptyComponent={liste ? <Texte style={styles.vide}>{t('permis.aucun')}</Texte> : <EtatChargement erreur={erreur} reessayer={charger} />}
+        ListEmptyComponent={liste ? <EtatVide illustration="enveloppe" texte={t('permis.aucun')} /> : <EtatChargement erreur={erreur} reessayer={charger} />}
         renderItem={({ item }) => <CarteDocument document={item} onRepondu={charger} />}
       />
     </View>
@@ -111,7 +112,6 @@ const styles = StyleSheet.create({
   ecran: { flex: 1, backgroundColor: colors.blanc },
   contenu: { padding: 20, gap: 14 },
   note: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 12, borderRadius: 12, backgroundColor: colors.sable2, marginBottom: 4 },
-  vide: { fontSize: 14, padding: 20, borderRadius: 14, backgroundColor: colors.carte },
   carte: { padding: 16, borderRadius: 16, backgroundColor: colors.carte, gap: 10 },
   petit: { fontSize: 13, lineHeight: 19, color: colors.brunMoyen },
   photo: { height: 210, borderRadius: 12, backgroundColor: colors.sable1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },

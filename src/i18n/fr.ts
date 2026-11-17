@@ -943,6 +943,7 @@ export const fr = {
     arreter: 'Arrêter la mise en avant',
     reservee: 'La mise en avant est réservée aux annonces de professionnels en ligne.',
     erreur: 'Action impossible. Réessayez.',
+    voir: 'Voir l’annonce ›',
     alaUne: 'À la une',
     tarifsTitre: 'Mettre une annonce en avant',
     tarifsTexte: 'Vos annonces peuvent apparaître « À la une », toujours signalées « Sponsorisé ». Prix fixes :',

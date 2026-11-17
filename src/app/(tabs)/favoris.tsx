@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { EtatVide } from '@/components/EtatVide';
 import { VignetteSansPhoto } from '@/components/annonces/VignetteSansPhoto';
 import { FlatList, Image, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
@@ -84,10 +85,7 @@ export default function Favoris() {
         ListHeaderComponent={liste && liste.length > 0 ? <Texte style={styles.intro}>{t('favoris.intro')}</Texte> : undefined}
         ListEmptyComponent={
           liste ? (
-            <View style={styles.vide}>
-              <IconeFavori couleur={colors.sable4} taille={36} />
-              <Texte style={{ fontSize: 14, lineHeight: 21, color: colors.brunMoyen, textAlign: 'center' }}>{t('favoris.vide')}</Texte>
-            </View>
+            <EtatVide illustration="coeur" texte={t('favoris.vide')} />
           ) : (
             <EtatChargement erreur={erreur} reessayer={charger} />
           )
@@ -230,7 +228,6 @@ const styles = StyleSheet.create({
   entete: { backgroundColor: colors.brun, paddingHorizontal: 20, paddingBottom: 18, gap: 4 },
   contenu: { padding: 16, gap: 12 },
   intro: { fontSize: 13, lineHeight: 19, color: colors.brunMoyen },
-  vide: { alignItems: 'center', gap: 12, paddingTop: 48, paddingHorizontal: 24 },
   carte: { padding: 12, borderRadius: 16, backgroundColor: colors.carte, gap: 10 },
   ligne: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   vignette: { width: 104, height: 78, borderRadius: 12, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },

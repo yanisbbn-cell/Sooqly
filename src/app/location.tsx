@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { EtatVide } from '@/components/EtatVide';
 import { VignetteSansPhoto } from '@/components/annonces/VignetteSansPhoto';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
@@ -158,10 +159,9 @@ export default function RechercheLocation() {
           </View>
 
           {tries.length === 0 && (
-            <View style={styles.vide}>
-              <Texte style={{ fontSize: 14, lineHeight: 21 }}>{t('location.aucun')}</Texte>
+            <EtatVide illustration="cle" texte={t('location.aucun')}>
               <Bouton libelle={t('location.modifierRecherche')} onPress={() => setResultats(null)} variante="contour" />
-            </View>
+            </EtatVide>
           )}
 
           {tries.map(({ annonce: a, resultat: r }) => {
@@ -421,7 +421,6 @@ const styles = StyleSheet.create({
     borderColor: colors.sable3,
     justifyContent: 'center',
   },
-  vide: { padding: 20, borderRadius: 14, backgroundColor: colors.sable2, gap: 12 },
   resultat: { flexDirection: 'row', borderRadius: 16, overflow: 'hidden', backgroundColor: colors.carte },
   vignette: { width: 110, alignItems: 'center', justifyContent: 'center' },
   petit: { fontSize: 12, color: colors.brunMoyen },

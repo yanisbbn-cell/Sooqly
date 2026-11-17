@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { EtatVide } from '@/components/EtatVide';
 import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -304,10 +305,10 @@ export default function Annonces() {
               <GrilleFantome colonnes={grille.colonnes} largeur={grille.largeur} />
             )
           ) : (
-            <View style={styles.vide}>
-              <Texte style={{ fontSize: 14, lineHeight: 21 }}>
-                {t(filtres.categorie || recherche || nbFiltres ? 'accueil2.aucune' : 'accueil2.aucuneEncore')}
-              </Texte>
+            <EtatVide
+              illustration={filtres.categorie || recherche || nbFiltres ? 'loupe' : 'couffin'}
+              texte={t(filtres.categorie || recherche || nbFiltres ? 'accueil2.aucune' : 'accueil2.aucuneEncore')}
+            >
               {(filtres.categorie || recherche || nbFiltres > 0) && (
                 <Pressable
                   onPress={() => {
@@ -322,7 +323,7 @@ export default function Annonces() {
                   </Texte>
                 </Pressable>
               )}
-            </View>
+            </EtatVide>
           )
         }
       />
@@ -507,7 +508,6 @@ const styles = StyleSheet.create({
   triTexte: { fontSize: 13 },
   rangeeCartes: { paddingHorizontal: 20, gap: 12 },
   cellule: { marginBottom: 12 },
-  vide: { marginHorizontal: 20, padding: 20, borderRadius: 14, backgroundColor: colors.sable2, gap: 12 },
   effacer: {
     alignSelf: 'flex-start',
     minHeight: toucheMin,

@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { EtatVide } from '@/components/EtatVide';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -41,7 +42,7 @@ export default function Bloques() {
         data={liste ?? []}
         keyExtractor={(x) => x.bloque_id}
         contentContainerStyle={styles.contenu}
-        ListEmptyComponent={liste ? <Texte style={styles.vide}>{t('confiance.aucunBloque')}</Texte> : <EtatChargement erreur={erreur} reessayer={charger} />}
+        ListEmptyComponent={liste ? <EtatVide illustration="cadenas" texte={t('confiance.aucunBloque')} /> : <EtatChargement erreur={erreur} reessayer={charger} />}
         renderItem={({ item: x }) => {
           const d = new Date(x.cree_le);
           return (
@@ -78,7 +79,6 @@ export default function Bloques() {
 const styles = StyleSheet.create({
   ecran: { flex: 1, backgroundColor: colors.blanc },
   contenu: { padding: 16, gap: 10 },
-  vide: { fontSize: 14, color: colors.brunMoyen, textAlign: 'center', paddingTop: 24 },
   carte: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 16, backgroundColor: colors.carte },
   bouton: { minHeight: toucheMin, paddingHorizontal: 14, borderRadius: 12, borderWidth: 1.5, borderColor: colors.sable4, justifyContent: 'center' },
 });

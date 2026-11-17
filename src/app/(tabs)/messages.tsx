@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { EtatVide } from '@/components/EtatVide';
 import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -61,8 +62,9 @@ export default function Messages() {
       <View style={styles.ecran}>
         {entete}
         <View style={styles.contenu}>
-          <Texte style={styles.vide}>{t('messagerie.connexion')}</Texte>
-          <Bouton libelle={t('publier.connexionBouton')} onPress={() => router.navigate('/compte')} />
+          <EtatVide illustration="bulle" texte={t('messagerie.connexion')}>
+            <Bouton libelle={t('publier.connexionBouton')} onPress={() => router.navigate('/compte')} />
+          </EtatVide>
         </View>
       </View>
     );
@@ -87,7 +89,7 @@ export default function Messages() {
           />
         }
         ListEmptyComponent={
-          liste ? <Texte style={styles.vide}>{t('messagerie.aucune')}</Texte> : <EtatChargement erreur={erreur} reessayer={charger} />
+          liste ? <EtatVide illustration="bulle" texte={t('messagerie.aucune')} /> : <EtatChargement erreur={erreur} reessayer={charger} />
         }
         renderItem={({ item: d }) => {
           const dernier =
@@ -138,7 +140,6 @@ const styles = StyleSheet.create({
   titre: { fontSize: 22, color: colors.sable1 },
   sous: { fontSize: 13, color: colors.sable3 },
   contenu: { padding: 20, gap: 10 },
-  vide: { fontSize: 14, lineHeight: 21, padding: 20, borderRadius: 14, backgroundColor: colors.sable2 },
   ligne: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 16, backgroundColor: colors.carte },
   annonce: { fontSize: 12, color: colors.brunMoyen },
   dernier: { fontSize: 13 },

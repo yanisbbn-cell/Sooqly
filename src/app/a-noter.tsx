@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { EtatVide } from '@/components/EtatVide';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -66,7 +67,7 @@ export default function ANoter() {
           ) : undefined
         }
         ListEmptyComponent={
-          liste ? <Texte style={styles.vide}>{t('confiance.aucuneTransaction')}</Texte> : <EtatChargement erreur={erreur} reessayer={charger} />
+          liste ? <EtatVide illustration="etoile" texte={t('confiance.aucuneTransaction')} /> : <EtatChargement erreur={erreur} reessayer={charger} />
         }
         renderItem={({ item: x }) => (
           <View style={[styles.carte, !x.note_id && styles.carteANoter]}>
@@ -116,7 +117,6 @@ export default function ANoter() {
 const styles = StyleSheet.create({
   ecran: { flex: 1, backgroundColor: colors.blanc },
   contenu: { padding: 16, gap: 10 },
-  vide: { fontSize: 14, color: colors.brunMoyen, textAlign: 'center', paddingTop: 24 },
   merci: { padding: 12, borderRadius: 14, backgroundColor: colors.sable2, marginBottom: 4 },
   carte: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 16, backgroundColor: colors.carte },
   carteANoter: { borderWidth: 2, borderColor: colors.accent },

@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { EtatVide } from '@/components/EtatVide';
 import { VignetteSansPhoto } from '@/components/annonces/VignetteSansPhoto';
 import { FlatList, Image, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
@@ -125,7 +126,7 @@ export default function MesAnnonces() {
           ) : undefined
         }
         ListEmptyComponent={
-          annonces ? <Texte style={styles.vide}>{t('mesAnnonces.aucune')}</Texte> : <EtatChargement erreur={erreur} reessayer={charger} />
+          annonces ? <EtatVide illustration="couffin" texte={t('mesAnnonces.aucune')} /> : <EtatChargement erreur={erreur} reessayer={charger} />
         }
         ListFooterComponent={
           annonces ? <Bouton libelle={t('mesAnnonces.nouvelle')} onPress={() => router.navigate('/publier')} variante="sombre" /> : undefined
@@ -445,7 +446,6 @@ function Action({ libelle, onPress, accent, danger }: { libelle: string; onPress
 const styles = StyleSheet.create({
   ecran: { flex: 1, backgroundColor: colors.blanc },
   contenu: { padding: 16, gap: 14 },
-  vide: { fontSize: 14, color: colors.brunMoyen, textAlign: 'center', paddingVertical: 24 },
   bilan: { flexDirection: 'row', gap: 8 },
   tarifs: { gap: 4, padding: 12, borderRadius: 14, borderWidth: 1, borderColor: colors.sable3 },
   bilanCase: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: 10, borderRadius: 14, backgroundColor: colors.carte },

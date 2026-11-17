@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { EtatVide } from '@/components/EtatVide';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -100,10 +101,9 @@ export default function Alertes() {
         }
         ListEmptyComponent={
           liste ? (
-            <View style={{ gap: 12, paddingTop: 8 }}>
-              <Texte style={{ fontSize: 14, lineHeight: 21, color: colors.brunMoyen }}>{t('alertes.aucune')}</Texte>
+            <EtatVide illustration="cloche" texte={t('alertes.aucune')}>
               <Bouton libelle={t('alertes.lancer')} onPress={() => router.navigate('/')} variante="sombre" />
-            </View>
+            </EtatVide>
           ) : (
             <EtatChargement erreur={erreur} reessayer={charger} />
           )
