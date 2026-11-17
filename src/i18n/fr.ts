@@ -3,6 +3,7 @@ import { avatarsFr } from './avatars.fr';
 /** Textes en français. Chaque texte doit aussi exister dans ar.ts. */
 export const fr = {
   app: {
+    retourAccueil: 'Sooqly : revenir à l’accueil',
     tagline: 'Tout se trouve près de chez vous.',
   },
   langue: {

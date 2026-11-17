@@ -4,6 +4,7 @@ import type { Traduction } from './fr';
 /** النصوص بالعربية. */
 export const ar: Traduction = {
   app: {
+    retourAccueil: 'سوقلي: العودة إلى الصفحة الرئيسية',
     tagline: 'كل ما تحتاجه قريب منك.',
   },
   langue: {
